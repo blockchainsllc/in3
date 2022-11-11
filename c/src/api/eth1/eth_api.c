@@ -67,10 +67,10 @@ static uint256_t uint256_from_bytes(bytes_t bytes) {
 
 /** adds a number as hex */
 static void params_add_number(sb_t* sb, uint64_t num) {
-  char tmp[30];
   if (sb->len > 1) sb_add_char(sb, ',');
-  sprintf(tmp, "\"0x%" PRIx64 "\"", num);
-  sb_add_chars(sb, tmp);
+  sb_add_char(sb, '"');
+  sb_add_hexuint(sb, (int64_t) num);
+  sb_add_char(sb, '"');
 }
 
 static void params_add_blk_num_t(sb_t* sb, eth_blknum_t bn) {

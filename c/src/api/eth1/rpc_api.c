@@ -503,10 +503,8 @@ static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
   char* val = d_get_string_at(ctx->params, 0);
   if (!val) {
     d_token_t* t = d_get_at(ctx->params, 0);
-    if (d_type(t) == T_INTEGER) {
-      val = alloca(20);
-      sprintf(val, "%i", d_int(t));
-    }
+    if (d_type(t) == T_INTEGER)
+      val = stack_printx(20, "%i", d_int(t));
     else
       return req_set_error(ctx->req, "the value must be a string", IN3_EINVAL);
   }
@@ -521,7 +519,7 @@ char* bytes_to_string_val(bytes_t wei, int exp, int digits) {
   char tmp[300];
   int  l = encode(ENC_DECIMAL, wei, tmp);
   if (l < 0)
-    sprintf(tmp, "<not supported>");
+    strcpy(tmp, "<not supported>");
   else {
     if (exp) {
       if (l <= exp) {
@@ -651,7 +649,7 @@ static in3_ret_t eth_verify_signature(in3_rpc_handle_ctx_t* ctx) {
 
   if (strcmp(sig_type, "eth_sign") == 0) {
     char*     tmp = alloca(msg.len + 30);
-    const int l   = sprintf(tmp, ETH_SIGN_PREFIX, msg.len);
+    const int l   = snprintx(tmp, msg.len + 30, ETH_SIGN_PREFIX, msg.len);
     memcpy(tmp + l, msg.data, msg.len);
     msg.data = (uint8_t*) tmp;
     msg.len += l;

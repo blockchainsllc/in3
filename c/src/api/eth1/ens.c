@@ -49,14 +49,11 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_req_t* parent, bytes_
         return IN3_WAITING;
     }
   }
-  else {
+  else
     // create request
-    char* req = _malloc(250);
-    char  data[73];
-    bytes_to_hex(calldata.data, 36, data);
-    sprintf(req, "{\"method\":\"eth_call\",\"jsonrpc\":\"2.0\",\"params\":[{\"to\":\"%s\",\"data\":\"0x%s\"},\"latest\"]}", to, data);
-    return req_add_required(parent, req_new(parent->client, req));
-  }
+    return req_add_required(parent,
+                            req_new(parent->client,
+                                    sprintx("{\"method\":\"eth_call\",\"jsonrpc\":\"2.0\",\"params\":[{\"to\":\"%s\",\"data\":\"%B\"},\"latest\"]}", to, bytes(calldata.data, 36))));
 }
 
 static void ens_hash(const char* domain, bytes32_t dst) {
@@ -85,8 +82,7 @@ in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, i
 
   // check cache
   if (in3_plugin_is_registered(parent->client, PLGN_ACT_CACHE)) {
-    cachekey = alloca(strlen(name) + 5);
-    sprintf(cachekey, "ens:%s:%i:%d", name, type, (int) in3_chain_id(parent));
+    cachekey             = stack_printx(strlen(name) + 5, "ens:%s:%i:%u", name, (int32_t) type, (uint32_t) in3_chain_id(parent));
     in3_cache_ctx_t cctx = {.req = parent, .key = cachekey, .content = NULL};
     TRY(in3_plugin_execute_first_or_none(parent, PLGN_ACT_CACHE_GET, &cctx))
     if (cctx.content) {

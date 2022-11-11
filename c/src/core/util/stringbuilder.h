@@ -112,6 +112,8 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
  * %x - expects uint64_t and inserts a hex representation with a 0x-prefix
  * %b - expects a bytes_t and inserts the data as hex without 0x-prefix
  * %B - expects a bytes_t and inserts the data as hex with a 0x-prefix
+ * %a - expects a uint8_t* as address and inserts the data as 20 bytes hex without 0x-prefix
+ * %A - expects a uint8_t* as address and inserts the data as 20 bytes hex witH 0x-prefix
  * %v - expects a bytes_t and inserts the data as hex without 0x-prefix after removing all leading zeros
  * %V - expects a bytes_t and inserts the data as hex with a 0x-prefix  removing all leading zeros
  * %j - expects a d_token_t* and inserts the json-representation
@@ -124,6 +126,7 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token);
  *  sprintx("%-4x",1l) -> "1   "
  *  sprintx("%4x",1l)  -> "   1"
  *  sprintx("%04x",1l) -> "0001"
+ *  sprintx("%A", adress) -> "0xab3fd6a8b34.."
  */
 sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
 
@@ -147,6 +150,8 @@ sb_t* sb_printx(sb_t* sb, const char* fmt, ...);
  * %x - expects uint64_t and inserts a hex representation with a 0x-prefix
  * %b - expects a bytes_t and inserts the data as hex without 0x-prefix
  * %B - expects a bytes_t and inserts the data as hex with a 0x-prefix
+ * %a - expects a uint8_t* as address and inserts the data as 20 bytes hex without 0x-prefix
+ * %A - expects a uint8_t* as address and inserts the data as 20 bytes hex witH 0x-prefix
  * %v - expects a bytes_t and inserts the data as hex without 0x-prefix after removing all leading zeros
  * %V - expects a bytes_t and inserts the data as hex with a 0x-prefix  removing all leading zeros
  * %j - expects a d_token_t* and inserts the json-representation
@@ -168,9 +173,32 @@ void  sb_vprintx(sb_t* sb, const char* fmt, va_list args);
  */
 void sb_vprintx(sb_t* sb, const char* fmt, va_list args);
 
+/**
+ * works like snprintf by writing into an existing buffer.
+ * max will determine the max number of bytes to write. the 0 determinating character will always be added auomaticly.
+ * for format-options, see sprintx
+ *
+ * example:
+ *  char* buf[5];
+ *  size_t written = snprintx(buf, 4,"%s","Hello World");
+ * // buf = "Hell"
+ * // written = 4
+ *
+ */
 size_t snprintx(char* dst, size_t max, const char* fmt, ...);
-char*  csnprintx(char* dst, size_t max, const char* fmt, ...);
 
+/**
+ * works like snprintx, but returns the given pointer. This should only be used by the stack_printx macro.
+ */
+char* csnprintx(char* dst, size_t max, const char* fmt, ...);
+
+/**
+ * works like sprintx, but instead of allocating memory in the heap, it will allocate on the stack for the max number of bytes as passed.
+ * if the content is bigger than max, only max characters will be written on the stack.
+ *
+ * example:
+ *    char* adr = stack_printx(44, "\"%A\"", wallet->account); // "0xab3fd6a8b34"
+ */
 #define stack_printx(max, fmt, ...) csnprintx(alloca(max + 1), max, fmt, __VA_ARGS__)
 
 #ifdef __cplusplus

@@ -268,6 +268,7 @@ sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, int fix_size) {
     if (b.len == 0) b = bytes((uint8_t*) &zero, 1);
     b_optimize_len(&b);
   }
+  if (!b.data) b.len = 0;
   size_t l  = prefix ? strlen(prefix) : 0;
   size_t bl = b.len * 2;
   if (fix_size > (int) b.len) bl = (size_t) fix_size * 2;
@@ -355,7 +356,7 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
 }
 
 void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
-  size_t max = check_size(sb, strlen(fmt));
+  check_size(sb, strlen(fmt));
   for (const char* c = fmt; *c; c++) {
     if (*c == '%') {
       c++;
@@ -380,7 +381,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
         uselong = true;
         c++;
       }
-      if (len) max = check_size(sb, len + 1);
+      if (len) check_size(sb, len + 1);
       switch (*c) {
         case 's':
           sb_add_chars(sb, va_arg(args, char*));
@@ -481,6 +482,12 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
         case 'B':
           sb_add_rawbytes(sb, "0x", va_arg(args, bytes_t), 0);
           break;
+        case 'a':
+          sb_add_rawbytes(sb, "", bytes(va_arg(args, uint8_t*), 20), 0);
+          break;
+        case 'A':
+          sb_add_rawbytes(sb, "0x", bytes(va_arg(args, uint8_t*), 20), 0);
+          break;
         case 'v':
           sb_add_rawbytes(sb, "", va_arg(args, bytes_t), -1);
           break;
@@ -521,10 +528,13 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
 
       continue;
     }
-    if (sb->len + 1 >= (sb->allocted & 0x0fffffff) && (max = check_size(sb, 1)) == 0) return;
-    sb->data[sb->len++] = *c;
+    if (sb->len + 1 >= (sb->allocted & 0x0fffffff) && check_size(sb, 1) == 0) break;
+#ifdef __clang_analyzer__
+    if (sb->data) // the analyser is not aware of the fact that sb->data can not be null, since check_size is ensuring this
+#endif
+      sb->data[sb->len++] = *c;
   }
-  sb->data[sb->len] = 0;
+  if (sb->data) sb->data[sb->len] = 0;
 }
 sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
   va_list args;

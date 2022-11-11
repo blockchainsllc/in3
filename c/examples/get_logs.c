@@ -12,7 +12,7 @@ static void get_logs_api(in3_t* in3);
 
 int main() {
   // create new incubed client
-  in3_t* in3    = in3_for_chain(CHAIN_ID_MAINNET);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
 
   // get logs using raw RPC call
   get_logs_rpc(in3);
@@ -40,7 +40,8 @@ void get_logs_rpc(in3_t* in3) {
   if (res == IN3_OK) {
     printf("Logs : \n%s\n", result);
     free(result);
-  } else {
+  }
+  else {
     printf("Error getting logs : \n%s\n", error);
     free(error);
   }
