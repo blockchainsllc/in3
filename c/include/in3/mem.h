@@ -155,5 +155,6 @@ in3_ret_t tf() {
   SAFE_RETURN();
 }
 */
+size_t _strnlen(const char* str, size_t maxlen);
 
 #endif /* __MEM_H__ */
