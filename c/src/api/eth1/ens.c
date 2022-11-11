@@ -49,11 +49,17 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_req_t* parent, bytes_
         return IN3_WAITING;
     }
   }
-  else
-    // create request
-    return req_add_required(parent,
-                            req_new(parent->client,
-                                    sprintx("{\"method\":\"eth_call\",\"jsonrpc\":\"2.0\",\"params\":[{\"to\":\"%s\",\"data\":\"%B\"},\"latest\"]}", to, bytes(calldata.data, 36))));
+  else {
+    char* req = _malloc(250);
+    char  data[73];
+    bytes_to_hex(calldata.data, 36, data);
+    snprintx(req, 250, "{\"method\":\"eth_call\",\"jsonrpc\":\"2.0\",\"params\":[{\"to\":\"%s\",\"data\":\"0x%s\"},\"latest\"]}", to, data);
+    return req_add_required(parent, req_new(parent->client, req));
+  }
+  //    // create request
+  //    return req_add_required(parent,
+  //                            req_new(parent->client,
+  //                                    sprintx("{\"method\":\"eth_call\",\"jsonrpc\":\"2.0\",\"params\":[{\"to\":\"%s\",\"data\":\"%B\"},\"latest\"]}", to, bytes(calldata.data, 36))));
 }
 
 static void ens_hash(const char* domain, bytes32_t dst) {
