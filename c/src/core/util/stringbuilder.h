@@ -167,6 +167,12 @@ void  sb_vprintx(sb_t* sb, const char* fmt, va_list args);
  * prints a string based a var args.
  */
 void sb_vprintx(sb_t* sb, const char* fmt, va_list args);
+
+size_t snprintx(char* dst, size_t max, const char* fmt, ...);
+char*  csnprintx(char* dst, size_t max, const char* fmt, ...);
+
+#define stack_printx(max, fmt, ...) csnprintx(alloca(max + 1), max, fmt, __VA_ARGS__)
+
 #ifdef __cplusplus
 }
 #endif

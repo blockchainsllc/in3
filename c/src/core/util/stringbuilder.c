@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #define IN3_INTERNAL
-
+#define FIXED_SIZE 0x80000000
 #include "stringbuilder.h"
 #include "../util/bytes.h"
 #include "../util/crypto.h"
@@ -61,12 +61,13 @@ sb_t* sb_init(sb_t* sb) {
   sb->len      = 0;
   return sb;
 }
-NONULL static void check_size(sb_t* sb, size_t len) {
-  if ((len == 0 || sb->len + len < sb->allocted) && sb->data) return;
+NONULL static size_t check_size(sb_t* sb, size_t len) {
+  if (sb->allocted & FIXED_SIZE) return min((sb->allocted & 0x0fffffff) - 1 - sb->len, len);
+  if ((len == 0 || sb->len + len < sb->allocted) && sb->data) return len;
   if (sb->allocted == 0) {
     sb->allocted = len + 1,
     sb->data     = _malloc(sb->allocted);
-    return;
+    return len;
   }
 #ifdef __ZEPHYR__
   size_t l = sb->allocted;
@@ -77,50 +78,53 @@ NONULL static void check_size(sb_t* sb, size_t len) {
 #else
   sb->data = _realloc(sb->data, sb->allocted, 0);
 #endif
+  return len;
 }
 
 sb_t* sb_add_chars(sb_t* sb, const char* chars) {
-  int l = strlen(chars);
+  size_t l = strlen(chars);
   if (l == 0 || chars == NULL) return sb;
-  check_size(sb, l);
-  memcpy(sb->data + sb->len, chars, l);
-  sb->len += l;
+  size_t max = check_size(sb, l);
+  memcpy(sb->data + sb->len, chars, max);
+  sb->len += max;
   sb->data[sb->len] = 0;
   return sb;
 }
 
-sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int l) {
-  if (l == -1) l = strlen(chars);
-  int escapes = 0;
+sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int len) {
+  size_t l       = len == -1 ? strlen(chars) : (size_t) len;
+  size_t escapes = 0;
   if (l == 0 || chars == NULL) return sb;
-  for (int i = 0; i < l; i++) {
+  for (size_t i = 0; i < l; i++) {
     if (chars[i] == '"' || chars[i] == '\n' || chars[i] == '\\') escapes++;
   }
-  check_size(sb, l + escapes);
+  size_t max = check_size(sb, l + escapes);
+  l          = min(l, max); // if we have a limit, we stop there
   memcpy(sb->data + sb->len, chars, l);
   if (escapes) {
     escapes = 0;
-    for (int i = 0; i < l; i++) {
+    for (size_t i = 0; i < l && i + escapes < max; i++) {
       if (chars[i] == '"' || chars[i] == '\\') {
         sb->data[sb->len + i + escapes] = '\\';
-        memcpy(sb->data + sb->len + i + escapes + 1, chars + i, l - i);
+        memcpy(sb->data + sb->len + i + escapes + 1, chars + i, min(l - i, max - i - escapes - 1));
         escapes++;
       }
       if (chars[i] == '\n') {
-        memcpy(sb->data + sb->len + i + escapes + 1, chars + i, l - i);
-        sb->data[sb->len + i + escapes]     = '\\';
-        sb->data[sb->len + i + escapes + 1] = 'n';
+        memcpy(sb->data + sb->len + i + escapes + 1, chars + i, min(l - i, max - i - escapes - 1));
+        sb->data[sb->len + i + escapes] = '\\';
+        if (max - i - escapes - 1) sb->data[sb->len + i + escapes + 1] = 'n';
         escapes++;
       }
     }
   }
-  sb->len += l + escapes;
+
+  sb->len += max;
   sb->data[sb->len] = 0;
   return sb;
 }
 
 sb_t* sb_add_char(sb_t* sb, char c) {
-  check_size(sb, 1);
+  if (!check_size(sb, 1)) return sb;
   sb->data[sb->len++] = c;
   sb->data[sb->len]   = 0;
   return sb;
@@ -128,9 +132,9 @@ sb_t* sb_add_char(sb_t* sb, char c) {
 
 sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len) {
   if (chars == NULL) return sb;
-  check_size(sb, len);
-  memcpy(sb->data + sb->len, chars + start, len);
-  sb->len += len;
+  size_t max = check_size(sb, len);
+  memcpy(sb->data + sb->len, chars + start, max);
+  sb->len += max;
   sb->data[sb->len] = 0;
   return sb;
 }
@@ -184,19 +188,19 @@ sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l) {
     case 8: l = sprintf(tmp, "0x%" PRIx64, (uint64_t) uint); break;
     default: return sb; /** Other types not supported */
   }
-  check_size(sb, l);
-  memcpy(sb->data + sb->len, tmp, l);
-  sb->len += l;
+  size_t max = check_size(sb, l);
+  memcpy(sb->data + sb->len, tmp, max);
+  sb->len += max;
   sb->data[sb->len] = 0;
   return sb;
 }
 
 sb_t* sb_add_int(sb_t* sb, int64_t val) {
-  char tmp[30]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
-  int  l = sprintf(tmp, "%" PRIi64, val);
-  check_size(sb, l);
-  memcpy(sb->data + sb->len, tmp, l);
-  sb->len += l;
+  char   tmp[30]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  int    l   = sprintf(tmp, "%" PRIi64, val);
+  size_t max = check_size(sb, l);
+  memcpy(sb->data + sb->len, tmp, max);
+  sb->len += max;
   sb->data[sb->len] = 0;
   return sb;
 }
@@ -264,27 +268,29 @@ sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, int fix_size) {
     if (b.len == 0) b = bytes((uint8_t*) &zero, 1);
     b_optimize_len(&b);
   }
-  int l  = prefix ? strlen(prefix) : 0;
-  int bl = b.len * 2;
-  if (fix_size > (int) b.len) bl = fix_size * 2;
+  size_t l  = prefix ? strlen(prefix) : 0;
+  size_t bl = b.len * 2;
+  if (fix_size > (int) b.len) bl = (size_t) fix_size * 2;
   if (fix_size == -1 && b.len && *b.data < 16) bl--;
   l += bl;
   if (l == 0) return sb;
-  check_size(sb, l);
-  if (prefix) memcpy(sb->data + sb->len, prefix, l - bl);
-  sb->len += l;
+  size_t max = check_size(sb, l);
+  if (prefix) memcpy(sb->data + sb->len, prefix, min(l - bl, max));
+  size_t p = sb->len + l - bl;
+  sb->len += max;
   sb->data[sb->len] = 0;
-  int p             = sb->len - bl;
-  for (int i = (int) b.len; i < fix_size; i++, p += 2)
-    sb->data[p] = sb->data[p + 1] = '0';
-  if (fix_size == -1 && b.len && *b.data < 16) {
+  for (int i = (int) b.len; i < fix_size; i++, p += 2) {
+    if (p < sb->len) sb->data[p] = '0';
+    if (p < sb->len - 1) sb->data[p + 1] = '0';
+  }
+  if (fix_size == -1 && b.len && *b.data < 16) { // check the first byte and we don't want to have a leading zero
     char tmp[3];
     bytes_to_hex(b.data, 1, tmp);
-    sb->data[p] = tmp[1];
-    bytes_to_hex(b.data + 1, b.len - 1, sb->data + p + 1);
+    bytes_to_hex(b.data + 1, min(b.len - 1, p < sb->len ? (sb->len - p - 1) / 2 : 0), sb->data + p + 1);
+    if (p < sb->len) sb->data[p] = tmp[1];
   }
   else
-    bytes_to_hex(b.data, b.len, sb->data + p);
+    bytes_to_hex(b.data, min(b.len, p < sb->len ? (sb->len - p) / 2 : 0), sb->data + p);
   return sb;
 }
 
@@ -349,7 +355,7 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
 }
 
 void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
-  check_size(sb, strlen(fmt));
+  size_t max = check_size(sb, strlen(fmt));
   for (const char* c = fmt; *c; c++) {
     if (*c == '%') {
       c++;
@@ -374,7 +380,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
         uselong = true;
         c++;
       }
-      if (len) check_size(sb, len + 1);
+      if (len) max = check_size(sb, len + 1);
       switch (*c) {
         case 's':
           sb_add_chars(sb, va_arg(args, char*));
@@ -440,11 +446,11 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
           break;
         }
         case 'x': {
-          char tmp[19] = {0}; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
-          int  l       = sprintf(tmp, "%" PRIx64, va_arg(args, uint64_t));
-          check_size(sb, l);
-          memcpy(sb->data + sb->len, tmp, l + 1);
-          sb->len += l;
+          char   tmp[19] = {0}; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+          int    l       = sprintf(tmp, "%" PRIx64, va_arg(args, uint64_t));
+          size_t max     = check_size(sb, l);
+          memcpy(sb->data + sb->len, tmp, max + 1);
+          sb->len += max;
           break;
         }
         case 'p':
@@ -453,15 +459,17 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
         case 'b': {
           bytes_t b = va_arg(args, bytes_t);
           if (c[1] == '6' && c[2] == '4') {
-            check_size(sb, encode_size(ENC_BASE64, b.len));
-            int l                 = encode(ENC_BASE64, b, sb->data + sb->len);
+            size_t max = check_size(sb, encode_size(ENC_BASE64, b.len));
+            int    l   = encode(ENC_BASE64, b, sb->data + sb->len);
+            if (l > (int) max) l = (int) max;
             sb->data[sb->len + l] = 0;
             sb->len += l;
             c += 2;
           }
           else if (c[1] == '5' && c[2] == '8') {
-            check_size(sb, encode_size(ENC_BASE58, b.len));
-            int l                 = encode(ENC_BASE58, b, sb->data + sb->len);
+            size_t max            = check_size(sb, encode_size(ENC_BASE58, b.len));
+            int    l              = encode(ENC_BASE58, b, sb->data + sb->len);
+            l                     = l < (int) max ? l : (int) max;
             sb->data[sb->len + l] = 0;
             sb->len += l;
             c += 2;
@@ -513,7 +521,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
 
       continue;
     }
-    if (sb->len + 1 >= sb->allocted) check_size(sb, 1);
+    if (sb->len + 1 >= (sb->allocted & 0x0fffffff) && (max = check_size(sb, 1)) == 0) return;
     sb->data[sb->len++] = *c;
   }
   sb->data[sb->len] = 0;
@@ -533,6 +541,24 @@ char* sprintx(const char* fmt, ...) {
   sb_vprintx(&s, fmt, args);
   va_end(args);
   return s.data;
+}
+
+size_t snprintx(char* dst, size_t max, const char* fmt, ...) {
+  sb_t    s = {.allocted = FIXED_SIZE | (max + 1), .data = dst, .len = 0};
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(&s, fmt, args);
+  va_end(args);
+  return s.len;
+}
+
+char* csnprintx(char* dst, size_t max, const char* fmt, ...) {
+  sb_t    s = {.allocted = FIXED_SIZE | (max + 1), .data = dst, .len = 0};
+  va_list args;
+  va_start(args, fmt);
+  sb_vprintx(&s, fmt, args);
+  va_end(args);
+  return dst;
 }
 
 void sb_add_params(sb_t* sb, const char* fmt, ...) {

@@ -188,6 +188,17 @@ void test_sb() {
   TEST_ASSERT_EQUAL_STRING("a=0x22313233343536373839,b=5,c=\"1234567890\",d=\\\"1234567890\\\",e=12345678901", sb->data);
 
   sb_free(sb);
+
+  // test limited
+  char    buf[6]  = {0};
+  uint8_t data[3] = {1, 2, 3};
+  TEST_ASSERT_EQUAL(2, snprintx(buf, 2, "%S", "a\"bcd"));
+  TEST_ASSERT_EQUAL_STRING("a\\", buf);
+
+  TEST_ASSERT_EQUAL(3, snprintx(buf, 3, "%V", bytes(data, 3)));
+  TEST_ASSERT_EQUAL_STRING("0x1", buf);
+  TEST_ASSERT_EQUAL(4, snprintx(buf, 4, "%B", bytes(data, 3)));
+  TEST_ASSERT_EQUAL_STRING("0x01", buf);
 }
 
 static void test_utils() {
