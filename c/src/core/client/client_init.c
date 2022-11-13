@@ -230,32 +230,30 @@ static in3_chain_type_t chain_type_from_id(chain_id_t id) {
 }
 
 char* in3_get_config(in3_t* c) {
-  sb_t* sb = sb_new("");
-  add_bool(sb, '{', "autoUpdateList", c->flags & FLAGS_AUTO_UPDATE_LIST);
-  add_uint(sb, ',', "chainId", c->chain.id);
-  add_uint(sb, ',', "signatureCount", c->signature_count);
-  add_uint(sb, ',', "finality", c->finality);
-  add_bool(sb, ',', "includeCode", c->flags & FLAGS_INCLUDE_CODE);
-  add_bool(sb, ',', "bootWeights", c->flags & FLAGS_BOOT_WEIGHTS);
-  add_uint(sb, ',', "maxAttempts", c->max_attempts);
-  add_bool(sb, ',', "keepIn3", c->flags & FLAGS_KEEP_IN3);
-  add_bool(sb, ',', "stats", c->flags & FLAGS_STATS);
-  add_bool(sb, ',', "useBinary", c->flags & FLAGS_BINARY);
-  add_bool(sb, ',', "useHttp", c->flags & FLAGS_HTTP);
-  add_bool(sb, ',', "experimental", c->flags & FLAGS_ALLOW_EXPERIMENTAL);
-  add_uint(sb, ',', "maxVerifiedHashes", c->max_verified_hashes);
-  add_uint(sb, ',', "timeout", c->timeout);
-  add_string(sb, ',', "proof", (c->proof == PROOF_NONE) ? "none" : (c->proof == PROOF_STANDARD ? "standard" : "full"));
+  sb_t sb = {0};
+  add_bool(&sb, '{', "autoUpdateList", c->flags & FLAGS_AUTO_UPDATE_LIST);
+  add_uint(&sb, ',', "chainId", c->chain.id);
+  add_uint(&sb, ',', "signatureCount", c->signature_count);
+  add_uint(&sb, ',', "finality", c->finality);
+  add_bool(&sb, ',', "includeCode", c->flags & FLAGS_INCLUDE_CODE);
+  add_bool(&sb, ',', "bootWeights", c->flags & FLAGS_BOOT_WEIGHTS);
+  add_uint(&sb, ',', "maxAttempts", c->max_attempts);
+  add_bool(&sb, ',', "keepIn3", c->flags & FLAGS_KEEP_IN3);
+  add_bool(&sb, ',', "stats", c->flags & FLAGS_STATS);
+  add_bool(&sb, ',', "useBinary", c->flags & FLAGS_BINARY);
+  add_bool(&sb, ',', "useHttp", c->flags & FLAGS_HTTP);
+  add_bool(&sb, ',', "experimental", c->flags & FLAGS_ALLOW_EXPERIMENTAL);
+  add_uint(&sb, ',', "maxVerifiedHashes", c->max_verified_hashes);
+  add_uint(&sb, ',', "timeout", c->timeout);
+  add_string(&sb, ',', "proof", (c->proof == PROOF_NONE) ? "none" : (c->proof == PROOF_STANDARD ? "standard" : "full"));
   if (c->replace_latest_block)
-    add_uint(sb, ',', "replaceLatestBlock", c->replace_latest_block);
+    add_uint(&sb, ',', "replaceLatestBlock", c->replace_latest_block);
 
-  in3_get_config_ctx_t cctx = {.client = c, .sb = sb};
+  in3_get_config_ctx_t cctx = {.client = c, .sb = &sb};
   in3_plugin_execute_all(c, PLGN_ACT_CONFIG_GET, &cctx);
-  sb_add_chars(sb, "}");
+  sb_add_chars(&sb, "}");
 
-  char* r = sb->data;
-  _free(sb);
-  return r;
+  return sb.data;
 }
 
 char* in3_configure_internal(json_ctx_t* json, in3_t* c, bool ignore_unknown) {

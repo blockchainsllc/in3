@@ -603,11 +603,11 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
   }
 
   // prepare the payload
-  sb_t* payload = sb_new(NULL);
-  res           = ctx_create_payload(ctx, payload, rpc != NULL);
+  sb_t payload = {0};
+  res          = ctx_create_payload(ctx, &payload, rpc != NULL);
   if (res < 0) {
     // we clean up
-    sb_free(payload);
+    _free(payload.data);
     free_urls(urls, nodes_count);
     // since we cannot return an error, we set the error in the context and return NULL, indicating the error.
     req_set_error(ctx, "could not generate the payload", res);
@@ -617,20 +617,17 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
   // prepare response-object
   in3_http_request_t* request = _calloc(sizeof(in3_http_request_t), 1);
   request->req                = ctx;
-  request->payload            = payload->data;
-  request->payload_len        = payload->len;
+  request->payload            = payload.data;
+  request->payload_len        = payload.len;
   request->urls_len           = nodes_count;
   request->urls               = urls;
   request->cptr               = NULL;
   request->wait               = d_get_int(d_get(ctx->requests[0], K_IN3), K_WAIT);
-  request->method             = payload->len ? "POST" : "GET";
+  request->method             = payload.len ? "POST" : "GET";
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
   ctx->raw_response = _calloc(sizeof(in3_response_t), nodes_count);
   for (int n = 0; n < nodes_count; n++) ctx->raw_response[n].state = IN3_WAITING;
-
-  // we only clean up the the stringbuffer, but keep the content (payload->data)
-  _free(payload);
 
   return request;
 }

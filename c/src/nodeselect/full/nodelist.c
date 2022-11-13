@@ -267,23 +267,17 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
   for (int i = 0, j = 2; i < 8; ++i, j += 8)
     sprintf(seed + j, "%08x", in3_rand(NULL) % 0xFFFFFFFF);
 
-  sb_t* in3_sec = sb_new("{");
-  if (nodelist_not_first_upd8(data)) {
-    bytes_t addr_ = (bytes_t){.data = data->nodelist_upd8_params->node, .len = 20};
-    sb_add_bytes(in3_sec, "\"dataNodes\":", &addr_, 1, true);
-  }
+  in3_nodeselect_config_t* w = in3_get_nodelist(c);
+  sb_t                     r = {0};
 
-  // create request
-  in3_nodeselect_config_t* w   = in3_get_nodelist(c);
-  char*                    req = _malloc(350);
-  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"params\":[%i,\"%s\",[]%s],\"in3\":%s}",
-          w->node_limit, seed,
-          ((c->flags & FLAGS_BOOT_WEIGHTS) && nodelist_first_upd8(data)) ? ",true" : "",
-          sb_add_char(in3_sec, '}')->data);
-  sb_free(in3_sec);
+  sb_printx(&r, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"params\":[%i,\"%s\",[]%s]",
+            (uint32_t) w->node_limit, seed,
+            ((c->flags & FLAGS_BOOT_WEIGHTS) && nodelist_first_upd8(data)) ? ",true" : "");
+  if (nodelist_not_first_upd8(data)) sb_printx(&r, ",\"in3\":{\"dataNodes\":[\"%A\"]}", data->nodelist_upd8_params->node);
+  sb_add_char(&r, '}');
 
   // new client
-  return req_add_required(parent_ctx, req_new(c, req));
+  return req_add_required(parent_ctx, req_new(c, r.data));
 }
 
 #ifdef NODESELECT_DEF_WL
