@@ -39,6 +39,14 @@
 #define DEBUG
 #endif
 
+typedef enum {
+  TEST_ADDR     = 0, /**< resolve as address */
+  TEST_RESOLVER = 1, /**< resolver */
+  TEST_OWNER    = 2, /**< owner */
+  TEST_NAME     = 3, /**< name */
+  TEST_HASH     = 4  /**< hash */
+} in3_test_enum_t;
+
 #include "../../src/core/client/request.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/debug.h"
@@ -190,8 +198,8 @@ void test_sb() {
   sb_free(sb);
 
   // test limited
-  char    buf[6]  = {0};
-  uint8_t data[3] = {1, 2, 3};
+  char    buf[100] = {0};
+  uint8_t data[3]  = {1, 2, 3};
   TEST_ASSERT_EQUAL(2, snprintx(buf, 2, "%S", "a\"bcd"));
   TEST_ASSERT_EQUAL_STRING("a\\", buf);
 
@@ -199,6 +207,31 @@ void test_sb() {
   TEST_ASSERT_EQUAL_STRING("0x1", buf);
   TEST_ASSERT_EQUAL(4, snprintx(buf, 4, "%B", bytes(data, 3)));
   TEST_ASSERT_EQUAL_STRING("0x01", buf);
+
+  // test uint-forms
+  TEST_ASSERT_EQUAL(7, snprintx(buf, 100, "%i:%i:%i", (int32_t) -1, (int32_t) 2, (int32_t) -3));
+  TEST_ASSERT_EQUAL_STRING("-1:2:-3", buf);
+
+  TEST_ASSERT_EQUAL(5, snprintx(buf, 100, "%i:%i:%i", (uint32_t) 1, (uint32_t) 2, (uint32_t) 3));
+  TEST_ASSERT_EQUAL_STRING("1:2:3", buf);
+
+  TEST_ASSERT_EQUAL(5, snprintx(buf, 100, "%u:%u:%u", (uint32_t) 1, (uint32_t) 2, (uint32_t) 3));
+  TEST_ASSERT_EQUAL_STRING("1:2:3", buf);
+
+  TEST_ASSERT_EQUAL(5, snprintx(buf, 100, "%lu:%lu:%lu", (uint64_t) 1, (uint64_t) 2, (uint64_t) 3));
+  TEST_ASSERT_EQUAL_STRING("1:2:3", buf);
+
+  TEST_ASSERT_EQUAL(5, snprintx(buf, 100, "%U:%U:%U", (uint64_t) 1, (uint64_t) 2, (uint64_t) 3));
+  TEST_ASSERT_EQUAL_STRING("1:2:3", buf);
+
+  in3_test_enum_t type     = TEST_OWNER;
+  uint64_t        chain    = 1;
+  char*           name     = "test";
+  char*           cachekey = alloca(strlen(name) + 5);
+  sprintf(cachekey, "ens:%s:%i:%d", name, type, (int) chain);
+
+  snprintx(buf, 100, "ens:%s:%i:%u", name, (int32_t) type, (uint32_t) chain);
+  TEST_ASSERT_EQUAL_STRING(cachekey, buf);
 }
 
 static void test_utils() {

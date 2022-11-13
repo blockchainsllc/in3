@@ -61,30 +61,33 @@ sb_t* sb_init(sb_t* sb) {
   sb->len      = 0;
   return sb;
 }
+// allocates ne memory (if needed) and return the available number of characters that can be added
 NONULL static size_t check_size(sb_t* sb, size_t len) {
+  // if the FIXED_SIZE bit is set, we don't grow the memory, but return the limit.
   if (sb->allocted & FIXED_SIZE) return min((sb->allocted & 0x0fffffff) - 1 - sb->len, len);
   if ((len == 0 || sb->len + len < sb->allocted) && sb->data) return len;
   if (sb->allocted == 0) {
-    sb->allocted = len + 1,
+    // first allocation - we want to make surewe don't just allocated 1 byte if len = 1, so we can make it more efficient
+    sb->allocted = max(len + 1, MIN_SIZE),
     sb->data     = _malloc(sb->allocted);
     return len;
   }
 #ifdef __ZEPHYR__
-  size_t l = sb->allocted;
+  size_t l = sb->allocted; // store the old allocated length for zephyr, since realloc would require the oldsize there
 #endif
   while (sb->len + len >= sb->allocted) sb->allocted <<= 1;
 #ifdef __ZEPHYR__
   sb->data = _realloc(sb->data, sb->allocted, l);
 #else
-  sb->data = _realloc(sb->data, sb->allocted, 0);
+  sb->data = _realloc(sb->data, sb->allocted, 0); // we pass 0, because only for zephyr the oldsize is used
 #endif
   return len;
 }
 
 sb_t* sb_add_chars(sb_t* sb, const char* chars) {
-  size_t l = strlen(chars);
+  const size_t l = strlen(chars);
   if (l == 0 || chars == NULL) return sb;
-  size_t max = check_size(sb, l);
+  const size_t max = check_size(sb, l);
   memcpy(sb->data + sb->len, chars, max);
   sb->len += max;
   sb->data[sb->len] = 0;
@@ -95,11 +98,15 @@ sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int len) {
   size_t l       = len == -1 ? strlen(chars) : (size_t) len;
   size_t escapes = 0;
   if (l == 0 || chars == NULL) return sb;
+
+  // determine the number of characters to be escaped
   for (size_t i = 0; i < l; i++) {
     if (chars[i] == '"' || chars[i] == '\n' || chars[i] == '\\') escapes++;
   }
-  size_t max = check_size(sb, l + escapes);
-  l          = min(l, max); // if we have a limit, we stop there
+
+  size_t max = check_size(sb, l + escapes); // ensure we have enough memory allocates
+  l          = min(l, max);                 // if we have a limit, we stop there
+
   memcpy(sb->data + sb->len, chars, l);
   if (escapes) {
     escapes = 0;
@@ -124,9 +131,10 @@ sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int len) {
 }
 
 sb_t* sb_add_char(sb_t* sb, char c) {
-  if (!check_size(sb, 1)) return sb;
-  sb->data[sb->len++] = c;
-  sb->data[sb->len]   = 0;
+  if (check_size(sb, 1)) {
+    sb->data[sb->len++] = c;
+    sb->data[sb->len]   = 0;
+  }
   return sb;
 }
 

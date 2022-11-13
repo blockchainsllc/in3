@@ -67,11 +67,11 @@ static in3_ret_t decode_value(abi_coder_t* c, bytes_t data, json_ctx_t* res, int
 
       int b = c->data.number.size / 8;
       if (b <= 8) {
-        if (c->data.number.sign && (word[32 - b] & 0x80)) {            // we have a negative number, which we need to convert to a string
-          memset(word, 0xff, 32 - b);                                  // fill all bytes with ff so we can use uint64_t
-          int64_t val = (int64_t) bytes_to_long(word + 24, 8);         // take the value and convert to a signed
-          char    tmp[24];                                             //
-          json_create_string(res, tmp, sprintf(tmp, "%" PRId64, val)); // format the signed as string
+        if (c->data.number.sign && (word[32 - b] & 0x80)) {           // we have a negative number, which we need to convert to a string
+          memset(word, 0xff, 32 - b);                                 // fill all bytes with ff so we can use uint64_t
+          int64_t val = (int64_t) bytes_to_long(word + 24, 8);        // take the value and convert to a signed
+          char    tmp[24];                                            //
+          json_create_string(res, tmp, snprintx(tmp, 23, "%I", val)); // format the signed as string
         }
         else
           json_create_int(res, bytes_to_long(word + 24, 8));

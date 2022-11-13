@@ -159,42 +159,39 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
       sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%i", d_int(t))), false);
     else
       sb_add_key_value(sb, "id", d_string(t), add_bytes_to_hash(msg_hash, d_string(t), d_len(t)), true);
-    sb_add_char(sb, ',');
-    sb_add_key_value(sb, "jsonrpc", "2.0", 3, true);
-    sb_add_char(sb, ',');
+
+    sb_add_chars(sb, ",\"jsonrpc\":\"2.0\",");
     if ((t = d_get(request_token, K_METHOD)) == NULL)
       return req_set_error(c, "missing method-property in request", IN3_EINVAL);
     else
       sb_add_key_value(sb, "method", d_string(t), add_bytes_to_hash(msg_hash, d_string(t), d_len(t)), true);
-    sb_add_char(sb, ',');
-    if ((t = d_get(request_token, K_PARAMS)) == NULL)
-      sb_add_key_value(sb, "params", "[]", 2, false);
-    else {
+    if ((t = d_get(request_token, K_PARAMS))) {
       if (d_is_binary_ctx(c->request_context)) return req_set_error(c, "only text json input is allowed", IN3_EINVAL);
-      const str_range_t ps = d_to_json(t);
       if (msg_hash.ctx) add_token_to_hash(msg_hash, t);
-      sb_add_key_value(sb, "params", ps.data, ps.len, false);
+      sb_add_json(sb, ",\"params\":", t);
     }
+    else
+      sb_add_chars(sb, ",\"params\":[]");
 
     if (proof || msg_hash.ctx) {
       // add in3
-      sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
+      sb_printx(sb, ",\"in3\":{\"verification\":\"%s\",\"version\":\"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER);
 
       // allow plugins to add their metadata
       in3_pay_payload_ctx_t pctx = {.req = c, .request = request_token, .sb = sb};
       TRY(in3_plugin_execute_first_or_none(c, PLGN_ACT_ADD_PAYLOAD, &pctx))
 
       if (msg_hash.ctx) {
-        in3_pay_sign_req_ctx_t sctx      = {.req = c, .request = request_token, .signature = {0}};
-        bytes_t                sig_bytes = bytes(sctx.signature, 65);
+        // ask the plugin to sign the request
+        in3_pay_sign_req_ctx_t sctx = {.req = c, .request = request_token, .signature = {0}};
         crypto_finalize_hash(msg_hash, sctx.request_hash);
         TRY(in3_plugin_execute_first(c, PLGN_ACT_PAY_SIGN_REQ, &sctx))
-        sb_add_bytes(sb, ",\"sig\":", &sig_bytes, 1, false);
+        sb_printx(sb, ",\"sig\":\"%B\"", bytes(sctx.signature, 65));
       }
       if (rc->finality)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
+        sb_printx(sb, ",\"finality\":%i", (int32_t) rc->finality);
       if (rc->replace_latest_block)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->replace_latest_block));
+        sb_printx(sb, ",\"latestBlock\":%i", (int32_t) rc->replace_latest_block);
       if (c->signers_length) {
         bytes_t* s = alloca(c->signers_length * sizeof(bytes_t));
         for (int j = 0; j < c->signers_length; j++)
@@ -231,9 +228,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
       }
 
       in3_pay_handle_ctx_t payload_ctx = {.req = c, .payload = sb};
-      in3_ret_t            ret         = in3_plugin_execute_first_or_none(c, PLGN_ACT_PAY_HANDLE, &payload_ctx);
-      if (ret != IN3_OK)
-        return ret;
+      TRY(in3_plugin_execute_first_or_none(c, PLGN_ACT_PAY_HANDLE, &payload_ctx))
 
       sb_add_range(sb, "}}", 0, 2);
     }

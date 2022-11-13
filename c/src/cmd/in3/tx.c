@@ -19,64 +19,18 @@ static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_num
     json_free(in_data);                                              // of course we clean up ;-)
   }                                                                  //
   sb_t* params = sb_new("[{");                                       // now we create the transactionobject as json-argument.
-  if (to) {                                                          // if this is a deployment we must not include the to-property
-    sb_add_chars(params, "\"to\":\"");
-    sb_add_chars(params, to);
-    sb_add_chars(params, "\" ");
-  }
-  if (req || data) {                                      // if we have a request context or explicitly data we create the data-property
-    if (params->len > 2) sb_add_char(params, ',');        // add comma if this is not the first argument
-    sb_add_chars(params, "\"data\":");                    // we will have a data-property
-    if (req && data) {                                    // if we have a both, we need to concat thewm (this is the case when depkloying a contract with constructorarguments)
-      uint8_t* full = _malloc(rdata.len - 4 + data->len); // in this case we skip the functionsignature.
-      memcpy(full, data->data, data->len);
-      memcpy(full + data->len, rdata.data + 4, rdata.len - 4);
-      bytes_t bb = bytes(full, rdata.len - 4 + data->len);
-      sb_add_bytes(params, "", &bb, 1, false);
-      _free(full);
-    }
-    else if (req)
-      sb_add_bytes(params, "", &rdata, 1, false);
-    else if (data)
-      sb_add_bytes(params, "", data, 1, false);
-  }
+  if (to) sb_printx(params, "\"to\":\"%s\"", to);
+  if (req || data) // if we have a request context or explicitly data we create the data-property
+    sb_add_value(params, "\"data\":\"0x%b%b\"", data ? *data : NULL_BYTES, rdata.len && data ? bytes(rdata.data + 4, rdata.len - 4) : rdata);
 
-  if (block_number) {
-    sb_add_chars(params, "},\"");
-    sb_add_chars(params, block_number);
-    sb_add_chars(params, "\"]");
-  }
+  if (block_number)
+    sb_printx(params, "},\"%s\"]", block_number);
   else {
-    uint8_t gasdata[8];
-    bytes_t g_bytes = bytes(gasdata, 8);
-
-    if (value) {
-      sb_add_chars(params, ", \"value\":\"");
-      sb_add_chars(params, value);
-      sb_add_chars(params, "\"");
-    }
-    if (from) {
-      sb_add_chars(params, ", \"from\":\"");
-      sb_add_chars(params, from);
-      sb_add_chars(params, "\"");
-    }
-    if (token) {
-      sb_add_chars(params, ", \"token\":\"");
-      sb_add_chars(params, token);
-      sb_add_chars(params, "\"");
-    }
-
-    if (gas_price) {
-      long_to_bytes(gas_price, gasdata);
-      b_optimize_len(&g_bytes);
-      sb_add_bytes(params, ", \"gasPrice\":", &g_bytes, 1, false);
-    }
-    if (gas) {
-      long_to_bytes(gas, gasdata);
-      g_bytes = bytes(gasdata, 8);
-      b_optimize_len(&g_bytes);
-      sb_add_bytes(params, ", \"gas\":", &g_bytes, 1, false);
-    }
+    if (value) sb_printx(params, ", \"value\":\"%s\"", value);
+    if (from) sb_printx(params, ", \"from\":\"%s\"", from);
+    if (token) sb_printx(params, ", \"token\":\"%s\"", token);
+    if (gas_price) sb_printx(params, ", \"gasPrice\":\"%x\"", gas_price);
+    if (gas) sb_printx(params, ", \"gas\":\"%x\"", gas);
     sb_add_chars(params, "}]");
   }
   args->len = 0;
