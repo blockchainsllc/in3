@@ -292,14 +292,9 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
 
       in3_req_t* logs_ctx = req_find_required(ctx, "eth_getLogs", NULL);
       if (!logs_ctx) {
-        // create request
-        char* fopt_  = filter_opt_set_fromBlock(fopt, f->last_block, !f->is_first_usage);
-        sb_t* sb_req = sb_new("{\"method\":\"eth_getLogs\",\"params\":[");
-        sb_add_chars(sb_req, fopt_);
-        sb_add_chars(sb_req, "]}");
+        char* fopt_ = filter_opt_set_fromBlock(fopt, f->last_block, !f->is_first_usage);
+        char* req   = sprintx("{\"method\":\"eth_getLogs\",\"params\":[%s]}", fopt_);
         _free(fopt_);
-        char* req = sb_req->data;
-        _free(sb_req);
         return req_add_required(ctx, req_new(ctx->client, req));
       }
       // check existing ctx

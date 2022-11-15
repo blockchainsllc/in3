@@ -44,6 +44,7 @@
 #include "sdkconfig.h"
 #include <esp_event.h>
 #include <esp_log.h>
+#include <esp_netif.h>          // //Functions for network interface moved to ESP-NETIF from v4.1 onwards.
 #include <in3/client.h>         // the core client
 #include <in3/eth_api.h>        // functions for direct api-access
 #include <in3/eth_full.h>       // functions for nodeselection
@@ -54,7 +55,6 @@
 #include <in3/stringbuilder.h>  // stringbuilder tool for dynamic memory string handling
 #include <in3/utils.h>
 #include <sys/param.h>
-#include <esp_netif.h>          // //Functions for network interface moved to ESP-NETIF from v4.1 onwards.
 
 static const char* REST_TAG = "esp-rest";
 // in3 client
@@ -97,12 +97,8 @@ void init_in3(void) {
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
   in3_plugin_register(c, PLGN_ACT_TRANSPORT, transport_mock, NULL, true);
-  c->flags  = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY; // no autoupdate nodelist
-  sb_t* cfg = sb_new("{\"chainId\":");
-  sb_add_int(cfg, CHAIN_ID_GOERLI);
-  sb_add_chars(cfg, ",\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}");
-  in3_configure(c, cfg->data);
-  sb_free(cfg);
+  c->flags = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY; // no autoupdate nodelist
+  in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":1,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}");
 }
 
 void eth_call(void) {
@@ -143,7 +139,7 @@ void app_main() {
   // esp_err_t error = heap_caps_register_failed_alloc_callback(heap_caps_alloc_failed_hook);
 
   nvs_flash_init();
-  esp_netif_init();	//Migration of TCP/IP Adapter network interface to its successor ESP-NETIF from v4.1 onwards.  
+  esp_netif_init(); // Migration of TCP/IP Adapter network interface to its successor ESP-NETIF from v4.1 onwards.
   ESP_ERROR_CHECK(esp_event_loop_create_default());
   // execute evm call for in3
   xTaskCreate(in3_task_evm, "uTask", 1024 * 100, NULL, 7, NULL);

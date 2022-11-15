@@ -169,20 +169,18 @@ in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
   char*               method   = d_get_string(request, K_METHOD);
   str_range_t         params   = d_to_json(d_get(request, K_PARAMS));
   char*               p        = alloca(params.len + 1);
-  sb_t*               filename = sb_new(method);
+  sb_t                filename = {0};
+  sb_add_chars(&filename, method);
   for_children_of(iter, d_get(request, K_PARAMS)) {
     d_bytes(iter.token);
     switch (d_type(iter.token)) {
       case T_BOOLEAN:
       case T_INTEGER:
-        sb_add_char(filename, '_');
-        sb_add_int(filename, d_int(iter.token));
+        sb_printx(&filename, "_%i", d_int(iter.token));
         break;
       case T_STRING:
-        if (d_len(iter.token) < 10) {
-          sb_add_char(filename, '_');
-          sb_add_chars(filename, d_string(iter.token));
-        }
+        if (d_len(iter.token) < 10)
+          sb_printx(&filename, "_%s", d_string(iter.token));
         break;
 
       default:
@@ -192,11 +190,11 @@ in3_ret_t mock_transport(void* plugin_data, in3_plugin_act_t action, void* plugi
 
   strncpy(p, params.data, params.len);
   p[params.len] = 0;
-  TEST_ASSERT_EQUAL_MESSAGE(0, add_response_test(filename->data, p), "response not found");
+  TEST_ASSERT_EQUAL_MESSAGE(0, add_response_test(filename.data, p), "response not found");
   TEST_ASSERT_NOT_NULL_MESSAGE(response_buffer, "no request registered");
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
   clean_json_str(p);
-  sb_free(filename);
+  _free(filename.data);
 
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_method, method);
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_params, p);

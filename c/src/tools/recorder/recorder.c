@@ -21,11 +21,11 @@ typedef struct ptr {
 
 static ptr_t* global_ptr = NULL;
 void*         add_global(void* ptr) {
-          ptr_t* p   = _malloc(sizeof(ptr_t));
-          p->next    = global_ptr;
-          p->ptr     = ptr;
-          global_ptr = p;
-          return ptr;
+  ptr_t* p   = _malloc(sizeof(ptr_t));
+  p->next    = global_ptr;
+  p->ptr     = ptr;
+  global_ptr = p;
+  return ptr;
 }
 
 typedef struct {
@@ -327,8 +327,7 @@ void recorder_print(int err, const char* fmt, ...) {
     fflush(rec.f);
   }
   else if (rec.f) {
-    if (result == NULL)
-      result = sb_new("");
+    if (result == NULL) result = _calloc(1, sizeof(sb_t));
     va_start(args, fmt);
     sb_vprint(result, fmt, args);
     va_end(args);
