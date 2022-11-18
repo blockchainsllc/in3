@@ -346,6 +346,7 @@ int req_nodes_len(node_match_t* node) {
 }
 
 bool req_is_method(const in3_req_t* ctx, const char* method) {
+  if (!ctx->requests || !ctx->requests[0]) return false;
   const char* required_method = d_get_string(ctx->requests[0], K_METHOD);
   return (required_method && strcmp(required_method, method) == 0);
 }
