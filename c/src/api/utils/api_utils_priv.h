@@ -56,7 +56,10 @@
 #endif
 
 // create the params as stringbuilder
-#define rpc_init sb_t* params = sb_new("[")
+#define rpc_init                \
+  sb_t  sb_params = {0};        \
+  sb_t* params    = &sb_params; \
+  sb_add_char(params, '[');
 
 // execute the request after the params have been set.
 #define rpc_exec(METHOD, RETURN_TYPE, HANDLE_RESULT)                                      \
@@ -69,7 +72,7 @@
   else                                                                                    \
     memset(&_res_, 0, sizeof(RETURN_TYPE));                                               \
   req_free(_ctx_);                                                                        \
-  sb_free(params);                                                                        \
+  _free(params->data);                                                                    \
   return _res_;
 
 #define params_add_key_pair(params, key, sb_add_func, quote_val, prefix_comma) \

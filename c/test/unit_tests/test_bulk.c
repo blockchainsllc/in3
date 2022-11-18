@@ -92,16 +92,18 @@ static void test_context_bulk() {
   TEST_ASSERT_NULL(in3_configure(in3, "{\"autoUpdateList\":false,\"nodeRegistry\":{\"needsUpdate\":false}}"));
 
   uint64_t blkno      = 5;
-  sb_t*    req        = sb_new("[");
+  sb_t     req        = SB_NULL;
   char     params[62] = {0};
+  sb_add_char(&req, '[');
   for (uint64_t i = 0; i < blkno; i++) {
     sprintf(params, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"0x%" PRIx64 "\", false]}", i);
-    sb_add_chars(req, params);
+    sb_add_chars(&req, params);
     if (i + 1 < blkno)
-      sb_add_chars(req, ",");
+      sb_add_chars(&req, ",");
   }
-  sb_add_chars(req, "]");
-  in3_req_t* block_ctx = req_new(in3, req->data);
+  sb_add_char(&req, ']');
+
+  in3_req_t* block_ctx = req_new(in3, req.data);
   in3_ret_t  ret       = in3_send_req(block_ctx);
   for (uint64_t i = 0; i < blkno; i++) {
     d_token_t* hash = d_getl(d_get(block_ctx->responses[i], K_RESULT), K_HASH, 32);
@@ -111,7 +113,7 @@ static void test_context_bulk() {
     in3_log_trace("HASH %s\n", h);
   }
   req_free(block_ctx);
-  _free(req);
+  _free(req.data);
   in3_free(in3);
 }
 

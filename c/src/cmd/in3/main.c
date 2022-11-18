@@ -8,25 +8,28 @@
 #include "tx.h"
 
 static void send_request(in3_t* c, int argc, char** argv, char* method, sb_t* args, char** result, char** error) {
-  sb_t* sb = sb_new("{\"method\":\"");
-  sb_add_chars(sb, method);
-  sb_add_chars(sb, "\",\"params\":");
-  sb_add_chars(sb, args->data);
+  sb_t sb = SB_NULL;
+  sb_add_chars(&sb, "{\"method\":\"");
+  sb_add_chars(&sb, method);
+  sb_add_chars(&sb, "\",\"params\":");
+  sb_add_chars(&sb, args->data);
   char* ms_sigs = get_argument(argc, argv, "-sigs", "--ms.signatures", true);
   if (ms_sigs) {
-    sb_add_chars(sb, ",\"in3\":{\"msSigs\":\"");
-    sb_add_chars(sb, ms_sigs);
-    sb_add_chars(sb, "\"}}");
+    sb_add_chars(&sb, ",\"in3\":{\"msSigs\":\"");
+    sb_add_chars(&sb, ms_sigs);
+    sb_add_chars(&sb, "\"}}");
   }
   else
-    sb_add_chars(sb, "}");
-  recorder_request(sb->data);
-  in3_client_rpc_raw(c, sb->data, result, error);
+    sb_add_chars(&sb, "}");
+  recorder_request(sb.data);
+  printf("## %s\n", sb.data);
+
+  in3_client_rpc_raw(c, sb.data, result, error);
   if (*result)
     recorder_response(*result);
   else
     recorder_error(*error ? *error : "Error");
-  sb_free(sb);
+  _free(sb.data);
   check_last_output();
 #ifdef NODESELECT_DEF
   in3_chain_t*          chain = &c->chain;
@@ -46,8 +49,9 @@ int main(int argc, char* argv[]) {
 
   // define vars
   char*  method = NULL;
-  sb_t*  args   = sb_new("[");
+  sb_t   args   = SB_NULL;
   in3_t* c      = in3_for_chain(CHAIN_ID_MAINNET);
+  sb_add_chars(&args, "[");
 
   init_transport(c);
   init_recorder(&argc, &argv);
@@ -67,10 +71,10 @@ int main(int argc, char* argv[]) {
       get_txdata()->sig = argv[i];
     else {
       // otherwise we add it to the params
-      if (args->len > 1) sb_add_char(args, ',');
+      if (args.len > 1) sb_add_char(&args, ',');
       if (*argv[i] == '-' && *(argv[i] + 1) == 0) {
         bytes_t b = readFile(stdin);
-        sb_add_range(args, (char*) b.data, 0, b.len);
+        sb_add_range(&args, (char*) b.data, 0, b.len);
         continue;
       }
       if ((*argv[i] == '.' && *(argv[i] + 1) == '/') || *argv[i] == '/') {
@@ -79,25 +83,25 @@ int main(int argc, char* argv[]) {
         if (f) {
           bytes_t b = readFile(f);
           fclose(f);
-          sb_add_range(args, (char*) b.data, 0, b.len);
+          sb_add_range(&args, (char*) b.data, 0, b.len);
           continue;
         }
       }
-      add_argument(argv[i], args, c, method);
+      add_argument(argv[i], &args, c, method);
     }
   }
-  sb_add_char(args, ']');
+  sb_add_char(&args, ']');
 
   // start the server?
   if (!method) check_server(c);
 
   // handle special cmd-methods
-  if (handle_rpc(c, &method, args, argc, argv)) recorder_exit(0);
+  if (handle_rpc(c, &method, &args, argc, argv)) recorder_exit(0);
 
   // execute
-  in3_log_debug("..sending request %s %s\n", method, args->data);
+  in3_log_debug("..sending request %s %s\n", method, args.data);
   char *result = NULL, *error = NULL;
-  send_request(c, argc, argv, method, args, &result, &error);
+  send_request(c, argc, argv, method, &args, &result, &error);
 
   if (error)
     die(error);
