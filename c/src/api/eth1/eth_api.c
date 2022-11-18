@@ -382,7 +382,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
   if (data.data) _free(data.data);
   if (error) {
     api_set_error(0, error);
-    sb_free(params);
+    _free(params->data);
     abi_sig_free(req);
     return NULL;
   }
@@ -435,7 +435,7 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
   rpc_init;
   params_add_bytes(params, bytes(tx_hash, 32));
   char* data = wait_for_receipt(in3, sb_add_char(params, ']')->data, 1000, 8);
-  sb_free(params);
+  _free(params->data);
   return data;
 }
 

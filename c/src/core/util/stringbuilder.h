@@ -71,9 +71,7 @@ typedef struct sb {
  */
 NONULL static inline sb_t sb_stack(char* p) { return (sb_t){.allocted = 0xffffff, .len = 0, .data = p}; }
 
-NONULL sb_t* sb_init(sb_t* sb); /**< initializes a stringbuilder by allocating memory. */
-NONULL void  sb_free(sb_t* sb); /**< frees all resources of the stringbuilder */
-
+NONULL sb_t* sb_init(sb_t* sb);                                                                             /**< initializes a stringbuilder by allocating memory. */
 NONULL sb_t* sb_add_char(sb_t* sb, char c);                                                                 /**< add a single character */
 NONULL sb_t* sb_add_chars(sb_t* sb, const char* chars);                                                     /**< adds a string */
 NONULL sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len);                                 /**< add a string range */

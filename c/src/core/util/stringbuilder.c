@@ -204,12 +204,6 @@ sb_t* sb_add_int(sb_t* sb, int64_t val) {
   return sb;
 }
 
-void sb_free(sb_t* sb) {
-  if (sb == NULL) return;
-  if (sb->data != NULL) _free(sb->data);
-  _free(sb);
-}
-
 char* format_json(const char* json) {
   sb_t  _sb = {0}, level = {0};
   sb_t* sb       = &_sb;
