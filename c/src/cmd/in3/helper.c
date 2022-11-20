@@ -119,15 +119,13 @@ void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
   char* error = in3_configure(c, sb.data);
   recorder_configure(sb.data);
   _free(sb.data);
-  if (error) {
-    char* msg = _malloc(200 + (strlen(error) + strlen(name) + strlen(value)));
-    sprintf(msg, "Invalid option '--%s=%s' : %s", name, value, error);
-    die(msg);
-  }
+  if (error) die(sprintx("Invalid option '--%s=%s' : %s", name, value, error));
 }
+
 void configure(in3_t* c, char* name, char* value) {
   configure_opt(c, name, value, 0, NULL);
 }
+
 static bool is_bool_opt(char* name) {
   for (int i = 0; bool_props[i]; i++) {
     if (strcmp(bool_props[i], name) == 0) return true;
@@ -152,11 +150,7 @@ bool configure_arg(in3_t* c, char** args, int* index, int argc) {
         break;
       }
     }
-    if (!name) {
-      char* err = alloca(strlen(arg) + 200);
-      sprintf(err, "Unknown option '%s'!", arg);
-      die(err);
-    }
+    if (!name) die(sprintx("Unknown option '%s'!", arg));
   }
   else if (arg[1] != '-')
     return false;
@@ -211,15 +205,10 @@ char* resolve(in3_t* c, char* name) {
   if (!name) return NULL;
   if (name[0] == '0' && name[1] == 'x') return name;
   if (strstr(name, ".eth")) {
-    char* params = alloca(strlen(name) + 10);
-    sprintf(params, "[\"%s\"]", name);
     char *res = NULL, *err = NULL;
-    in3_client_rpc(c, "in3_ens", params, &res, &err);
-    if (err) {
-      res = alloca(strlen(err) + 100);
-      sprintf(res, "Could not resolve %s : %s", name, err);
-      die(res);
-    }
+    in3_client_rpc(c, "in3_ens", stack_printx(strlen(name) + 10, "[\"%s\"]", name), &res, &err);
+    if (err)
+      die(stack_printx(strlen(err) + 100, "Could not resolve %s : %s", name, err));
     if (res[0] == '"') {
       res[strlen(res) - 1] = 0;
       res++;

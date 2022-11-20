@@ -57,14 +57,12 @@ char* get_storage_dir() {
 #if defined(_WIN32)
     char* home = getenv("USERPROFILE");
     if (!home) home = ".";
-    _HOME_DIR = _malloc(strlen(home) + 8);
-    sprintf(_HOME_DIR, "%s\\.in3\\", home);
+    _HOME_DIR = sprintx("%s\\.in3\\", home);
     _mkdir(_HOME_DIR);
 #else
     char* home = getenv("HOME");
     if (!home) home = ".";
-    _HOME_DIR = _malloc(strlen(home) + 8);
-    sprintf(_HOME_DIR, "%s/.in3/", home);
+    _HOME_DIR = sprintx("%s/.in3/", home);
     mode_t old_umask;
     old_umask = umask(0);
     mkdir(_HOME_DIR, 0777);
@@ -75,9 +73,7 @@ char* get_storage_dir() {
 }
 
 static char* create_path(const char* key) {
-  char* path = _malloc(strlen(get_storage_dir()) + strlen(key) + 5);
-  sprintf(path, "%s%s", get_storage_dir(), key);
-  return path;
+  return sprintx("%s%s", get_storage_dir(), key);
 }
 
 bytes_t* storage_get_item(void* cptr, const char* key) {
@@ -128,9 +124,9 @@ static void rm_recurs(const char* path) {
   while ((entry = readdir(dir))) {
     DIR*  sub_dir       = NULL;
     FILE* file          = NULL;
-    char  abs_path[270] = {0};
+    char  abs_path[271] = {0};
     if (*(entry->d_name) != '.') {
-      sprintf(abs_path, "%s/%s", path, entry->d_name);
+      snprintx(abs_path, 270, "%s/%s", path, entry->d_name);
       if ((sub_dir = opendir(abs_path))) {
         closedir(sub_dir);
         rm_recurs(abs_path);

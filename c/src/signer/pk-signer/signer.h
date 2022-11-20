@@ -91,7 +91,7 @@ in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, d_digest_ty
 /** hashes the msg by adding the Ethereum Signed Message-Prefix */
 void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg);
 
-/** signs with a pk bases on the type */
+/** signs with a pk bases on the type. This function allocates memory on the heap (result.data) and must be freed after use! */
 bytes_t sign_with_pk(const bytes32_t pk, const bytes_t data, const d_digest_type_t type);
 
 /** adds a path to a hd signer */

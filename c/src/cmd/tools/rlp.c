@@ -327,7 +327,7 @@ void write(bytes_t* data, char* l, char** tt) {
       }
       printf("\n");
 
-      sprintf(prefix, "%s   ", l);
+      snprintx(prefix, 99, "%s   ", l);
       write(&t, prefix, t2);
       printf("%s]\n", l);
     }
