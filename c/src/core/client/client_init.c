@@ -413,11 +413,7 @@ char* in3_configure_internal(json_ctx_t* json, in3_t* c, bool ignore_unknown) {
         }
       }
 
-      if (!handled && !ignore_unknown) {
-        char tmp[100];
-        sprintf(tmp, "The config with index %d is unknown or not supported!", prop_index);
-        EXPECT_TOK(token, false, tmp);
-      }
+      if (!handled && !ignore_unknown) EXPECT_TOK(token, false, stack_printx(100, "The config with index %d is unknown or not supported!", (uint32_t) prop_index));
     }
   }
 
@@ -562,12 +558,10 @@ in3_ret_t in3_plugin_execute_first(in3_req_t* ctx, in3_plugin_act_t action, void
     }
   }
 #ifdef LOGGING
-  char* name = action_name(action);
-  char* msg  = alloca(strlen(name) + 60);
-  sprintf(msg, "no plugin found that handled the %s action", name);
+  char* msg = stack_printx(300, "no plugin found that handled the %s action", action_name(action));
 #else
   char* msg = "E";
-  UNUSED_VAR(msg); // this makes sure we don't get a warning when building with _DLOGGING=false
+  UNUSED_VAR(msg); // this makes sure we don't get a warning when building with -DLOGGING=false
 #endif
   return req_set_error(ctx, msg, IN3_EPLGN_NONE);
 }
