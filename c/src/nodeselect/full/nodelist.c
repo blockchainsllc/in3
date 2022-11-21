@@ -312,10 +312,7 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, i
   in3_log_debug("update the whitelist...\n");
 
   // create request
-  char* req     = _malloc(300);
-  char  tmp[41] = {0};
-  bytes_to_hex(data->whitelist->contract, 20, tmp);
-  sprintf(req, "{\"method\":\"in3_whiteList\",\"jsonrpc\":\"2.0\",\"params\":[\"0x%s\"]}", tmp);
+  char* req = sprintx("{\"method\":\"in3_whiteList\",\"jsonrpc\":\"2.0\",\"params\":[\"%A\"]}", data->whitelist->contract);
 
   // new client
   return req_add_required(parent_ctx, req_new(c, req));

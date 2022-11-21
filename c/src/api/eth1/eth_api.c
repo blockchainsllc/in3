@@ -382,7 +382,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
   if (data.data) _free(data.data);
   if (error) {
     api_set_error(0, error);
-    sb_free(params);
+    _free(params->data);
     abi_sig_free(req);
     return NULL;
   }
@@ -435,7 +435,7 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
   rpc_init;
   params_add_bytes(params, bytes(tx_hash, 32));
   char* data = wait_for_receipt(in3, sb_add_char(params, ']')->data, 1000, 8);
-  sb_free(params);
+  _free(params->data);
   return data;
 }
 
@@ -733,7 +733,7 @@ bytes_t* eth_sendRawTransaction(in3_t* in3, bytes_t data) {
 
 in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]) {
   char tmp[64], msg[41], *hexadr;
-  int  p = chain_id ? sprintf(tmp, "%i0x", (uint32_t) chain_id) : 0;
+  int  p = chain_id ? snprintx(tmp, 64, "%U0x", (uint64_t) chain_id) : 0;
   bytes_to_hex(adr, 20, tmp + p);
   hexadr = tmp + p;
   bytes32_t hash;

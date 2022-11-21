@@ -125,11 +125,10 @@ static bool set_uint32(uint32_t* dst, char* value) {
 }
 static bool set_create2(char* value, sb_t* sb) {
   if (strlen(value) != 176) die("create2-arguments must have the form -zc2 <creator>:<codehash>:<saltarg>");
-  char tmp[177], t2[500];
+  char tmp[177];
   memcpy(tmp, value, 177);
   tmp[42] = tmp[109] = 0;
-  sprintf(t2, "{\"zksync\":{\"signer_type\":\"create2\",\"create2\":{\"creator\":\"%s\",\"codehash\":\"%s\",\"saltarg\":\"%s\"}}}", tmp, tmp + 43, tmp + 110);
-  sb_add_chars(sb, t2);
+  sb_printx(sb, "{\"zksync\":{\"signer_type\":\"create2\",\"create2\":{\"creator\":\"%s\",\"codehash\":\"%s\",\"saltarg\":\"%s\"}}}", tmp, tmp + 43, tmp + 110);
   return false;
 }
 static bool set_recorder(in3_t* c, char* value, int argc, char** argv, bool write) {
@@ -285,11 +284,8 @@ void init_env(in3_t* c, int argc, char* argv[]) {
       char* error = in3_configure(c, data);
       recorder_configure(data);
 
-      if (error) {
-        char* msg = _malloc(strlen(error) + 200);
-        sprintf(msg, "Error reading the in3_conf.json : %s", error);
-        die(msg);
-      }
+      if (error)
+        die(sprintx("Error reading the in3_conf.json : %s", error));
       else
         fclose(cnf_file);
     }

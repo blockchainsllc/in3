@@ -9,9 +9,9 @@ req_exec_t* get_req_exec() {
 
 static void execute(in3_t* c, FILE* f) {
   if (feof(f)) die("no data");
-  sb_t* sb    = sb_new(NULL);
-  char  first = 0, stop = 0;
-  int   level = 0, d = 0;
+  sb_t sb    = SB_NULL;
+  char first = 0, stop = 0;
+  int  level = 0, d = 0;
   while (1) {
     d = fgetc(f);
     if (d == EOF) {
@@ -30,12 +30,12 @@ static void execute(in3_t* c, FILE* f) {
       first = d;
     }
 
-    sb_add_char(sb, (char) d);
+    sb_add_char(&sb, (char) d);
     if (d == first) level++;
     if (d == stop) level--;
     if (level == 0) {
       // time to execute
-      in3_req_t* ctx = req_new(c, sb->data);
+      in3_req_t* ctx = req_new(c, sb.data);
       if (ctx->error)
         recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
       else {
@@ -69,8 +69,8 @@ static void execute(in3_t* c, FILE* f) {
       }
       fflush(stdout);
       req_free(ctx);
-      first   = 0;
-      sb->len = 0;
+      first  = 0;
+      sb.len = 0;
     }
   }
 }

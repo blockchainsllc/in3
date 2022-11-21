@@ -45,15 +45,6 @@
 
 static const size_t MIN_SIZE = 32;
 
-sb_t* sb_new(const char* chars) {
-  sb_t* sb     = _malloc(sizeof(sb_t));
-  sb->data     = _malloc(MIN_SIZE);
-  sb->allocted = MIN_SIZE;
-  sb->data[0]  = 0;
-  sb->len      = 0;
-  if (chars != NULL) sb_add_chars(sb, chars);
-  return sb;
-}
 sb_t* sb_init(sb_t* sb) {
   sb->data     = _malloc(MIN_SIZE);
   sb->allocted = MIN_SIZE;
@@ -211,12 +202,6 @@ sb_t* sb_add_int(sb_t* sb, int64_t val) {
   sb->len += max;
   sb->data[sb->len] = 0;
   return sb;
-}
-
-void sb_free(sb_t* sb) {
-  if (sb == NULL) return;
-  if (sb->data != NULL) _free(sb->data);
-  _free(sb);
 }
 
 char* format_json(const char* json) {

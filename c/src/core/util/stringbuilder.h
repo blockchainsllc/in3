@@ -71,10 +71,7 @@ typedef struct sb {
  */
 NONULL static inline sb_t sb_stack(char* p) { return (sb_t){.allocted = 0xffffff, .len = 0, .data = p}; }
 
-sb_t*        sb_new(const char* chars); /**< creates a new stringbuilder and copies the inital characters into it.*/
-NONULL sb_t* sb_init(sb_t* sb);         /**< initializes a stringbuilder by allocating memory. */
-NONULL void  sb_free(sb_t* sb);         /**< frees all resources of the stringbuilder */
-
+NONULL sb_t* sb_init(sb_t* sb);                                                                             /**< initializes a stringbuilder by allocating memory. */
 NONULL sb_t* sb_add_char(sb_t* sb, char c);                                                                 /**< add a single character */
 NONULL sb_t* sb_add_chars(sb_t* sb, const char* chars);                                                     /**< adds a string */
 NONULL sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len);                                 /**< add a string range */
@@ -200,6 +197,7 @@ char* csnprintx(char* dst, size_t max, const char* fmt, ...);
  *    char* adr = stack_printx(44, "\"%A\"", wallet->account); // "0xab3fd6a8b34"
  */
 #define stack_printx(max, fmt, ...) csnprintx(alloca(max + 1), max, fmt, __VA_ARGS__)
+#define SB_NULL                     ((sb_t){0})
 
 #ifdef __cplusplus
 }

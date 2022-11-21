@@ -18,24 +18,25 @@ static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_num
     if (error) die(error);                                           // we then set the data, which appends the arguments to the functionhash.
     json_free(in_data);                                              // of course we clean up ;-)
   }                                                                  //
-  sb_t* params = sb_new("[{");                                       // now we create the transactionobject as json-argument.
-  if (to) sb_printx(params, "\"to\":\"%s\"", to);
+  sb_t params = SB_NULL;                                             //
+  sb_add_chars(&params, "[{");                                       // now we create the transactionobject as json-argument.
+  if (to) sb_printx(&params, "\"to\":\"%s\"", to);
   if (req || data) // if we have a request context or explicitly data we create the data-property
-    sb_add_value(params, "\"data\":\"0x%b%b\"", data ? *data : NULL_BYTES, rdata.len && data ? bytes(rdata.data + 4, rdata.len - 4) : rdata);
+    sb_add_value(&params, "\"data\":\"0x%b%b\"", data ? *data : NULL_BYTES, rdata.len && data ? bytes(rdata.data + 4, rdata.len - 4) : rdata);
 
   if (block_number)
-    sb_printx(params, "},\"%s\"]", block_number);
+    sb_printx(&params, "},\"%s\"]", block_number);
   else {
-    if (value) sb_printx(params, ", \"value\":\"%s\"", value);
-    if (from) sb_printx(params, ", \"from\":\"%s\"", from);
-    if (token) sb_printx(params, ", \"token\":\"%s\"", token);
-    if (gas_price) sb_printx(params, ", \"gasPrice\":\"%x\"", gas_price);
-    if (gas) sb_printx(params, ", \"gas\":\"%x\"", gas);
-    sb_add_chars(params, "}]");
+    if (value) sb_printx(&params, ", \"value\":\"%s\"", value);
+    if (from) sb_printx(&params, ", \"from\":\"%s\"", from);
+    if (token) sb_printx(&params, ", \"token\":\"%s\"", token);
+    if (gas_price) sb_printx(&params, ", \"gasPrice\":\"%x\"", gas_price);
+    if (gas) sb_printx(&params, ", \"gas\":\"%x\"", gas);
+    sb_add_chars(&params, "}]");
   }
   args->len = 0;
-  sb_add_chars(args, params->data);
-  sb_free(params);
+  sb_add_chars(args, params.data);
+  _free(params.data);
   return req;
 }
 

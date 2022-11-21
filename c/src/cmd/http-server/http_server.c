@@ -146,9 +146,9 @@ static int clients[MAX_CON];
 #endif
 
 static void error_response(char* message, int error_code) {
-  char* payload = alloca(strlen(message) + 100);
-  sprintf(payload, "{\"id\":1,\"jsonrpc\":\"2.0\",\"error\":{\"message\":\"%s\",\"code\":%i}}", message, error_code);
+  char* payload = sprintx("{\"id\":1,\"jsonrpc\":\"2.0\",\"error\":{\"message\":\"%s\",\"code\":%u}}", message, (uint32_t) error_code);
   printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %lu\r\n\r\n%s\r\n", strlen(payload), payload);
+  _free(payload);
 }
 
 // client connection

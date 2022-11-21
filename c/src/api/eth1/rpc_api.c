@@ -705,14 +705,9 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_REQUIRED_BYTES(signature, ctx, 1, 65, 65)
   TRY_PARAM_GET_STRING(sig_type, ctx, 2, "raw")
 
-  if (strcmp(sig_type, "eth_sign") == 0) {
-    char*     tmp = alloca(msg.len + 30);
-    const int l   = sprintf(tmp, ETH_SIGN_PREFIX, msg.len);
-    memcpy(tmp + l, msg.data, msg.len);
-    msg.data = (uint8_t*) tmp;
-    msg.len += l;
-  }
-  if (strcmp(sig_type, "hash") == 0) {
+  if (strcmp(sig_type, "eth_sign") == 0)
+    eth_create_prefixed_msg_hash(hash, msg);
+  else if (strcmp(sig_type, "hash") == 0) {
     if (msg.len != 32) return req_set_error(ctx->req, "The message hash must be 32 byte", IN3_EINVAL);
     memcpy(hash, msg.data, 32);
   }
@@ -728,22 +723,20 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
 }
 
 static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
+  // this function serves both in3_sign_data and eth_sign, but both functions hjave slidly different arguments
   const bool is_eth_sign = strcmp(ctx->method, "eth_sign") == 0;
   bytes_t    data, signer;
   char*      sig_type;
-  //  const bytes_t* pk          = &signer;
 
   TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, (is_eth_sign ? 1 : 0), 1, 0)
   TRY_PARAM_GET_BYTES(signer, ctx, (is_eth_sign ? 0 : 1), 20, 0)
   TRY_PARAM_GET_STRING(sig_type, ctx, 2, (is_eth_sign ? "eth_sign" : "raw"))
 
   if (strcmp(sig_type, "eth_sign") == 0) {
-    char*     tmp = alloca(data.len + 30);
-    const int l   = sprintf(tmp, ETH_SIGN_PREFIX, data.len);
-    memcpy(tmp + l, data.data, data.len);
-    data.data = (uint8_t*) tmp;
-    data.len += l;
-    sig_type = "raw";
+    void* tmp = alloca(32);
+    sig_type  = "hash";
+    eth_create_prefixed_msg_hash(tmp, data);
+    data = bytes(tmp, 32);
   }
 
   in3_sign_ctx_t sc = {0};
@@ -758,10 +751,9 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   if (strcmp(sig_type, "sign_ec_btc") == 0) sc.digest_type = SIGN_EC_BTC;
   if (strcmp(sig_type, "sign_ed25519") == 0) sc.curve_type = EDDSA_ED25519;
 
-  if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN)) {
-    TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc));
-  }
-  else if (sc.account.len == 32) {
+  if ((sc.account.len == 20 || sc.account.len == 0) && in3_plugin_is_registered(ctx->req->client, PLGN_ACT_SIGN))
+    TRY(in3_plugin_execute_first(ctx->req, PLGN_ACT_SIGN, &sc))
+  else if (sc.account.len == 32) { // in this case we treat the account as private key
     sc.signature = sign_with_pk(signer.data, data, sc.digest_type);
     if (!sc.signature.data) return req_set_error(ctx->req, "unsupported sigType", IN3_EINVAL);
   }
@@ -774,10 +766,10 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   if (strncmp(sig_type, "sign_ec_", 8) && sc.signature.len == 65 && sc.signature.data[64] < 2)
     sc.signature.data[64] += 27;
 
-  sb_t* sb = in3_rpc_handle_start(ctx);
   if (is_eth_sign)
-    sb_printx(sb, "\"%B\"", sig_bytes);
+    in3_rpc_handle_with_bytes(ctx, sig_bytes);
   else {
+    sb_t* sb = in3_rpc_handle_start(ctx);
     sb_printx(sb, "{\"message\":\"%B\",", data);
 
     if (strcmp(sig_type, "raw") == 0) {
@@ -789,10 +781,10 @@ static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
       sb_printx(sb, "\"messageHash\":\"%B\",", data);
     sb_printx(sb, "\"signature\":\"%B\",\"r\":\"%B\",\"s\":\"%B\",\"v\":%d}",
               sig_bytes, bytes(sc.signature.data, 32), bytes(sc.signature.data + 32, 32), sc.signature.data[64]);
+    in3_rpc_handle_finish(ctx);
   }
-
   _free(sc.signature.data);
-  return in3_rpc_handle_finish(ctx);
+  return IN3_OK;
 }
 
 static in3_ret_t in3_decryptKey(in3_rpc_handle_ctx_t* ctx) {

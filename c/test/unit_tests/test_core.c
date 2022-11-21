@@ -182,20 +182,21 @@ void test_parse_json() {
 }
 
 void test_sb() {
-  sb_t* sb = sb_new("a=\"");
-  TEST_ASSERT_EQUAL_STRING("a=\"", sb->data);
-  sb_add_escaped_chars(sb, ",x=\"123\"", -1);
-  TEST_ASSERT_EQUAL_STRING("a=\",x=\\\"123\\\"", sb->data);
+  sb_t sb = {0};
+  sb_add_chars(&sb, "a=\"");
+  TEST_ASSERT_EQUAL_STRING("a=\"", sb.data);
+  sb_add_escaped_chars(&sb, ",x=\"123\"", -1);
+  TEST_ASSERT_EQUAL_STRING("a=\",x=\\\"123\\\"", sb.data);
 
-  sb->len            = 0;
+  sb.len             = 0;
   uint8_t*  testdata = (uint8_t*) "\"1234567890\"";
   uint32_t  i        = 5;
   bytes32_t b        = {0};
   long_to_bytes(12345678901, b + 24);
-  sb_printx(sb, "a=%B,b=%i,c=%s,d=%S,e=%w", bytes(testdata, 10), i, testdata, testdata, bytes(b, 32));
-  TEST_ASSERT_EQUAL_STRING("a=0x22313233343536373839,b=5,c=\"1234567890\",d=\\\"1234567890\\\",e=12345678901", sb->data);
+  sb_printx(&sb, "a=%B,b=%i,c=%s,d=%S,e=%w", bytes(testdata, 10), i, testdata, testdata, bytes(b, 32));
+  TEST_ASSERT_EQUAL_STRING("a=0x22313233343536373839,b=5,c=\"1234567890\",d=\\\"1234567890\\\",e=12345678901", sb.data);
 
-  sb_free(sb);
+  _free(sb.data);
 
   // test limited
   char    buf[100] = {0};

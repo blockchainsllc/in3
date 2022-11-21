@@ -32,10 +32,8 @@ bool exec_weights(in3_t* c) {
     in3_req_t* ctx      = NULL;
     char*      health_s = NULL;
     if (run_test_request) {
-      char req[300];
-      char adr[41];
-      bytes_to_hex((nl->nodelist + i)->address, 20, adr);
-      sprintf(req, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"dataNodes\":[\"0x%s\"]}}", adr);
+      char req[301];
+      snprintx(req, 300, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"dataNodes\":[\"%A\"]}}", (nl->nodelist + i)->address);
       ctx = req_new(c, req);
       if (ctx) in3_send_req(ctx);
       if (run_test_request == 2) {
@@ -44,10 +42,10 @@ bool exec_weights(in3_t* c) {
         char*       node_name  = "";
         uint32_t    running    = 0;
         json_ctx_t* health_res = NULL;
-        char        health_url[500];
+        char        health_url[501];
         char*       urls[1];
         urls[0] = health_url;
-        sprintf(health_url, "%s/health", nl->nodelist[i].url);
+        snprintx(health_url, 500, "%s/health", nl->nodelist[i].url);
         in3_http_request_t r    = {0};
         in3_req_t          ctx  = {0};
         ctx.raw_response        = _calloc(sizeof(in3_response_t), 1);
