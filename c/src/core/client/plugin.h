@@ -62,7 +62,7 @@ in3_ret_t in3_plugin_register(
 );
 
 /**
- * adds a plugin rregister function to the default. All defaults functions will automaticly called and registered for every new in3_t instance.
+ * adds a plugin rregister function to the default. All defaults functions will automatically called and registered for every new in3_t instance.
  */
 void in3_register_default(plgn_register reg_fn);
 
@@ -94,7 +94,7 @@ static inline void* in3_plugin_get_data(in3_t* c, in3_plugin_act_fn fn) {
 // ----------- RPC HANDLE -----------
 
 /**
- * verification context holding the pointers to all relevant toknes.
+ * verification context holding the pointers to all relevant tokens.
  */
 typedef struct {
   in3_req_t*       req;      /**< Request context. */

@@ -26,7 +26,7 @@ def set_item(_cptr, key, value):
         key: File name to be stored.
         value: File contents.
     """
-    key = c.string_at(key).decode('utf8')
+    key = c.string_at(key, c.sizeof(key)).decode('utf8')
     path.mkdir(parents=True, exist_ok=True)
     try:
         value = c.string_at(value.contents.data, value.contents.len)
