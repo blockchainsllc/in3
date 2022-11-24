@@ -179,27 +179,59 @@ sb_t* sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, 
   return sb;
 }
 
-sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l) {
-  char tmp[19]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
-  switch (l) {
-    case 1: l = sprintf(tmp, "0x%" PRIx8, (uint8_t) uint); break;
-    case 2: l = sprintf(tmp, "0x%" PRIx16, (uint16_t) uint); break;
-    case 4: l = sprintf(tmp, "0x%" PRIx32, (uint32_t) uint); break;
-    case 8: l = sprintf(tmp, "0x%" PRIx64, (uint64_t) uint); break;
-    default: return sb; /** Other types not supported */
+static char* print_hex(char* tmp, uintmax_t val, size_t* written) {
+  const char   hex[]     = "0123456789abcdef";
+  const size_t last_char = 16;         // we start writing at pos 15 since 8 bytes would be 16 characters
+  size_t       last      = last_char;  // max 8 bytes
+  tmp[last_char]         = 0;          // add null-terminator
+  while ((val || last == last_char)) { // we want to have a zero if val=0
+    tmp[--last] = hex[val & 0xf];      // write last char
+    val         = val >> 4;            // move all 4 bits
   }
-  size_t max = check_size(sb, l);
-  memcpy(sb->data + sb->len, tmp, max);
+  if (written) *written = last_char - last;
+  return tmp + last;
+}
+
+static char* print_dec(char* tmp, uintmax_t val, size_t* written) {
+  const size_t last_char = 20;         // we start writing at pos 20 since 8 bytes would be max 20 characters
+  size_t       last      = last_char;  // max 8 bytes
+  tmp[last_char]         = 0;          // add null-terminator
+  while ((val || last == last_char)) { // we want to have a zero if val=0
+    tmp[--last] = '0' + (val % 10);    // write last char
+    val         = val / 10;            // next
+  }
+  if (written) *written = last_char - last;
+  return tmp + last;
+}
+
+sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint) {
+  char   tmp[19]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  size_t written;
+  char*  val = print_hex(tmp, uint, &written);
+  size_t max = check_size(sb, written + 2);
+  if (max > 1) {
+    memcpy(sb->data + sb->len, "0x", 2);
+    memcpy(sb->data + sb->len + 2, val, max - 2);
+  }
   sb->len += max;
   sb->data[sb->len] = 0;
   return sb;
 }
 
 sb_t* sb_add_int(sb_t* sb, int64_t val) {
-  char   tmp[30]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
-  int    l   = sprintf(tmp, "%" PRIi64, val);
+  char   tmp[22]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  size_t l   = 0;
+  char*  str = NULL;
+  if (val < 0) {
+    str  = print_dec(tmp, (uintmax_t) (0 - val), &l) - 1;
+    *str = '-';
+    l++;
+  }
+  else
+    str = print_dec(tmp, (uintmax_t) val, &l);
+
   size_t max = check_size(sb, l);
-  memcpy(sb->data + sb->len, tmp, max);
+  memcpy(sb->data + sb->len, str, max);
   sb->len += max;
   sb->data[sb->len] = 0;
   return sb;
@@ -407,7 +439,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
             break;
           }
           char* tmp = _malloc(wei.len * 3 + 1);
-          if (encode(ENC_DECIMAL, wei, tmp) < 0) sprintf(tmp, "<not supported>");
+          if (encode(ENC_DECIMAL, wei, tmp) < 0) strcpy(tmp, "<not supported>");
           sb_add_chars(sb, tmp);
           _free(tmp);
           break;
@@ -421,7 +453,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
           char tmp[100];
           int  len = encode(ENC_DECIMAL, wei.val, tmp);
           if (len < 0)
-            sprintf(tmp, "<not supported>");
+            strcpy(tmp, "<not supported>");
           else {
             if (wei.dec >= len) {
               memmove(tmp + (2 + wei.dec - len), tmp, len + 1);
@@ -444,14 +476,15 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
         }
         case 'x': {
           char   tmp[19] = {0}; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
-          int    l       = sprintf(tmp, "%" PRIx64, va_arg(args, uint64_t));
-          size_t max     = check_size(sb, l);
-          if (max) memcpy(sb->data + sb->len, tmp, max + 1);
+          size_t written = 0;
+          char*  val     = print_hex(tmp, va_arg(args, uint64_t), &written);
+          size_t max     = check_size(sb, written);
+          if (max) memcpy(sb->data + sb->len, val, max + 1);
           sb->len += max;
           break;
         }
         case 'p':
-          sb_add_hexuint_l(sb, (uint64_t) (va_arg(args, void*)), sizeof(uint64_t));
+          sb_add_hexuint_l(sb, (uint64_t) (va_arg(args, void*)));
           break;
         case 'b': {
           bytes_t b = va_arg(args, bytes_t);
