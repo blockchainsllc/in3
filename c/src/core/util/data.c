@@ -252,9 +252,8 @@ char* d_string(d_token_t* item) {
     }
     case T_NULL: return NULL;
     case T_INTEGER: {
-
-      item->data  = _malloc(10);
-      item->len   = (T_STRING << 28) | sprintf((char*) item->data, "%d", d_len(item));
+      item->data  = (void*) sprintx("%d", (uint32_t) d_len(item));
+      item->len   = (T_STRING << 28) | _strnlen((char*) item->data, 20);
       item->state = TOKEN_STATE_ALLOCATED;
       return (char*) item->data;
     }
@@ -793,11 +792,8 @@ char* d_create_json(json_ctx_t* ctx, d_token_t* item) {
             char* kn = d_get_keystr(ctx, it.token->key);
             if (kn)
               sb_printx(&sb, "\"%s\":", kn);
-            else {
-              char tmp[8];
-              sprintf(tmp, "\"%04x\":", (uint32_t) it.token->key);
-              sb_add_chars(&sb, tmp);
-            }
+            else
+              sb_printx(&sb, "\"%04x\":", (uint64_t) it.token->key);
           }
           sb_add_chars(&sb, p);
           _free(p);
