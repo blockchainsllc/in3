@@ -40,11 +40,6 @@ IF (IN3API)
 
   add_subdirectory(eth1)
 
-    if (NOT WASM)
-      add_subdirectory(usn)
-    endif()
-
-    
     IF (IPFS)
         add_subdirectory(ipfs)
     ENDIF (IPFS)
