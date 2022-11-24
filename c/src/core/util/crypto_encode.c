@@ -48,8 +48,9 @@ int encode(in3_encoding_type_t type, bytes_t src, char* dst) {
     }
     case ENC_BASE64: {
 #ifdef BASE64
-      char* r = base64_encode(src.data, src.len);
-      int   s = sprintf(dst, "%s", r);
+      char*  r = base64_encode(src.data, src.len);
+      size_t s = _strnlen(r, src.len * 3);
+      strcpy(dst, r);
       _free(r);
       return s;
 #else
