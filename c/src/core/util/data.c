@@ -253,7 +253,7 @@ char* d_string(d_token_t* item) {
     case T_NULL: return NULL;
     case T_INTEGER: {
       item->data  = (void*) sprintx("%d", (uint32_t) d_len(item));
-      item->len   = (T_STRING << 28) | _strnlen((char*) item->data, 20);
+      item->len   = (T_STRING << 28) | strnlen((char*) item->data, 20);
       item->state = TOKEN_STATE_ALLOCATED;
       return (char*) item->data;
     }
