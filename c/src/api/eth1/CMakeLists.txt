@@ -66,5 +66,5 @@ add_static_library(
 )
 
 if (NOT ZEPHYR_BASE)
-  target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=199309L)
+  target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=200809L)
 endif()
