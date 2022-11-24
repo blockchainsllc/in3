@@ -24,7 +24,7 @@ int main() {
   hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
 
   // create a simple signer with this key
-  eth_set_pk_signer(in3, pk, ECDSA_SECP256K1);
+  eth_set_pk_signer(in3, pk, ECDSA_SECP256K1, NULL);
 
   // send tx using raw RPC call
   send_tx_rpc(in3);
