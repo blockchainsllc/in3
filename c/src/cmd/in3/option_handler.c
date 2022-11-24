@@ -1,6 +1,5 @@
 #include "../../nodeselect/full/nodelist.h"
 #include "../../nodeselect/full/nodeselect_def.h"
-#include "../../signer/multisig/multisig.h"
 #include "../../signer/pk-signer/signer.h"
 
 #include "handlers.h"
@@ -184,14 +183,6 @@ static bool set_path(in3_t* c, char* value) {
     die("Invalid path for nano ledger");
 }
 #endif
-#ifdef MULTISIG
-static bool set_ms(in3_t* c, char* value) {
-  address_t adr;
-  if (hex_to_bytes(value, -1, adr, 20) != 20) die("-ms must be exactly 20 bytes");
-  add_gnosis_safe(c, adr);
-  return true;
-}
-#endif
 bool handle_option(in3_t* c, char* key, char* value, sb_t* conf, int argc, char** argv) {
   CHECK_OPTION("test", set_test_transport(c, value))
   CHECK_OPTION("clearCache", true)
@@ -217,7 +208,6 @@ bool handle_option(in3_t* c, char* key, char* value, sb_t* conf, int argc, char*
   CHECK_OPTION("file.in", set_recorder(c, value, argc, argv, false))
   CHECK_OPTION("file.out", set_recorder(c, value, argc, argv, true))
   CHECK_OPTION("ms.signatures", true)
-  CHECK_OPTION("multisig", set_ms(c, value))
   CHECK_OPTION("human", set_flag(get_output_conf(), out_human, value))
   CHECK_OPTION("eth", set_flag(get_output_conf(), out_eth, value))
   CHECK_OPTION("hex", set_flag(get_output_conf(), out_hex, value))

@@ -1,74 +1,74 @@
 config:
-  clearCache : 
+  clearCache:
     descr: clears the cache before performing any operation.
     cmd: ccache
     type: bool
     example: true
-  eth :  
+  eth:
     cmd: e
     type: bool
     descr: converts the result (as wei) to ether.
     example: true
-  port :  
+  port:
     cmd: port
     type: uint
     descr: if specified it will run as http-server listening to the given port.
     example: 8545
-  allowed-methods :  
+  allowed-methods:
     cmd: am
     type: string
     descr: only works if port is specified and declares a comma-seperated list of rpc-methods which are allowed. All other will be rejected.
     example: eth_sign,eth_blockNumber
-  block:  
+  block:
     cmd: b
     type: uint
     descr: the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner
     example: latest
-  to:  
+  to:
     cmd: to
     type: address
     descr: the target address of the call
-    example: '0x7d1c10184fa178ebb5b10a9aa6230a255c5c59f6'
-  from :  
+    example: "0x7d1c10184fa178ebb5b10a9aa6230a255c5c59f6"
+  from:
     cmd: from
     type: address
     descr: the sender of a call or tx (only needed if no signer is registered)
-    example: '0x7d1c10184fa178ebb5b10a9aa6230a255c5c59f6'
-  data :  
+    example: "0x7d1c10184fa178ebb5b10a9aa6230a255c5c59f6"
+  data:
     cmd: d
     type: bytes
     descr: the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.
-    example: '0x7d1c101'
-  gas_price:  
+    example: "0x7d1c101"
+  gas_price:
     cmd: gp
     type: uint
-    descr: 'the gas price to use when sending transactions. (default: use eth_gasPrice)'
+    descr: "the gas price to use when sending transactions. (default: use eth_gasPrice)"
     example: 1000000000000
-  gas :  
+  gas:
     cmd: gas
     type: uint
-    descr: 'the gas limit to use when sending transactions. (default: 100000)'
+    descr: "the gas limit to use when sending transactions. (default: 100000)"
     example: 100000
-  token :  
+  token:
     cmd: token
     type: string
-    descr: 'the address of the erc20-token contract.'
-  nonce :  
+    descr: "the address of the erc20-token contract."
+  nonce:
     cmd: nonce
     type: uint
-    descr: 'the nonce. (default: will be fetched useing eth_getTransactionCount)'
+    descr: "the nonce. (default: will be fetched useing eth_getTransactionCount)"
     example: 2
-  test :  
+  test:
     cmd: test
     type: string
     descr: creates a new json-test written to stdout with the name as specified.
     example: test_blockNumber
-  path :  
+  path:
     cmd: path
     type: string
-    descr: 'the HD wallet derivation path . We can pass in simplified way as hex string  i.e [44,60,00,00,00] => 0x2c3c000000'
-    example: '0x2c3c000000'
-  sigtype:  
+    descr: "the HD wallet derivation path . We can pass in simplified way as hex string  i.e [44,60,00,00,00] => 0x2c3c000000"
+    example: "0x2c3c000000"
+  sigtype:
     cmd: st
     type: string
     enum:
@@ -78,100 +78,95 @@ config:
     default: raw
     descr: the type of the signature data.
     example: hash
-  password:  
+  password:
     cmd: pwd
     type: string
-    descr: password to unlock the key 
+    descr: password to unlock the key
     example: MYPASSWORD
-  value :  
+  value:
     cmd: value
     type: uint
-    descr: 'the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)'
-    example: '0.2eth'
-  wait:  
+    descr: "the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)"
+    example: "0.2eth"
+  wait:
     cmd: w
     type: bool
     descr: if given, instead returning the transaction, it will wait until the transaction is mined and return the transactionreceipt.
     example: true
-  json :  
+  json:
     cmd: json
     type: bool
     descr: if given the result will be returned as json, which is especially important for eth_call results with complex structres.
     example: true
-  hex :  
+  hex:
     cmd: hex
     type: bool
     descr: if given the result will be returned as hex.
     example: true
-  debug :  
+  debug:
     cmd: debug
     type: bool
-    descr: if given incubed will output debug information when executing. 
+    descr: if given incubed will output debug information when executing.
     example: true
-  quiet:   
+  quiet:
     cmd: q
     type: bool
-    descr: quiet. no additional output. 
+    descr: quiet. no additional output.
     example: true
-  human :  
+  human:
     cmd: h
     type: bool
     descr: human readable, which removes the json -structure and oly displays the values.
     example: true
-  test-request:  
+  test-request:
     cmd: tr
     type: bool
-    descr: runs test request when showing in3_weights 
+    descr: runs test request when showing in3_weights
     example: true
-  test-health-request:  
+  test-health-request:
     cmd: thr
     type: bool
-    descr: runs test request including health-check when showing in3_weights 
+    descr: runs test request including health-check when showing in3_weights
     example: true
-  multisig :  
-    cmd: ms
-    type: address
-    descr: adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig(s) ) 
-    example: '0x7d1c10184fa178ebb5b10a9aa6230a255c5c59f6'
-  ms.signatures :  
+  ms.signatures:
     cmd: sigs
     type: bytes
-    descr: add additional signatures, which will be useds when sending through a multisig! 
+    descr: add additional signatures, which will be useds when sending through a multisig!
     example: 0x7d1c10184fa178ebb5b10a9aa6230a255c5c59f6ab00f111c32258f3a53bd1dead143dd5d7eae3737c7b0f21843afcdd27a1b8f0
-  response.in:  
+  response.in:
     cmd: ri
     type: bool
-    descr: read response from stdin 
+    descr: read response from stdin
     example: true
-  response.out:  
+  response.out:
     cmd: ro
     type: bool
-    descr: write raw response to stdout 
+    descr: write raw response to stdout
     example: true
-  file.in:  
+  file.in:
     cmd: fi
     type: string
-    descr: reads a prerecorded request from the filepath and executes it with the recorded data. (great for debugging) 
+    descr: reads a prerecorded request from the filepath and executes it with the recorded data. (great for debugging)
     example: record.txt
-  file.out:  
+  file.out:
     cmd: fo
     type: string
-    descr: records a request and writes the reproducable data in a file (including all cache-data, timestamps ...) 
+    descr: records a request and writes the reproducable data in a file (including all cache-data, timestamps ...)
     example: record.txt
-  nodelist:  
+  nodelist:
     cmd: nl
     type: string
     descr: a coma seperated list of urls (or address:url) to be used as fixed nodelist
-    example: 'https://in3-v2.slock.it/mainnet/nd-1,https://mainnet.incubed.net'
-  bootnodes:  
+    example: "https://in3-v2.slock.it/mainnet/nd-1,https://mainnet.incubed.net"
+  bootnodes:
     cmd: bn
     type: string
     descr: a coma seperated list of urls (or address:url) to be used as boot nodes
-    example: 'https://in3-v2.slock.it/mainnet/nd-1,https://mainnet.incubed.net'
-  onlysign:  
+    example: "https://in3-v2.slock.it/mainnet/nd-1,https://mainnet.incubed.net"
+  onlysign:
     cmd: os
     type: bool
-    descr: only sign, do not send the raw Transaction 
+    descr: only sign, do not send the raw Transaction
     example: true
   noproof:
     alias: proof=none
@@ -185,15 +180,15 @@ config:
     type: bool
     descr: alias for --stats=false, which will mark all requests as not counting in the stats
     example: true
-  version:  
+  version:
     cmd: v
     type: bool
-    descr: displays the version 
+    descr: displays the version
     example: true
   help:
     cmd: h
     type: bool
-    descr: displays this help message 
+    descr: displays this help message
     example: true
 
 rpc:
@@ -204,7 +199,7 @@ rpc:
 
   call: |
     <signature> ...args
-    uses eth_call to call a function. Following the call argument the function-signature and its arguments must follow. 
+    uses eth_call to call a function. Following the call argument the function-signature and its arguments must follow.
 
   in3_nodeList: returns the nodeList of the Incubed NodeRegistry as json.
 

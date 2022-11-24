@@ -47,10 +47,6 @@ if (LEDGER_NANO)
     set(LIBS ${LIBS} ledger_signer)
 endif()
 
-if (MULTISIG)
-    set(LIBS ${LIBS} multisig)
-endif()
-
 if (TESTCASE)
 set(SRC ${SRC} ../../tools/testcase/testcase.c ../../tools/testcase/yaml.c)
 else()
