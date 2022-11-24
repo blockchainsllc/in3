@@ -350,9 +350,11 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
 }
 
 void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
-  check_size(sb, strlen(fmt));
+  check_size(sb, _strnlen(fmt, 1000)); // make sure, we allocate at least enough for the format string
+  str_range_t range = {.data = (char*) fmt, .len = 0};
   for (const char* c = fmt; *c; c++) {
     if (*c == '%') {
+      if (range.len) sb_add_range(sb, range.data, 0, range.len);
       c++;
       bool   zero    = false;
       bool   uselong = false;
@@ -444,7 +446,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
           char   tmp[19] = {0}; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
           int    l       = sprintf(tmp, "%" PRIx64, va_arg(args, uint64_t));
           size_t max     = check_size(sb, l);
-          memcpy(sb->data + sb->len, tmp, max + 1);
+          if (max) memcpy(sb->data + sb->len, tmp, max + 1);
           sb->len += max;
           break;
         }
@@ -508,27 +510,25 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
           break;
       }
       if (len && sb->len < old_len + len) {
-        int written = sb->len - old_len;
+        int    written = sb->len - old_len;
+        size_t max     = check_size(sb, len - written);
         if (leftpad) {
-          memset(sb->data + sb->len, zero ? '0' : ' ', len - written);
-          sb->data[sb->len + len - written] = 0;
+          memset(sb->data + sb->len, zero ? '0' : ' ', max);
+          sb->data[sb->len + max] = 0;
         }
         else {
-          memmove(sb->data + old_len + len - written, sb->data + old_len, written + 1);
-          memset(sb->data + old_len, zero ? '0' : ' ', len - written);
+          memmove(sb->data + old_len + max, sb->data + old_len, written + 1);
+          memset(sb->data + old_len, zero ? '0' : ' ', max);
         }
-        sb->len += len - written;
+        sb->len += max;
       }
-
+      range = (str_range_t){.data = (char*) c + 1, .len = 0}; // reset range to start after insert
       continue;
     }
-    if (sb->len + 1 >= (sb->allocted & 0x0fffffff) && check_size(sb, 1) == 0) break;
-#ifdef __clang_analyzer__
-    if (sb->data) // the analyser is not aware of the fact that sb->data can not be null, since check_size is ensuring this
-#endif
-      sb->data[sb->len++] = *c;
+    else
+      range.len++;
   }
-  if (sb->data) sb->data[sb->len] = 0;
+  if (range.len) sb_add_range(sb, range.data, 0, range.len);
 }
 sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
   va_list args;
