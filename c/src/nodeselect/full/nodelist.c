@@ -263,15 +263,13 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
   in3_log_debug("update the nodelist...\n");
 
   // create random seed
-  char seed[67] = {'0', 'x'};
-  for (int i = 0, j = 2; i < 8; ++i, j += 8)
-    sprintf(seed + j, "%08x", in3_rand(NULL) % 0xFFFFFFFF);
-
+  bytes32_t rnd;
+  random_buffer(rnd, 32);
   in3_nodeselect_config_t* w = in3_get_nodelist(c);
   sb_t                     r = {0};
 
-  sb_printx(&r, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"params\":[%i,\"%s\",[]%s]",
-            (uint32_t) w->node_limit, seed,
+  sb_printx(&r, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"params\":[%i,\"%B\",[]%s]",
+            (uint32_t) w->node_limit, bytes(rnd, 32),
             ((c->flags & FLAGS_BOOT_WEIGHTS) && nodelist_first_upd8(data)) ? ",true" : "");
   if (nodelist_not_first_upd8(data)) sb_printx(&r, ",\"in3\":{\"dataNodes\":[\"%A\"]}", data->nodelist_upd8_params->node);
   sb_add_char(&r, '}');
