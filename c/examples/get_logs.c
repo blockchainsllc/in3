@@ -49,9 +49,7 @@ void get_logs_rpc(in3_t* in3) {
 
 void get_logs_api(in3_t* in3) {
   // Create filter options
-  char b[30];
-  sprintf(b, "{\"fromBlock\":\"0x%" PRIx64 "\"}", eth_blockNumber(in3) - 2);
-  json_ctx_t* jopt = parse_json(b);
+  json_ctx_t* jopt = parse_json(stack_printx(30, "{\"fromBlock\":\"0x%x\"}", eth_blockNumber(in3) - 2));
 
   // Create new filter with options
   size_t fid = eth_newFilter(in3, jopt);

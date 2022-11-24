@@ -15,7 +15,6 @@
 
 static void ipfs_rpc_example(in3_t* c) {
   char *result, *error;
-  char  tmp[100];
 
   in3_ret_t res = in3_client_rpc(
       c,
@@ -27,7 +26,7 @@ static void ipfs_rpc_example(in3_t* c) {
     return_err(in3_errmsg(res));
 
   printf("IPFS hash: %s\n", result);
-  sprintf(tmp, "[%s, \"utf8\"]", result);
+  char* tmp = stack_printx(100, "[%s, \"utf8\"]", result);
   free(result);
   result = NULL;
 
