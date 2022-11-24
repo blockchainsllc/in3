@@ -384,184 +384,188 @@ sb_t* sb_add_json(sb_t* sb, const char* prefix, d_token_t* token) {
 void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
   check_size(sb, _strnlen(fmt, 1000)); // make sure, we allocate at least enough for the format string
   str_range_t range = {.data = (char*) fmt, .len = 0};
-  for (const char* c = fmt; *c; c++) {
-    if (*c == '%') {
-      if (range.len) sb_add_range(sb, range.data, 0, range.len);
-      c++;
-      bool   zero    = false;
-      bool   uselong = false;
-      bool   leftpad = false;
-      size_t len     = 0;
-      size_t old_len = sb->len;
-      if (*c == '-') {
+  for (const char* c = fmt;; c++) {
+    switch (*c) {
+
+      case '%': {
+        if (range.len) sb_add_range(sb, range.data, 0, range.len);
         c++;
-        leftpad = true;
-      }
-      if (*c == '0') {
-        c++;
-        zero = true;
-      }
-      while (*c >= '0' && *c <= '9') {
-        len = len * 10 + (*c - '0');
-        c++;
-      }
-      while (*c == 'l') {
-        uselong = true;
-        c++;
-      }
-      if (len) check_size(sb, len + 1);
-      switch (*c) {
-        case 's':
-          sb_add_chars(sb, va_arg(args, char*));
-          break;
-        case 'S':
-          sb_add_escaped_chars(sb, va_arg(args, char*), -1);
-          break;
-        case 'i':
-        case 'd':
-          sb_add_int(sb, (int64_t) va_arg(args, int32_t));
-          break;
-        case 'u':
-          if (uselong)
-            sb_add_int(sb, va_arg(args, int64_t));
-          else
-            sb_add_int(sb, (int64_t) va_arg(args, uint32_t));
-          break;
-        case 'I':
-        case 'D':
-        case 'U':
-          sb_add_int(sb, va_arg(args, int64_t));
-          break;
-        case 'w': {
-          bytes_t wei = va_arg(args, bytes_t);
-          if (wei.len > 32) {
-            sb_add_char(sb, 'X');
-            break;
-          }
-          char* tmp = _malloc(wei.len * 3 + 1);
-          if (encode(ENC_DECIMAL, wei, tmp) < 0) strcpy(tmp, "<not supported>");
-          sb_add_chars(sb, tmp);
-          _free(tmp);
-          break;
+        bool   zero    = false;
+        bool   uselong = false;
+        bool   leftpad = false;
+        size_t len     = 0;
+        size_t old_len = sb->len;
+        if (*c == '-') {
+          c++;
+          leftpad = true;
         }
-        case 'W': {
-          dec_t wei = va_arg(args, dec_t);
-          if (wei.val.len > 32) {
-            sb_add_char(sb, 'X');
+        if (*c == '0') {
+          c++;
+          zero = true;
+        }
+        while (*c >= '0' && *c <= '9') {
+          len = len * 10 + (*c - '0');
+          c++;
+        }
+        while (*c == 'l') {
+          uselong = true;
+          c++;
+        }
+        if (len) check_size(sb, len + 1);
+        switch (*c) {
+          case 's':
+            sb_add_chars(sb, va_arg(args, char*));
+            break;
+          case 'S':
+            sb_add_escaped_chars(sb, va_arg(args, char*), -1);
+            break;
+          case 'i':
+          case 'd':
+            sb_add_int(sb, (int64_t) va_arg(args, int32_t));
+            break;
+          case 'u':
+            if (uselong)
+              sb_add_int(sb, va_arg(args, int64_t));
+            else
+              sb_add_int(sb, (int64_t) va_arg(args, uint32_t));
+            break;
+          case 'I':
+          case 'D':
+          case 'U':
+            sb_add_int(sb, va_arg(args, int64_t));
+            break;
+          case 'w': {
+            bytes_t wei = va_arg(args, bytes_t);
+            if (wei.len > 32) {
+              sb_add_char(sb, 'X');
+              break;
+            }
+            char* tmp = _malloc(wei.len * 3 + 1);
+            if (encode(ENC_DECIMAL, wei, tmp) < 0) strcpy(tmp, "<not supported>");
+            sb_add_chars(sb, tmp);
+            _free(tmp);
             break;
           }
-          char tmp[100];
-          int  len = encode(ENC_DECIMAL, wei.val, tmp);
-          if (len < 0)
-            strcpy(tmp, "<not supported>");
-          else {
-            if (wei.dec >= len) {
-              memmove(tmp + (2 + wei.dec - len), tmp, len + 1);
-              memset(tmp, '0', (2 + wei.dec - len));
-              tmp[1] = '.';
-              for (int l = strlen(tmp) - 1; l > 1; l--) {
-                if (tmp[l] != '0' || tmp[l - 1] == '.') {
-                  tmp[l + 1] = 0;
-                  break;
+          case 'W': {
+            dec_t wei = va_arg(args, dec_t);
+            if (wei.val.len > 32) {
+              sb_add_char(sb, 'X');
+              break;
+            }
+            char tmp[100];
+            int  len = encode(ENC_DECIMAL, wei.val, tmp);
+            if (len < 0)
+              strcpy(tmp, "<not supported>");
+            else {
+              if (wei.dec >= len) {
+                memmove(tmp + (2 + wei.dec - len), tmp, len + 1);
+                memset(tmp, '0', (2 + wei.dec - len));
+                tmp[1] = '.';
+                for (int l = strlen(tmp) - 1; l > 1; l--) {
+                  if (tmp[l] != '0' || tmp[l - 1] == '.') {
+                    tmp[l + 1] = 0;
+                    break;
+                  }
                 }
               }
+              else if (wei.dec) {
+                memmove(tmp + (len - wei.dec) + 1, tmp + (len - wei.dec), wei.dec + 1);
+                tmp[len - wei.dec] = '.';
+              }
             }
-            else if (wei.dec) {
-              memmove(tmp + (len - wei.dec) + 1, tmp + (len - wei.dec), wei.dec + 1);
-              tmp[len - wei.dec] = '.';
-            }
+            sb_add_chars(sb, tmp);
+            break;
           }
-          sb_add_chars(sb, tmp);
-          break;
+          case 'x': {
+            char   tmp[19] = {0}; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+            size_t written = 0;
+            char*  val     = print_hex(tmp, va_arg(args, uint64_t), &written);
+            size_t max     = check_size(sb, written);
+            if (max) memcpy(sb->data + sb->len, val, max + 1);
+            sb->len += max;
+            break;
+          }
+          case 'p':
+            sb_add_hexuint_l(sb, (uint64_t) (va_arg(args, void*)));
+            break;
+          case 'b': {
+            bytes_t b = va_arg(args, bytes_t);
+            if (c[1] == '6' && c[2] == '4') {
+              size_t max = check_size(sb, encode_size(ENC_BASE64, b.len));
+              int    l   = encode(ENC_BASE64, b, sb->data + sb->len);
+              if (l > (int) max) l = (int) max;
+              sb->data[sb->len + l] = 0;
+              sb->len += l;
+              c += 2;
+            }
+            else if (c[1] == '5' && c[2] == '8') {
+              size_t max            = check_size(sb, encode_size(ENC_BASE58, b.len));
+              int    l              = encode(ENC_BASE58, b, sb->data + sb->len);
+              l                     = l < (int) max ? l : (int) max;
+              sb->data[sb->len + l] = 0;
+              sb->len += l;
+              c += 2;
+            }
+            else
+              sb_add_rawbytes(sb, "", b, 0);
+            break;
+          }
+          case 'B':
+            sb_add_rawbytes(sb, "0x", va_arg(args, bytes_t), 0);
+            break;
+          case 'a':
+            sb_add_rawbytes(sb, "", bytes(va_arg(args, uint8_t*), 20), 0);
+            break;
+          case 'A':
+            sb_add_rawbytes(sb, "0x", bytes(va_arg(args, uint8_t*), 20), 0);
+            break;
+          case 'v':
+            sb_add_rawbytes(sb, "", va_arg(args, bytes_t), -1);
+            break;
+          case 'V':
+            sb_add_rawbytes(sb, "0x", va_arg(args, bytes_t), -1);
+            break;
+          case 'j':
+            sb_add_json(sb, "", va_arg(args, d_token_t*));
+            break;
+          case 'J': {
+            sb_t tmp = {0};
+            sb_add_json(&tmp, "", va_arg(args, d_token_t*));
+            if (tmp.data) {
+              char* t2 = format_json(tmp.data);
+              sb_add_chars(sb, t2);
+              _free(t2);
+              _free(tmp.data);
+            }
+            break;
+          }
+          case 0:
+            return;
+          default:
+            break;
         }
-        case 'x': {
-          char   tmp[19] = {0}; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
-          size_t written = 0;
-          char*  val     = print_hex(tmp, va_arg(args, uint64_t), &written);
-          size_t max     = check_size(sb, written);
-          if (max) memcpy(sb->data + sb->len, val, max + 1);
+        if (len && sb->len < old_len + len) {
+          int    written = sb->len - old_len;
+          size_t max     = check_size(sb, len - written);
+          if (leftpad) {
+            memset(sb->data + sb->len, zero ? '0' : ' ', max);
+            sb->data[sb->len + max] = 0;
+          }
+          else {
+            memmove(sb->data + old_len + max, sb->data + old_len, written + 1);
+            memset(sb->data + old_len, zero ? '0' : ' ', max);
+          }
           sb->len += max;
-          break;
         }
-        case 'p':
-          sb_add_hexuint_l(sb, (uint64_t) (va_arg(args, void*)));
-          break;
-        case 'b': {
-          bytes_t b = va_arg(args, bytes_t);
-          if (c[1] == '6' && c[2] == '4') {
-            size_t max = check_size(sb, encode_size(ENC_BASE64, b.len));
-            int    l   = encode(ENC_BASE64, b, sb->data + sb->len);
-            if (l > (int) max) l = (int) max;
-            sb->data[sb->len + l] = 0;
-            sb->len += l;
-            c += 2;
-          }
-          else if (c[1] == '5' && c[2] == '8') {
-            size_t max            = check_size(sb, encode_size(ENC_BASE58, b.len));
-            int    l              = encode(ENC_BASE58, b, sb->data + sb->len);
-            l                     = l < (int) max ? l : (int) max;
-            sb->data[sb->len + l] = 0;
-            sb->len += l;
-            c += 2;
-          }
-          else
-            sb_add_rawbytes(sb, "", b, 0);
-          break;
-        }
-        case 'B':
-          sb_add_rawbytes(sb, "0x", va_arg(args, bytes_t), 0);
-          break;
-        case 'a':
-          sb_add_rawbytes(sb, "", bytes(va_arg(args, uint8_t*), 20), 0);
-          break;
-        case 'A':
-          sb_add_rawbytes(sb, "0x", bytes(va_arg(args, uint8_t*), 20), 0);
-          break;
-        case 'v':
-          sb_add_rawbytes(sb, "", va_arg(args, bytes_t), -1);
-          break;
-        case 'V':
-          sb_add_rawbytes(sb, "0x", va_arg(args, bytes_t), -1);
-          break;
-        case 'j':
-          sb_add_json(sb, "", va_arg(args, d_token_t*));
-          break;
-        case 'J': {
-          sb_t tmp = {0};
-          sb_add_json(&tmp, "", va_arg(args, d_token_t*));
-          if (tmp.data) {
-            char* t2 = format_json(tmp.data);
-            sb_add_chars(sb, t2);
-            _free(t2);
-            _free(tmp.data);
-          }
-          break;
-        }
-        case 0:
-          return;
-        default:
-          break;
+        range = (str_range_t){.data = (char*) c + 1, .len = 0}; // reset range to start after insert
+        break;
       }
-      if (len && sb->len < old_len + len) {
-        int    written = sb->len - old_len;
-        size_t max     = check_size(sb, len - written);
-        if (leftpad) {
-          memset(sb->data + sb->len, zero ? '0' : ' ', max);
-          sb->data[sb->len + max] = 0;
-        }
-        else {
-          memmove(sb->data + old_len + max, sb->data + old_len, written + 1);
-          memset(sb->data + old_len, zero ? '0' : ' ', max);
-        }
-        sb->len += max;
-      }
-      range = (str_range_t){.data = (char*) c + 1, .len = 0}; // reset range to start after insert
-      continue;
+      case 0:
+        if (range.len) sb_add_range(sb, range.data, 0, range.len);
+        return;
+      default: range.len++;
     }
-    else
-      range.len++;
   }
-  if (range.len) sb_add_range(sb, range.data, 0, range.len);
 }
 sb_t* sb_printx(sb_t* sb, const char* fmt, ...) {
   va_list args;
