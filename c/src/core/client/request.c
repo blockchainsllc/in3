@@ -449,39 +449,44 @@ in3_ret_t in3_rpc_handle_with_int(in3_rpc_handle_ctx_t* hctx, uint64_t value) {
   return in3_rpc_handle(hctx, "\"0x%x\"", value);
 }
 
+static d_token_t* find_req(in3_req_t* found, char* req) {
+  for (; found; found = found->required) {
+    for (cache_entry_t* e = found->cache; e; e = e->next) {
+      if (e->props & CACHE_PROP_SRC_REQ && strcmp((char*) e->value.data, req) == 0) return found;
+    }
+  }
+  return NULL;
+}
+
 static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child, bool use_cache, bool allow_error) {
   if (params == NULL) params = "";
-  char* req = NULL;
-  if (use_cache) {
-    req = alloca(strlen(params) + strlen(method) + 20 + (in3 ? 10 + strlen(in3) : 0));
-    if (in3)
-      sprintf(req, "{\"method\":\"%s\",\"params\":[%s],\"in3\":%s}", method, params, in3);
-    else
-      sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
-  }
+  in3_req_t* ctx      = parent->required;
+  size_t     req_len  = _strnlen(params, 100000) + _strnlen(method, 100) + 30 + (in3 ? 10 + _strnlen(in3, 100) : 0); // calculate the memory needed to store the json-request
+  bool       use_heap = req_len > 1000;                                                                              // anything bigger than 1000 should not be stored on the stack
+  char*      _in3     = in3 ? stack_printx(10 + _strnlen(in3, 100), ",\"in3\":%s", in3) : "";                        // the full optional in3-section should always fit into heap
+  char*      req      = use_cache                                                                                    // if we are using the cache we need the exact request as ke, which we will compare to a cached value in order to find the right request
+                            ? (use_heap
+                                   ? sprintx("{\"method\":\"%s\",\"params\":[%s]%s}", method, params, _in3)
+                                   : stack_printx(req_len, "{\"method\":\"%s\",\"params\":[%s]%s}", method, params, _in3))
+                            : NULL;
 
-  in3_req_t* ctx = parent->required;
-  for (; ctx; ctx = ctx->required) {
-    if (use_cache) {
-      // only check first entry
-      bool found = false;
-      for (cache_entry_t* e = ctx->cache; e && !found; e = e->next) {
-        if (e->props & CACHE_PROP_SRC_REQ) {
-          if (strcmp((char*) e->value.data, req) == 0) found = true;
-        }
-      }
-      if (found) break;
+  // find the existing ctx
+  if (use_cache)
+    ctx = find_req(ctx, req);
+  else
+    for (; ctx; ctx = ctx->required) {
+      // we simply check if the method and params of the first request match
+      if (strcmp(d_get_string(ctx->requests[0], K_METHOD), method)) continue;
+      d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
+      if (!t) continue;
+      str_range_t p = d_to_json(t);
+      if (strncmp(params, p.data + 1, p.len - 2) == 0) break;
     }
-    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), method) != 0) continue;
-    d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
-    if (!t) continue;
-    str_range_t p = d_to_json(t);
-    if (strncmp(params, p.data + 1, p.len - 2) == 0) break;
-  }
 
-  if (ctx && child) *child = ctx;
+  if (ctx) {
+    if (child) *child = ctx;         // if we found the child assign it
+    if (req && use_heap) _free(req); // we only cleanup if the req is in the heap
 
-  if (ctx)
     switch (in3_req_state(ctx)) {
       case REQ_ERROR:
         return req_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
@@ -503,18 +508,16 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
       case REQ_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
     }
-
-  // create the call
-  req = use_cache ? _strdupn(req, -1) : _malloc(strlen(params) + strlen(method) + 26 + (in3 ? 7 + strlen(in3) : 0));
-  if (!use_cache) {
-    if (in3)
-      sprintf(req, "{\"method\":\"%s\",\"params\":[%s],\"in3\":%s}", method, params, in3);
-    else
-      sprintf(req, "{\"method\":\"%s\",\"params\":[%s]}", method, params);
   }
+
+  // create the request, which will always be in the heap and cleaned up when freeing the request
+  req = use_cache
+            ? (use_heap ? req : _strdupn(req, -1))
+            : sprintx("{\"method\":\"%s\",\"params\":[%s]%s}", method, params, _in3);
   ctx = req_new(parent->client, req);
   if (!ctx) {
-    if (use_cache && req) _free(req);
+    req_set_error(parent, req, IN3_ERPC);
+    _free(req);
     return req_set_error(parent, "Invalid request!", IN3_ERPC);
   }
   if (child) *child = ctx;
@@ -528,22 +531,23 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
     }
   }
 
-  if (use_cache)
-    in3_cache_add_ptr(&ctx->cache, req)->props = CACHE_PROP_SRC_REQ;
+  if (use_cache) in3_cache_add_ptr(&ctx->cache, _strdupn(req, -1))->props |= CACHE_PROP_SRC_REQ | CACHE_PROP_MUST_FREE;
   in3_ret_t ret = req_add_required(parent, ctx);
+
+  // if the request is an internal handled request, we willhave a result already, so we need to update the *result.
   if (ret == IN3_OK && ctx->responses[0]) {
     *result = d_get(ctx->responses[0], K_RESULT);
     if (!*result) {
       char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
       UNUSED_VAR(s); // this makes sure we don't get a warning when building with _DLOGGING=false
-      return req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
+      ret = req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
     }
   }
   return ret;
 }
 
 in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child) {
-  bool use_cache = strcmp(method, "eth_sendTransaction") == 0;
+  bool use_cache = strcmp(method, "eth_sendTransaction") == 0; // this subrequest will be converted into eth_sendRawTransaction, so we must keep the original request.
   return req_send_sub_request_internal(parent, method, params, in3, result, child, use_cache, false);
 }
 
@@ -574,21 +578,11 @@ in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, in3_curve_
   }
 
   // get the signature from required
+  char*       params = sprintx("[\"%B\",\"%B\",%u,%u,%j]", raw_data, from, (uint32_t) pl_type, (uint32_t) curve_type, meta);
   const char* method = method_for_sigtype(type);
-  sb_t        params = {0};
-  sb_add_bytes(&params, "[", &raw_data, 1, false);
-  sb_add_chars(&params, ",");
-  sb_add_bytes(&params, NULL, &from, 1, false);
-  sb_add_chars(&params, ",");
-  sb_add_int(&params, (int64_t) pl_type);
-  sb_add_chars(&params, ",");
-  sb_add_int(&params, (int64_t) curve_type);
-  sb_add_json(&params, ",", meta);
-  sb_add_chars(&params, "]");
-
-  in3_req_t* c = req_find_required(ctx, method, params.data);
+  in3_req_t*  c      = req_find_required(ctx, method, params);
   if (c) {
-    _free(params.data);
+    _free(params);
     switch (in3_req_state(c)) {
       case REQ_ERROR:
         return req_set_error(ctx, c->error ? c->error : "Could not handle signing", IN3_ERPC);
@@ -612,15 +606,14 @@ in3_ret_t req_send_sign_request(in3_req_t* ctx, d_digest_type_t type, in3_curve_
     }
   }
   else {
-    sb_t req = {0};
-    sb_add_chars(&req, "{\"method\":\"");
-    sb_add_chars(&req, method);
-    sb_add_chars(&req, "\",\"params\":");
-    sb_add_chars(&req, params.data);
-    sb_add_chars(&req, "}");
-    _free(params.data);
-    c = req_new(ctx->client, req.data);
-    if (!c) return IN3_ECONFIG;
+    char* req = sprintx("{\"method\":\"%s\",\"params\":%s}", method, params);
+    _free(params);
+    c = req_new(ctx->client, req);
+    if (!c) {
+      req_set_error(ctx, req, IN3_EINVAL);
+      _free(req);
+      return req_set_error(ctx, "Invalid sign request", IN3_EINVAL);
+    }
     c->type = RT_SIGN;
     return req_add_required(ctx, c);
   }
@@ -654,14 +647,6 @@ in3_ret_t req_require_signature(in3_req_t* ctx, d_digest_type_t digest_type, in3
   return req_send_sign_request(ctx, digest_type, curve_type, pl_type, signature, raw_data, from, meta, cache_key);
 }
 
-static d_token_t* find_req(in3_req_t* found, char* req) {
-  for (; found; found = found->required) {
-    for (cache_entry_t* e = found->cache; e; e = e->next) {
-      if (e->props & CACHE_PROP_SRC_REQ && strcmp((char*) e->value.data, req) == 0) return found;
-    }
-  }
-  return NULL;
-}
 in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path, char* payload,
                             in3_http_header_t* headers, d_token_t** result, in3_req_t** child, uint32_t wait_in_ms) {
   sb_t rp = {0};
