@@ -81,8 +81,7 @@ in3_ret_t send_provider_request(in3_req_t* parent, zksync_config_t* conf, char* 
   if (conf) {
     TRY(ensure_provider(conf, parent))
     if (!conf->provider_url) return IN3_EUNKNOWN;
-    in3 = alloca(strlen(conf->provider_url) + 26);
-    sprintf(in3, "{\"rpc\":\"%s\"}", conf->provider_url);
+    in3 = stack_printx(_strnlen(conf->provider_url, 300) + 26, "{\"rpc\":\"%s\"}", conf->provider_url);
   }
   return req_send_sub_request(parent, method, params, in3, result, NULL);
 }

@@ -113,7 +113,7 @@ void _free_(void* ptr) {
   free(ptr);
 #endif
 }
-
+/*
 size_t _strnlen(const char* str, size_t maxlen) {
   if (!str) return 0;
   for (size_t n = 0; n <= maxlen; n++) {
@@ -121,6 +121,7 @@ size_t _strnlen(const char* str, size_t maxlen) {
   }
   return maxlen;
 }
+*/
 #ifdef TEST
 
 static int mem_count = 0;

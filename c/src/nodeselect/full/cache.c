@@ -57,13 +57,13 @@ static void write_cache_key(char* key, chain_id_t chain_id, const address_t whit
   assert(key);
   assert(chain_id > 0);
 
-  if (whitelist_contract) {                                           //  only  whitelistnodelists contain the address.
-    char contract_[41];                                               // currently we have a max with of 40 which is more than the chain_id could hold
-    bytes_to_hex(whitelist_contract, 20, contract_);                  // contract is appended as hex
-    sprintf(key, NODE_LIST_KEY WHITTE_LIST_KEY, chain_id, contract_); // we need to append both to be unique
+  if (whitelist_contract) {                                                 //  only  whitelistnodelists contain the address.
+    char contract_[41];                                                     // currently we have a max with of 40 which is more than the chain_id could hold
+    bytes_to_hex(whitelist_contract, 20, contract_);                        // contract is appended as hex
+    snprintf(key, 100, NODE_LIST_KEY WHITTE_LIST_KEY, chain_id, contract_); // we need to append both to be unique
   }
   else
-    sprintf(key, NODE_LIST_KEY, chain_id);
+    snprintf(key, 100, NODE_LIST_KEY, chain_id);
 }
 
 /**
