@@ -25,10 +25,6 @@ stages:
   - build
   - integration
   - bindings
-  - python
-  - dotnet
-  - java
-  - swift
   - test
   - analysis
   - deploy
@@ -40,8 +36,6 @@ include:
   - local: "/c/ci.yml"
   - local: "/c/ci-analyse.yml"
   - local: "/c/ci-deploy.yml"
-  - local: "/python/ci.yml"
-  - local: "/dotnet/ci.yml"
 
 wasm:
   stage: bindings
