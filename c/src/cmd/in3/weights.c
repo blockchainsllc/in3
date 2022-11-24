@@ -80,8 +80,7 @@ bool exec_weights(in3_t* c) {
           char* l = strrchr(version, ':');
           if (l) version = l + 1;
         }
-        health_s = _malloc(3000);
-        sprintf(health_s, "%-22s %-7s   %7d   %-9s ", node_name ? node_name : "-", version ? version : "-", running, health ? "OK" : "unhealthy");
+        health_s = sprintx("%-22s %-7s   %7d   %-9s ", node_name ? node_name : "-", version ? version : "-", running, health ? "OK" : "unhealthy");
 
         if (ctx.raw_response->data.data)
           _free(ctx.raw_response->data.data);
@@ -96,33 +95,33 @@ bool exec_weights(in3_t* c) {
     char *             tr = NULL, *warning = NULL;
     if (ctx) {
       tr = _malloc(1000);
-      if (!ctx->error && d_get(ctx->responses[0], K_ERROR)) {
+      if (!ctx->error && d_type(d_get(ctx->responses[0], K_ERROR)) != T_NULL) {
         d_token_t* msg = d_get(ctx->responses[0], K_ERROR);
         if (d_type(msg) == T_OBJECT) msg = d_get(msg, K_MESSAGE);
-        sprintf((warning = tr), "%s", msg ? d_string(msg) : "Error-Response!");
+        snprintx((warning = tr), 999, "%s", msg ? d_string(msg) : "Error-Response!");
       }
       else if (!ctx->error) {
         b = d_get_int(ctx->responses[0], K_RESULT);
         if (block < b) block = b;
 
         if (b < block - 1)
-          sprintf((warning = tr), "#%i ( out of sync : %i blocks behind latest )", b, block - b);
+          snprintx((warning = tr), 999, "#%i ( out of sync : %i blocks behind latest )", b, block - b);
         else if (strncmp(node->url, "https://", 8))
-          sprintf((warning = tr), "#%i (missing https, which is required in a browser )", b);
+          snprintx((warning = tr), 999, "#%i (missing https, which is required in a browser )", b);
         else if (!IS_APPROX(d_get_int(ctx->responses[0], K_RESULT), d_get_int(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK), 1))
-          sprintf((warning = tr), "#%i ( current block mismatch: %i blocks apart )", b,
-                  d_get_int(ctx->responses[0], K_RESULT) - d_get_int(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK));
+          snprintx((warning = tr), 999, "#%i ( current block mismatch: %i blocks apart )", b,
+                   d_get_int(ctx->responses[0], K_RESULT) - d_get_int(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK));
         else
-          sprintf(tr, "#%i", b);
+          snprintx(tr, 999, "#%i", b);
       }
       else if (!strlen(node->url) || !node->props)
-        sprintf((warning = tr), "No URL spcified anymore props = %i ", (int) (node->props & 0xFFFFFF));
+        snprintx((warning = tr), 999, "No URL spcified anymore props = %i ", (int) (node->props & 0xFFFFFF));
       else if ((node->props & NODE_PROP_DATA) == 0)
-        sprintf((warning = tr), "The node is marked as not supporting Data-Providing");
+        snprintx((warning = tr), 999, "The node is marked as not supporting Data-Providing");
       else if (c->proof != PROOF_NONE && (node->props & NODE_PROP_PROOF) == 0)
-        sprintf((warning = tr), "The node is marked as able to provide proof");
+        snprintx((warning = tr), 999, "The node is marked as able to provide proof");
       else if ((c->flags & FLAGS_HTTP) && (node->props & NODE_PROP_HTTP) == 0)
-        sprintf((warning = tr), "The node is marked as able to support http-requests");
+        snprintx((warning = tr), 999, "The node is marked as able to support http-requests");
       else
         tr = ctx->error;
       if (strlen(tr) > 100) tr[100] = 0;

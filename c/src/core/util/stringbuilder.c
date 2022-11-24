@@ -86,6 +86,7 @@ sb_t* sb_add_chars(sb_t* sb, const char* chars) {
 }
 
 sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int len) {
+  if (chars == NULL) chars = "<NULL>";
   size_t l       = len == -1 ? strlen(chars) : (size_t) len;
   size_t escapes = 0;
   if (l == 0 || chars == NULL) return sb;

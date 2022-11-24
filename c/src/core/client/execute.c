@@ -136,11 +136,25 @@ NONULL static void add_token_to_hash(in3_digest_t msg_hash, d_token_t* t) {
   }
 }
 
+static void add_id(in3_req_t* c, sb_t* sb, in3_digest_t msg_hash, d_token_t* request_token) {
+  char*      temp = NULL;
+  d_token_t* t    = d_get(request_token, K_ID);
+  if (t == NULL)
+    temp = stack_printx(40, "%u", c->id + 1);
+  else if (d_type(t) == T_INTEGER)
+    temp = stack_printx(40, "%u", (uint32_t) d_int(t));
+  else
+    temp = d_string(t);
+
+  sb_add_chars(sb, "{\"id\":\"");
+  sb_add_range(sb, temp, 0, add_bytes_to_hash(msg_hash, temp, _strnlen(temp, 40)));
+  sb_add_char(sb, '\"');
+}
+
 NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) {
   assert_in3_req(c);
   assert(sb);
 
-  char   temp[100];
   in3_t* rc           = c->client;
   bool   use_msg_hash = !no_in3 && in3_plugin_is_registered(rc, PLGN_ACT_PAY_SIGN_REQ);
 
@@ -152,14 +166,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
     in3_digest_t msg_hash      = use_msg_hash ? crypto_create_hash(DIGEST_KECCAK) : ((in3_digest_t){0});
 
     if (i > 0) sb_add_char(sb, ',');
-    sb_add_char(sb, '{');
-    if ((t = d_get(request_token, K_ID)) == NULL)
-      sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%" PRIu32, c->id + i)), false);
-    else if (d_type(t) == T_INTEGER)
-      sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%i", d_int(t))), false);
-    else
-      sb_add_key_value(sb, "id", d_string(t), add_bytes_to_hash(msg_hash, d_string(t), d_len(t)), true);
-
+    add_id(c, sb, msg_hash, request_token);
     sb_add_chars(sb, ",\"jsonrpc\":\"2.0\",");
     if ((t = d_get(request_token, K_METHOD)) == NULL)
       return req_set_error(c, "missing method-property in request", IN3_EINVAL);

@@ -93,8 +93,7 @@ in3_ret_t in3_resolve_chain_id(in3_req_t* req, chain_id_t* chain_id) {
   // make sure, we have the correct chain_id
   *chain_id = in3_chain_id(req);
   if (*chain_id == CHAIN_ID_LOCAL) {
-    char cachekey[50];
-    sprintf(cachekey, "chain_id_%x", req->client->chain.version);
+    char* cachekey = stack_printx(50, "chain_id_%x", (uint64_t) req->client->chain.version);
     if (req->client->chain.id == CHAIN_ID_LOCAL) {
       if (req->client->chain.version && !(req->client->chain.version & 0x80000000)) {
         // we have a url-hash, which can lookup in the cache
