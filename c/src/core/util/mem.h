@@ -36,8 +36,6 @@
 #define __MEM_H__
 
 #ifndef _POSIX_C_SOURCE
-#define __USE_GNU
-#define _XOPEN_SOURCE   600
 #define _POSIX_C_SOURCE 200809L
 #endif
 
