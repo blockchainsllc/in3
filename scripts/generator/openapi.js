@@ -298,10 +298,7 @@ function create_fn(config, method, path, def) {
         }
         return null
     }).find(_ => _)
-    if (!response) {
-        console.log(">>>>>> ", arguments)
-        throw new Error('no response found')
-    }
+    if (!response) throw new Error('no response found')
     fn.result = {
         descr: [response.summary, response.description].filter(_ => _).join('\n\n').trim()
     }
