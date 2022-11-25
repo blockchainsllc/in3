@@ -35,6 +35,10 @@
 #ifndef __MEM_H__
 #define __MEM_H__
 
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
