@@ -298,7 +298,10 @@ function create_fn(config, method, path, def) {
         }
         return null
     }).find(_ => _)
-    if (!response) throw new Error('no response found')
+    if (!response) {
+        console.log(">>>>>> ", arguments)
+        throw new Error('no response found')
+    }
     fn.result = {
         descr: [response.summary, response.description].filter(_ => _).join('\n\n').trim()
     }
@@ -412,10 +415,16 @@ function filter(t) {
     return t
 }
 
+const isHttpVerb = (m) => ['post', 'get', 'delete', 'put', 'patch', 'options', 'head'].includes(m)
+
 exports.generate_openapi = async function (config) {
     config.data = await getDef(config)
     Object.keys(config.data.paths).forEach(_ =>
-        Object.keys(config.data.paths[_]).forEach(m => create_fn(config, m, _, config.data.paths[_][m]))
+        Object.keys(config.data.paths[_])
+            .filter(isHttpVerb) // we only filter verbs to ensure we are parsing actions or queries and not extra data
+            .forEach(m => {
+                create_fn(config, m, _, config.data.paths[_][m])
+            })
     )
 
     //    fs.writeFileSync(config.api_name + '_types.yaml', yaml.stringify({ types: config.types || '' }))
