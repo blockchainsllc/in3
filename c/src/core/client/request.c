@@ -232,7 +232,8 @@ char* req_get_response_data(in3_req_t* ctx) {
       return NULL;
     }
     if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (start = d_to_json(d_get(ctx->responses[i], K_IN3)).data) && start < rr.data + rr.len) {
-      while (*start != ',' && start > rr.data) start--; // NOSONAR -  we are already checking that start is within the range
+      char beginning = d_to_json(ctx->responses[i]).data;
+      while (start > beginning && *start != ',' && start > rr.data) start--; // NOSONAR -  we are already checking that start is within the range
       sb_add_range(&sb, rr.data, 0, start - rr.data + 1);
       sb.data[sb.len - 1] = '}';
     }
