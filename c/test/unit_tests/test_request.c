@@ -160,7 +160,7 @@ static void test_exec_req() {
   _free(result);
 
   result = in3_client_exec_req(c, "{\"params\":[\"0x1234\"]}");
-  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-6,\"message\":\"No Method defined\"}}", result);
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"No Method defined\"}}", result);
   _free(result);
 
   result = in3_client_exec_req(c, "{\"method\":\"in3_cacheClear\",\"params\":[]}");

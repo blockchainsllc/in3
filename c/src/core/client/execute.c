@@ -1006,6 +1006,7 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
 
       // do we need to handle it internaly?
       if (!req->raw_response && !req->response_context && (ret = handle_internally(req)) < 0)
+        // there was weither an error or a WAITING, so we return here
         return req->error ? ret : req_set_error(req, get_error_message(req, ret), ret);
 
       // if this is an incubed-request, we need the nodelist and pick the nodes.
