@@ -434,7 +434,7 @@ NONULL static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_nodeselect_def
   if (ctx->client->signature_count && w->request_count <= 1)
     rc = 2;
 
-  in3_ret_t ret = in3_node_list_pick_nodes(ctx, w, data, &ctx->nodes, rc, &filter);
+  in3_ret_t ret = in3_node_list_pick_nodes(ctx, w, data, &ctx->in3_state->nodes, rc, &filter);
   free_signers(filter.exclusions);
   return ret;
 }
@@ -459,19 +459,19 @@ NONULL static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_nodeselect_d
     in3_node_filter_t filter       = NODE_FILTER_INIT;
     filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
     filter.props                   = w->node_props | NODE_PROP_SIGNER;
-    filter.exclusions              = ctx->nodes;
+    filter.exclusions              = ctx->in3_state->nodes;
     const in3_ret_t res            = in3_node_list_pick_nodes(ctx, w, data, &signer_nodes, total_sig_cnt, &filter);
     if (res < 0)
       return req_set_error(ctx, "Could not find any nodes for requesting signatures", res);
-    if (ctx->signers) _free(ctx->signers);
-    const int node_count  = req_nodes_len(signer_nodes);
-    ctx->signers_length   = node_count;
-    ctx->signers          = _malloc(20 * node_count); // 20 bytes per address
-    const node_match_t* w = signer_nodes;
-    in3_node_t*         n = NULL;
+    if (ctx->in3_state->signers) _free(ctx->in3_state->signers);
+    const int node_count           = req_nodes_len(signer_nodes);
+    ctx->in3_state->signers_length = node_count;
+    ctx->in3_state->signers        = _malloc(20 * node_count); // 20 bytes per address
+    const node_match_t* w          = signer_nodes;
+    in3_node_t*         n          = NULL;
     for (int i = 0; i < node_count; i++) {
       n = get_node(data, w);
-      if (n) memcpy(ctx->signers + i * 20, n->address, 20);
+      if (n) memcpy(ctx->in3_state->signers + i * 20, n->address, 20);
       w = w->next;
     }
     if (signer_nodes) in3_req_free_nodes(signer_nodes);
@@ -548,7 +548,7 @@ NONULL in3_ret_t handle_offline(in3_nodeselect_def_t* data, in3_nl_offline_ctx_t
     if (!BIT_CHECK(ctx->missing, pos))
       continue;
 
-    const uint8_t* address = ctx->vctx->req->signers + (pos * 20);
+    const uint8_t* address = ctx->vctx->req->in3_state->signers + (pos * 20);
     for (unsigned int i = 0; i < data->nodelist_length; ++i) {
       if (memcmp(data->nodelist[i].address, address, 20) != 0)
         continue;
@@ -628,8 +628,8 @@ NONULL static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followu
   if (!fctx->req) return IN3_EUNKNOWN;
   in3_req_t*    ctx         = fctx->req;
   node_match_t* vnode       = fctx->node;
-  node_match_t* node        = ctx->nodes;
-  int           nodes_count = ctx->nodes == NULL ? 1 : req_nodes_len(ctx->nodes);
+  node_match_t* node        = ctx->in3_state->nodes;
+  int           nodes_count = ctx->in3_state->nodes == NULL ? 1 : req_nodes_len(ctx->in3_state->nodes);
 
   // no node - nothing to do here.
   if (!node) return IN3_EIGNORE;

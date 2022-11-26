@@ -78,8 +78,8 @@ unsigned int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* 
   if (addr == NULL) return 0 * vc_err(vc, "could not recover the signature");
 
   // try to find the signature requested
-  for (i = 0; i < vc->req->signers_length; i++) {
-    if (memcmp(vc->req->signers + i * 20, addr->data, 20) == 0) {
+  for (i = 0; i < vc->req->in3_state->signers_length; i++) {
+    if (memcmp(vc->req->in3_state->signers + i * 20, addr->data, 20) == 0) {
       // adn set the bit depending on the index.
       res = 1 << i;
       break;

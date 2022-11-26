@@ -144,17 +144,17 @@ in3_ret_t        req_require_signature(in3_req_t* ctx, d_digest_type_t type, in3
 NONULL in3_ret_t req_require_pub_key(in3_req_t* ctx, in3_curve_type_t curve_type, in3_convert_type_t convert_type, bytes_t from, uint8_t dst[64]); // Attention: dst buffer MUST have at least 64 bytes allocated
 NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
 
-#define assert_in3_req(ctx)                                                                    \
-  assert(ctx);                                                                                 \
-  assert_in3(ctx->client);                                                                     \
-  assert(ctx->signers_length <= (ctx->type == RT_RPC ? ctx->client->signature_count + 1 : 0)); \
-  assert(ctx->signers_length ? (ctx->signers != NULL) : (ctx->signers == NULL));               \
-  assert(ctx->len >= 1 || ctx->error);                                                         \
-  assert(ctx->attempt <= ctx->client->max_attempts);                                           \
-  assert(!ctx->len || ctx->request_context);                                                   \
-  assert(!ctx->len || ctx->requests);                                                          \
-  assert(!ctx->len || ctx->requests[0]);                                                       \
-  assert(!ctx->len || ctx->requests[ctx->len - 1]);                                            \
+#define assert_in3_req(ctx)                                                                                                          \
+  assert(ctx);                                                                                                                       \
+  assert_in3(ctx->client);                                                                                                           \
+  assert(!ctx->in3_state || ctx->in3_state->signers_length <= (ctx->type == RT_RPC ? ctx->client->signature_count + 1 : 0));         \
+  assert(!ctx->in3_state || ctx->in3_state->signers_length ? (ctx->in3_state->signers != NULL) : (ctx->in3_state->signers == NULL)); \
+  assert(ctx->len >= 1 || ctx->error);                                                                                               \
+  assert(ctx->attempt <= ctx->client->max_attempts);                                                                                 \
+  assert(!ctx->len || ctx->request_context);                                                                                         \
+  assert(!ctx->len || ctx->requests);                                                                                                \
+  assert(!ctx->len || ctx->requests[0]);                                                                                             \
+  assert(!ctx->len || ctx->requests[ctx->len - 1]);                                                                                  \
   assert(ctx->error ? (ctx->verification_state < 0) : (ctx->verification_state == IN3_OK || ctx->verification_state == IN3_WAITING));
 
 #define assert_in3_response(r) \

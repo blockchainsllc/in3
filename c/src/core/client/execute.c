@@ -45,16 +45,20 @@
 #include <string.h>
 
 NONULL static bool is_raw_http(in3_req_t* ctx) {
-  return !ctx->nodes && strcmp("in3_http", d_get_string(ctx->requests[0], K_METHOD)) == 0;
+  return !ctx->in3_state && strcmp("in3_http", d_get_string(ctx->requests[0], K_METHOD)) == 0;
 }
 
 NONULL static void response_free(in3_req_t* ctx) {
   assert_in3_req(ctx);
 
   int nodes_count = 1;
-  if (ctx->nodes) {
-    nodes_count = req_nodes_len(ctx->nodes);
-    in3_req_free_nodes(ctx->nodes);
+  if (ctx->in3_state) {
+    if (ctx->in3_state->nodes) {
+      nodes_count = req_nodes_len(ctx->in3_state->nodes);
+      in3_req_free_nodes(ctx->in3_state->nodes);
+    }
+    _free(ctx->in3_state->signers);
+    _free(ctx->in3_state);
   }
   if (ctx->raw_response) {
     for (int i = 0; i < nodes_count; i++) {
@@ -65,13 +69,11 @@ NONULL static void response_free(in3_req_t* ctx) {
 
   if (ctx->responses) _free(ctx->responses);
   if (ctx->response_context) json_free(ctx->response_context);
-  if (ctx->signers) _free(ctx->signers);
   ctx->response_context = NULL;
   ctx->responses        = NULL;
   ctx->raw_response     = NULL;
-  ctx->nodes            = NULL;
-  ctx->signers          = NULL;
-  ctx->signers_length   = 0;
+  ctx->raw_response     = NULL;
+  ctx->in3_state        = NULL;
 }
 
 NONULL void in3_check_verified_hashes(in3_t* c) {
@@ -199,11 +201,11 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
         sb_printx(sb, ",\"finality\":%i", (int32_t) rc->finality);
       if (rc->replace_latest_block)
         sb_printx(sb, ",\"latestBlock\":%i", (int32_t) rc->replace_latest_block);
-      if (c->signers_length) {
-        bytes_t* s = alloca(c->signers_length * sizeof(bytes_t));
-        for (int j = 0; j < c->signers_length; j++)
-          s[j] = bytes(c->signers + j * 20, 20);
-        sb_add_bytes(sb, ",\"signers\":", s, c->signers_length, true);
+      if (c->in3_state && c->in3_state->signers_length) {
+        bytes_t* s = alloca(c->in3_state->signers_length * sizeof(bytes_t));
+        for (int j = 0; j < c->in3_state->signers_length; j++)
+          s[j] = bytes(c->in3_state->signers + j * 20, 20);
+        sb_add_bytes(sb, ",\"signers\":", s, c->in3_state->signers_length, true);
       }
       if ((rc->flags & FLAGS_INCLUDE_CODE) && strcmp(d_get_string(request_token, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
@@ -361,7 +363,8 @@ static void clean_up_ctx(in3_req_t* ctx) {
 }
 
 NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx) {
-  int nodes_count = req_nodes_len(ctx->nodes);
+
+  int nodes_count = ctx->in3_state ? req_nodes_len(ctx->in3_state->nodes) : 1;
   // this means we need to retry with the same node
   for (int i = 0; i < nodes_count; i++) {
     if (ctx->raw_response[i].data.data)
@@ -481,10 +484,10 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
 
 static in3_ret_t find_valid_result(in3_req_t* ctx, node_match_t** vnode) {
 
-  int             nodes_count   = ctx->nodes == NULL ? 1 : req_nodes_len(ctx->nodes);
+  int             nodes_count   = (!ctx->in3_state || !ctx->in3_state->nodes) ? 1 : req_nodes_len(ctx->in3_state->nodes);
   in3_response_t* response      = ctx->raw_response;
   in3_chain_t*    chain         = in3_get_chain(ctx->client, in3_chain_id(ctx));
-  node_match_t*   node          = ctx->nodes;
+  node_match_t*   node          = ctx->in3_state ? ctx->in3_state->nodes : NULL;
   bool            still_pending = false;
   in3_ret_t       state         = IN3_ERPC;
 
@@ -594,10 +597,10 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
   }
 
   in3_ret_t     res;
+  node_match_t* node        = ctx->in3_state ? ctx->in3_state->nodes : NULL;
   char*         rpc         = d_get_string(d_get(ctx->requests[0], K_IN3), K_RPC);
-  int           nodes_count = rpc ? 1 : req_nodes_len(ctx->nodes);
+  int           nodes_count = rpc ? 1 : req_nodes_len(node);
   char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
-  node_match_t* node        = ctx->nodes;
 
   for (int n = 0; n < nodes_count; n++) {
     urls[n] = _strdupn(rpc ? rpc : node->url, -1);
@@ -745,7 +748,7 @@ static void in3_handle_rpc_next(in3_req_t* ctx, ctx_req_transports_t* transports
   }
 
   // looks like we were not able to send out the first request, so waiting for the second won't help.
-  node_match_t* w = ctx->nodes;
+  node_match_t* w = ctx->in3_state ? ctx->in3_state->nodes : NULL;
   for (int j = 0; w; j++, w = w->next) {
     if (ctx->raw_response[j].state == IN3_WAITING && !ctx->raw_response[j].data.data) {
       in3_ctx_add_response(ctx, j, IN3_ERPC, "The request could not be send!", -1, 1);
@@ -775,7 +778,7 @@ void in3_handle_rpc(in3_req_t* ctx, ctx_req_transports_t* transports) {
   in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_SEND, request);
 
   // debug output
-  node_match_t* node = request->req->nodes;
+  node_match_t* node = request->req->in3_state ? request->req->in3_state->nodes : NULL;
   for (unsigned int i = 0; i < request->urls_len; i++, node = node ? node->next : NULL) {
     if (request->req->raw_response[i].state != IN3_WAITING) {
       char* data = request->req->raw_response[i].data.data;
@@ -931,10 +934,13 @@ static inline in3_ret_t select_nodes(in3_req_t* req) {
   in3_ret_t ret = IN3_OK;
 
   // we only need to pick nodes, if we don't have an anser or no nodes picked
-  if (req->raw_response || req->nodes) return ret;
+  if (req->raw_response || req->in3_state) return ret;
 
   // if the request has a rpc-url or a REST-request, we don't pick nodes.
   if (d_get(d_get(req->requests[0], K_IN3), K_RPC) || is_raw_http(req)) return ret;
+
+  // time to create the in3_state
+  if (!req->in3_state) req->in3_state = _calloc(1, sizeof(in3_state_t));
 
   // pick data nodes first
   in3_nl_pick_ctx_t pctx = {.type = NL_DATA, .req = req};
@@ -987,10 +993,10 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
 
       // ok, we have a response, then we try to evaluate the responses
       // verify responses and return the node with the correct result.
-      node_match_t* node = NULL;
-      if ((ret = find_valid_result(req, &node)) == IN3_OK) {
-        // allow payments to to handle post actions
-        in3_nl_followup_ctx_t fctx = {.req = req, .node = node};
+      node_match_t* valid_node = NULL;
+      if ((ret = find_valid_result(req, &valid_node)) == IN3_OK) {
+        // allow payments to handle post actions
+        in3_nl_followup_ctx_t fctx = {.req = req, .node = valid_node};
         in3_plugin_execute_first_or_none(req, PLGN_ACT_NL_PICK_FOLLOWUP, &fctx);
       }
 

@@ -463,7 +463,7 @@ static unsigned int idx_from_bs(unsigned int bs) {
 static void handle_signed_err(in3_vctx_t* vc, d_token_t* err, unsigned int bs, uint64_t header_number) {
   // handle errors based on context
   if (d_get_int(err, K_CODE) == JSON_RPC_ERR_FINALITY) {
-    uint8_t*           signer_addr = vc->req->signers + (20 * (idx_from_bs(bs) - 1));
+    uint8_t*           signer_addr = vc->req->in3_state->signers + (20 * (idx_from_bs(bs) - 1));
     in3_get_data_ctx_t dctx        = {.type = GET_DATA_NODE_MIN_BLK_HEIGHT, .data = signer_addr, .req = vc->req};
     ba_print(signer_addr, 20);
     in3_plugin_execute_first(vc->req, PLGN_ACT_GET_DATA, &dctx);
@@ -522,7 +522,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t header, bytes_t expecte
     return memcmp(hash, block_hash, 32) ? vc_err(vc, "invalid blockhash") : IN3_OK;
 
   // if we expect no signatures ...
-  if (vc->req->signers_length == 0) {
+  if (vc->req->in3_state->signers_length == 0) {
 #ifdef POA
     vhist_t* vh = NULL;
     // ... and the chain is a authority chain....
@@ -579,7 +579,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t header, bytes_t expecte
   }
 
   unsigned int signd = (confirmed | erred);
-  unsigned int all   = (1ULL << vc->req->signers_length) - 1;
+  unsigned int all   = (1ULL << vc->req->in3_state->signers_length) - 1;
   if (signd != all) {
     mark_offline(vc, all & ~signd);
     vc->dont_blacklist = true;

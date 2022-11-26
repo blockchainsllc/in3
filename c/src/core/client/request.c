@@ -357,7 +357,7 @@ in3_proof_t in3_req_get_proof(in3_req_t* ctx, int i) {
     if (verfification && strcmp(verfification, "none") == 0) return PROOF_NONE;
     if (verfification && strcmp(verfification, "proof") == 0) return PROOF_STANDARD;
   }
-  if (ctx->signers_length && !ctx->client->proof) return PROOF_STANDARD;
+  if (ctx->in3_state && ctx->in3_state->signers_length && !ctx->client->proof) return PROOF_STANDARD;
   return ctx->client->proof;
 }
 
