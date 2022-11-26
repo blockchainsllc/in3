@@ -197,7 +197,7 @@ in3_ret_t filter_add(in3_filter_handler_t* filters, in3_req_t* ctx, in3_filter_t
       case REQ_SUCCESS:
         if (IN3_OK != (res = req_get_error(block_ctx, 0)))
           return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", res);
-        current_block = d_get_long(block_ctx->responses[0], K_RESULT);
+        current_block = d_get_long(req_get_response(block_ctx, 0), K_RESULT);
         TRY(req_remove_required(ctx, block_ctx, false));
     }
   }
@@ -275,7 +275,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
           return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", res);
     }
   }
-  uint64_t blkno = d_get_long(block_ctx->responses[0], K_RESULT);
+  uint64_t blkno = d_get_long(req_get_response(block_ctx, 0), K_RESULT);
 
   in3_filter_t* f = filters->array[id - 1];
   if (!f)
@@ -308,7 +308,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
           if (IN3_OK != (res = req_get_error(logs_ctx, 0)))
             return req_set_error(logs_ctx, logs_ctx->error ? logs_ctx->error : "Error fetching logs", res);
       }
-      d_token_t* r = d_get(logs_ctx->responses[0], K_RESULT);
+      d_token_t* r = d_get(req_get_response(logs_ctx, 0), K_RESULT);
       if (!r) return req_set_error(logs_ctx, "no result in filter response", IN3_ERPC);
       char* jr = d_create_json(logs_ctx->response_context, r);
       sb_add_chars(result, jr);
@@ -346,7 +346,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
                   return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching blocks", res);
             }
 
-            d_token_t* hash = d_getl(d_get(block_ctx->responses[0], K_RESULT), K_HASH, 32);
+            d_token_t* hash = d_getl(d_get(req_get_response(block_ctx, 0), K_RESULT), K_HASH, 32);
             if (i > f->last_block + 1)
               sb_add_char(result, ',');
             sb_add_bytes(result, NULL, d_as_bytes(hash), 1, false);

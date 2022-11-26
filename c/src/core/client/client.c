@@ -111,8 +111,9 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
   }
 
   // do we have an error-property in the response?
-  bool       is_obj = d_type(ctx->responses[0]) == T_OBJECT;
-  d_token_t* r      = is_obj ? d_get(ctx->responses[0], K_ERROR) : NULL;
+  d_token_t* response = req_get_response(ctx, 0);
+  bool       is_obj   = d_type(response) == T_OBJECT;
+  d_token_t* r        = is_obj ? d_get(response, K_ERROR) : NULL;
   if (d_type(r) != T_NULL) {
     if (d_type(r) == T_STRING)
       *error = _strdupn(d_string(r), -1);
@@ -126,12 +127,12 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
     goto clean;
   }
 
-  if ((r = (is_obj ? d_get(ctx->responses[0], K_RESULT) : NULL)) == NULL) {
-    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "in3_http") == 0) {
-      *result = d_is_bytes(ctx->responses[0])
-                    ? _strdupn((void*) d_bytes(ctx->responses[0]).data, d_len(ctx->responses[0]) + 1)
-                    : d_create_json(ctx->response_context, r ? r : ctx->responses[0]);
-      res = IN3_OK;
+  if ((r = (is_obj ? d_get(response, K_RESULT) : NULL)) == NULL) {
+    if (strcmp(d_get_string(response, K_METHOD), "in3_http") == 0) {
+      *result = d_is_bytes(response)
+                    ? _strdupn((void*) d_bytes(response).data, d_len(response) + 1)
+                    : d_create_json(ctx->response_context, r ? r : response);
+      res     = IN3_OK;
     }
     else {
       // we have no result

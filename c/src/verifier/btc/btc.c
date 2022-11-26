@@ -807,12 +807,12 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
       case REQ_ERROR:
         return req_set_error(ctx->req, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
       case REQ_SUCCESS: {
-        d_token_t* result = d_get(sub->responses[0], K_RESULT);
+        d_token_t* result = d_get(req_get_response(sub, 0), K_RESULT);
         if (result) {
           sb_add_json(in3_rpc_handle_start(ctx), "", result);
         }
         else {
-          char* error_msg = d_get_string(d_get(sub->responses[0], K_ERROR), K_MESSAGE);
+          char* error_msg = d_get_string(d_get(req_get_response(sub, 0), K_ERROR), K_MESSAGE);
           return req_set_error(ctx->req, error_msg ? error_msg : "Unable to send transaction", IN3_ERPC);
         }
         return in3_rpc_handle_finish(ctx);

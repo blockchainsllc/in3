@@ -101,16 +101,16 @@ d_token_t* get_result(in3_req_t* ctx) {
     api_set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
     return NULL;
   }
-  else if (!ctx->responses) {
+  else if (!ctx->response_context) {
     api_set_error(IN3_ERPC, "No response");
     return NULL;
   }
 
-  d_token_t* t = d_get(ctx->responses[0], K_RESULT);
+  d_token_t* t = d_get(req_get_response(ctx, 0), K_RESULT);
   if (t) return t; // everthing is good, we have a result
 
   // if no result, we expect an error
-  t = d_get(ctx->responses[0], K_ERROR); // we we have an error...
+  t = d_get(req_get_response(ctx, 0), K_ERROR); // we we have an error...
   api_set_error(ETIMEDOUT, !t
                                ? "No result or error in response"
                                : (d_type(t) != T_OBJECT ? d_string(t) : d_get_string(t, K_MESSAGE)));

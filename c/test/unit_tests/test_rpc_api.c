@@ -91,7 +91,7 @@ static void test_in3_config() {
    }]");
 
   TEST_ASSERT_NULL(ctx->error);
-  TEST_ASSERT_EQUAL(1, d_get_int(ctx->responses[0], K_RESULT));
+  TEST_ASSERT_EQUAL(1, d_get_int(req_get_response(ctx, 0), K_RESULT));
   req_free(ctx);
 
   TEST_ASSERT_EQUAL(7, c->chain.id);
@@ -235,15 +235,14 @@ static void test_in3_client_context() {
   TEST_ASSERT_EQUAL(IN3_ERPCNRES, req_get_error(ctx, 0));
 
   // null maybe a valid result
-  json_ctx_t* json  = parse_json("{\"result\":null}");
-  ctx->responses    = malloc(sizeof(d_token_t*));
-  ctx->responses[0] = json->result;
+  json_ctx_t* json      = parse_json("{\"result\":null}");
+  ctx->response_context = json;
   TEST_ASSERT_EQUAL(IN3_OK, req_get_error(ctx, 0));
   json_free(json);
 
   // Test with error
-  json              = parse_json("{\"error\":\"Unknown\"}");
-  ctx->responses[0] = json->result;
+  json                  = parse_json("{\"error\":\"Unknown\"}");
+  ctx->response_context = json;
   TEST_ASSERT_EQUAL(IN3_EINVALDT, req_get_error(ctx, 0));
   // Test req_check_response_error() which internally also calls req_set_error()
   TEST_ASSERT_EQUAL(IN3_ERPC, req_check_response_error(ctx, 0));
@@ -251,13 +250,12 @@ static void test_in3_client_context() {
   json_free(json);
 
   // Test with error obj
-  json              = parse_json("{\"error\":{\"msg\":\"Unknown\",\"id\":\"0xf1\"}}");
-  ctx->responses[0] = json->result;
+  json                  = parse_json("{\"error\":{\"msg\":\"Unknown\",\"id\":\"0xf1\"}}");
+  ctx->response_context = json;
   TEST_ASSERT_EQUAL(IN3_ERPC, req_check_response_error(ctx, 0));
   TEST_ASSERT_EQUAL_STRING("{\"msg\":\"Unknown\",\"id\":\"0xf1\"}:Unknown", ctx->error);
   json_free(json);
-  free(ctx->responses);
-  ctx->responses = NULL;
+  ctx->response_context = NULL;
 
   // Test getter/setter
   TEST_ASSERT_EQUAL(IN3_ERPC, req_set_error(ctx, "RPC failure", IN3_ERPC));

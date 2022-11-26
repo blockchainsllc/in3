@@ -33,7 +33,7 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_req_t* parent, bytes_
   if (ctx) {
     switch (in3_req_state(ctx)) {
       case REQ_SUCCESS: {
-        d_token_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
+        d_token_t* rpc_result = d_get(req_get_response(ctx, 0), K_RESULT);
         d_bytes(rpc_result);
         if (!ctx->error && rpc_result && d_type(rpc_result) == T_BYTES && d_len(rpc_result) >= 20) {
           *result = d_as_bytes(rpc_result);

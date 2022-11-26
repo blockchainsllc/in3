@@ -80,7 +80,7 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
 
       // if it is useable, we can now handle the result.
       case REQ_SUCCESS: {
-        d_token_t* r = d_get(ctx->responses[0], K_RESULT);
+        d_token_t* r = d_get(req_get_response(ctx, 0), K_RESULT);
         if (r) {
           // we have a result, so write it back to the dst
           *dst = d_bytes(r);

@@ -217,7 +217,9 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
   in3_req_t* ctx = req_find_required(parent_ctx, "in3_nodeList", NULL);
 
   if (ctx) {
-    if (in3_req_state(ctx) == REQ_ERROR || (in3_req_state(ctx) == REQ_SUCCESS && !d_get(ctx->responses[0], K_RESULT))) {
+    d_token_t* response = req_get_response(ctx, 0);
+
+    if (in3_req_state(ctx) == REQ_ERROR || (in3_req_state(ctx) == REQ_SUCCESS && !d_get(response, K_RESULT))) {
       // blacklist node that gave us an error response for nodelist (if not first update)
       // and clear nodelist params
       if (nodelist_not_first_upd8(data))
@@ -238,7 +240,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
       case REQ_SUCCESS: {
-        d_token_t* r = d_get(ctx->responses[0], K_RESULT);
+        d_token_t* r = d_get(response, K_RESULT);
         // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `data->nodelist_upd8_params->node` lied to us
         // about the nodelist update, so we blacklist it for an hour
         if (nodelist_exp_last_block_neq(data, d_get_long(r, K_LAST_BLOCK_NUMBER)))
@@ -295,7 +297,7 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, i
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
       case REQ_SUCCESS: {
-        d_token_t* result = d_get(ctx->responses[0], K_RESULT);
+        d_token_t* result = d_get(req_get_response(ctx, 0), K_RESULT);
         if (result) {
           // we have a result....
           const in3_ret_t res = in3_client_fill_chain_whitelist(data, ctx, result);

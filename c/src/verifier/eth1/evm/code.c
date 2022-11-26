@@ -91,7 +91,7 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
   if (ctx)
     switch (in3_req_state(ctx)) {
       case REQ_SUCCESS: {
-        d_token_internal_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
+        d_token_internal_t* rpc_result = d_get(req_get_response(ctx, 0), K_RESULT);
         if (!ctx->error && rpc_result) {
           bytes32_t calculated_code_hash;
           bytes_t   code = d_bytes(rpc_result);

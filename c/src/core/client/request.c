@@ -147,6 +147,15 @@ in3_chain_t* in3_get_chain(in3_t* c, chain_id_t id) {
   return chain;
 }
 
+d_token_t* req_get_response(in3_req_t* req, size_t index) {
+  d_token_t* res = req->response_context ? req->response_context->result : NULL;
+  switch (d_type(res)) {
+    case T_OBJECT: return res;
+    case T_ARRAY: return (req->in3_state || !req_is_method(req, "in3_http")) ? d_get_at(res, index) : res;
+    default: return req->in3_state ? NULL : res;
+  }
+}
+
 in3_req_t* req_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
@@ -216,8 +225,7 @@ char* req_get_error_data(in3_req_t* ctx) {
 
 char* req_get_result_json(in3_req_t* ctx, int index) {
   assert_in3_req(ctx);
-  if (!ctx->responses) return NULL;
-  d_token_t* res = d_get(ctx->responses[index], K_RESULT);
+  d_token_t* res = d_get(req_get_response(ctx, (size_t) index), K_RESULT);
   return res ? d_create_json(ctx->response_context, res) : NULL;
 }
 
@@ -228,15 +236,15 @@ char* req_get_response_data(in3_req_t* ctx) {
   if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, '[');
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
     if (i) sb_add_char(&sb, ',');
-    str_range_t rr    = d_to_json(ctx->responses[i]);
-    char*       start = NULL;
+    d_token_t*  response = req_get_response(ctx, i);
+    str_range_t rr       = d_to_json(response);
+    char*       start    = NULL;
     if (!rr.data) { // it's a binary response, so we can't return the json
       _free(sb.data);
       return NULL;
     }
-    if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (start = d_to_json(d_get(ctx->responses[i], K_IN3)).data) && start < rr.data + rr.len) {
-      char* beginning = d_to_json(ctx->responses[i]).data;
-      while (start > beginning && *start != ',' && start > rr.data) start--; // NOSONAR -  we are already checking that start is within the range
+    if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (start = d_to_json(d_get(response, K_IN3)).data) && start < rr.data + rr.len) {
+      while (*start != ',' && start > rr.data) start--; // NOSONAR -  we are already checking that start is within the range
       sb_add_range(&sb, rr.data, 0, start - rr.data + 1);
       sb.data[sb.len - 1] = '}';
     }
@@ -255,7 +263,7 @@ req_type_t req_get_type(in3_req_t* ctx) {
 in3_ret_t req_check_response_error(in3_req_t* c, int i) {
   assert_in3_req(c);
 
-  d_token_t* r = d_get(c->responses[i], K_ERROR);
+  d_token_t* r = d_get(req_get_response(c, (size_t) i), K_ERROR);
   if (!r)
     return IN3_OK;
   else if (d_type(r) == T_OBJECT) {
@@ -322,9 +330,10 @@ in3_ret_t req_get_error(in3_req_t* ctx, int id) {
     return IN3_ERPC;
   else if (id >= (int) ctx->len)
     return IN3_EINVAL;
-  else if (!ctx->responses || !ctx->responses[id])
+  d_token_t* response = req_get_response(ctx, (size_t) id);
+  if (!response)
     return IN3_ERPCNRES;
-  else if (NULL == d_get(ctx->responses[id], K_RESULT) || d_get(ctx->responses[id], K_ERROR))
+  else if (NULL == d_get(response, K_RESULT) || d_get(response, K_ERROR))
     return IN3_EINVALDT;
   return IN3_OK;
 }
@@ -488,16 +497,17 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
     }
 
   if (ctx) {
-    if (child) *child = ctx;         // if we found the child assign it
-    if (req && use_heap) _free(req); // we only cleanup if the req is in the heap
+    if (child) *child = ctx;                        // if we found the child assign it
+    if (req && use_heap) _free(req);                // we only cleanup if the req is in the heap
+    d_token_t* response = req_get_response(ctx, 0); // we are only taking the first response ( for now )
 
     switch (in3_req_state(ctx)) {
       case REQ_ERROR:
         return req_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
-        *result = strcmp(method, "in3_http") == 0 ? ctx->responses[0] : d_get(ctx->responses[0], K_RESULT);
+        *result = strcmp(method, "in3_http") == 0 ? response : d_get(response, K_RESULT);
         if (!*result) {
-          d_token_t* error = d_get(ctx->responses[0], K_ERROR);
+          d_token_t* error = d_get(response, K_ERROR);
           if (error && allow_error) {
             *result = error;
             return IN3_OK;
@@ -539,10 +549,11 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
   in3_ret_t ret = req_add_required(parent, ctx);
 
   // if the request is an internal handled request, we willhave a result already, so we need to update the *result.
-  if (ret == IN3_OK && ctx->responses[0]) {
-    *result = d_get(ctx->responses[0], K_RESULT);
+  if (ret == IN3_OK && ctx->response_context) {
+    d_token_t* response = req_get_response(ctx, 0);
+    *result             = d_get(response, K_RESULT);
     if (!*result) {
-      char* s = d_get_string(d_get(ctx->responses[0], K_ERROR), K_MESSAGE);
+      char* s = d_get_string(d_get(response, K_ERROR), K_MESSAGE);
       UNUSED_VAR(s); // this makes sure we don't get a warning when building with _DLOGGING=false
       ret = req_set_error(parent, s ? s : "error executing provider call", IN3_ERPC);
     }
@@ -671,7 +682,7 @@ in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path,
       case REQ_ERROR:
         return req_set_error(req, found->error, found->verification_state ? found->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
-        *result = found->responses[0];
+        *result = found->response_context->result;
         return *result ? IN3_OK : req_set_error(req, "error executing provider call", IN3_ERPC);
       case REQ_WAITING_TO_SEND:
       case REQ_WAITING_FOR_RESPONSE:

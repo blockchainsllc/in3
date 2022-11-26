@@ -94,23 +94,24 @@ bool exec_weights(in3_t* c) {
     uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity, now);
     char *             tr = NULL, *warning = NULL;
     if (ctx) {
-      tr = _malloc(1000);
-      if (!ctx->error && d_type(d_get(ctx->responses[0], K_ERROR)) != T_NULL) {
-        d_token_t* msg = d_get(ctx->responses[0], K_ERROR);
+      d_token_t* resp = req_get_response(ctx, 0);
+      tr              = _malloc(1000);
+      if (!ctx->error && d_type(d_get(resp, K_ERROR)) != T_NULL) {
+        d_token_t* msg = d_get(resp, K_ERROR);
         if (d_type(msg) == T_OBJECT) msg = d_get(msg, K_MESSAGE);
         snprintx((warning = tr), 999, "%s", msg ? d_string(msg) : "Error-Response!");
       }
       else if (!ctx->error) {
-        b = d_get_int(ctx->responses[0], K_RESULT);
+        b = d_get_int(resp, K_RESULT);
         if (block < b) block = b;
 
         if (b < block - 1)
           snprintx((warning = tr), 999, "#%i ( out of sync : %i blocks behind latest )", b, block - b);
         else if (strncmp(node->url, "https://", 8))
           snprintx((warning = tr), 999, "#%i (missing https, which is required in a browser )", b);
-        else if (!IS_APPROX(d_get_int(ctx->responses[0], K_RESULT), d_get_int(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK), 1))
+        else if (!IS_APPROX(d_get_int(resp, K_RESULT), d_get_int(d_get(resp, K_IN3), K_CURRENT_BLOCK), 1))
           snprintx((warning = tr), 999, "#%i ( current block mismatch: %i blocks apart )", b,
-                   d_get_int(ctx->responses[0], K_RESULT) - d_get_int(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK));
+                   d_get_int(resp, K_RESULT) - d_get_int(d_get(resp, K_IN3), K_CURRENT_BLOCK));
         else
           snprintx(tr, 999, "#%i", b);
       }

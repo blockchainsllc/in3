@@ -106,7 +106,7 @@ static void test_context_bulk() {
   in3_req_t* block_ctx = req_new(in3, req.data);
   in3_ret_t  ret       = in3_send_req(block_ctx);
   for (uint64_t i = 0; i < blkno; i++) {
-    d_token_t* hash = d_getl(d_get(block_ctx->responses[i], K_RESULT), K_HASH, 32);
+    d_token_t* hash = d_getl(d_get(req_get_response(block_ctx, (size_t) i), K_RESULT), K_HASH, 32);
     TEST_ASSERT_NOT_NULL(hash);
     char h[67] = "0x";
     bytes_to_hex(d_bytes(hash).data, 32, h + 2);

@@ -67,11 +67,8 @@ NONULL static void response_free(in3_req_t* ctx) {
     _free(ctx->raw_response);
   }
 
-  if (ctx->responses) _free(ctx->responses);
   if (ctx->response_context) json_free(ctx->response_context);
   ctx->response_context = NULL;
-  ctx->responses        = NULL;
-  ctx->raw_response     = NULL;
   ctx->raw_response     = NULL;
   ctx->in3_state        = NULL;
 }
@@ -265,8 +262,6 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
       ctx->response_context->result->data = (uint8_t*) response_data;
       ctx->response_context->result->state |= TOKEN_STATE_RAW;
     }
-    ctx->responses    = _malloc(sizeof(d_token_t*));
-    ctx->responses[0] = ctx->response_context->result;
     return IN3_OK;
   }
   else {
@@ -275,6 +270,7 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
 
   ctx->response_context = is_json ? parse_json(response_data) : parse_binary_str(response_data, len);
 
+  // handle parse error
   if (!ctx->response_context) {
     char* error = is_json ? parse_json_error(response_data) : NULL;
     req_set_error(ctx, "\nError in JSON-response : ", req_set_error(ctx, error ? error : str_remove_html(response_data), IN3_EINVALDT));
@@ -282,23 +278,15 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
     return IN3_EINVALDT;
   }
 
-  if (d_type(ctx->response_context->result) == T_OBJECT) {
-    // it is a single result
-    ctx->responses    = _malloc(sizeof(d_token_t*));
-    ctx->responses[0] = ctx->response_context->result;
-    if (ctx->len != 1) return req_set_error(ctx, "The response must be an array!", IN3_EINVALDT);
+  // check response types
+  switch (d_type(ctx->response_context->result)) {
+    case T_OBJECT:
+      return ctx->len == 1 ? IN3_OK : req_set_error(ctx, "The response must be an array!", IN3_EINVALDT);
+    case T_ARRAY:
+      return ctx->len == d_len(ctx->response_context->result) ? IN3_OK : req_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
+    default:
+      return req_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
   }
-  else if (d_type(ctx->response_context->result) == T_ARRAY) {
-    int        i;
-    d_token_t* t = NULL;
-    if (d_len(ctx->response_context->result) != (int) ctx->len)
-      return req_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
-    ctx->responses = _malloc(sizeof(d_token_t*) * ctx->len);
-    for (i = 0, t = ctx->response_context->result + 1; i < (int) ctx->len; i++, t = d_next(t))
-      ctx->responses[i] = t;
-  }
-  else
-    return req_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
 
   return IN3_OK;
 }
@@ -357,7 +345,6 @@ static void clean_up_ctx(in3_req_t* ctx) {
 
   if (ctx->verification_state != IN3_OK && ctx->verification_state != IN3_WAITING) ctx->verification_state = IN3_WAITING;
   if (ctx->error) _free(ctx->error);
-  if (ctx->responses) _free(ctx->responses);
   if (ctx->response_context) json_free(ctx->response_context);
   ctx->error = NULL;
 }
@@ -371,18 +358,16 @@ NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx) {
       _free(ctx->raw_response[i].data.data);
   }
   _free(ctx->raw_response);
-  _free(ctx->responses);
   json_free(ctx->response_context);
 
   ctx->raw_response     = NULL;
   ctx->response_context = NULL;
-  ctx->responses        = NULL;
   return IN3_OK;
 }
 
 static in3_ret_t handle_payment(in3_vctx_t* vc, node_match_t* node, int index) {
   in3_req_t*             ctx  = vc->req;
-  in3_pay_followup_ctx_t fctx = {.req = ctx, .node = node, .resp_in3 = vc->proof, .resp_error = d_get(ctx->responses[index], K_ERROR)};
+  in3_pay_followup_ctx_t fctx = {.req = ctx, .node = node, .resp_in3 = vc->proof, .resp_error = d_get(req_get_response(ctx, (size_t) index), K_ERROR)};
   return req_set_error(ctx, "Error following up the payment data", in3_plugin_execute_first_or_none(ctx, PLGN_ACT_PAY_FOLLOWUP, &fctx));
 }
 
@@ -417,16 +402,17 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
   // check each request
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
     in3_vctx_t vc;
+    d_token_t* resp   = req_get_response(ctx, i);
     vc.req            = ctx;
     vc.chain          = chain;
     vc.request        = ctx->requests[i];
-    vc.result         = d_get(ctx->responses[i], K_RESULT);
+    vc.result         = d_get(resp, K_RESULT);
     vc.client         = ctx->client;
     vc.index          = (int) i;
     vc.method         = d_get_string(vc.request, K_METHOD);
     vc.node           = node;
     vc.dont_blacklist = false;
-    vc.proof          = d_get(ctx->responses[i], K_IN3); // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
+    vc.proof          = d_get(resp, K_IN3); // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
     res               = handle_payment(&vc, node, i);
 
     if (vc.proof) { // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
@@ -439,7 +425,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
     if (!res && !vc.result) {
       char* err_msg;
       // if we don't have a result, the node reported an error
-      if (is_user_error(d_get(ctx->responses[i], K_ERROR), &err_msg)) {
+      if (is_user_error(d_get(resp, K_ERROR), &err_msg)) {
         in3_log_debug("we have a user-error from node, so we reject the response, but don't blacklist ..\n");
         continue;
       }
@@ -515,12 +501,10 @@ static in3_ret_t find_valid_result(in3_req_t* ctx, node_match_t** vnode) {
   if (state && still_pending) {
     in3_log_debug("failed to verify, but waiting for pending\n");
     if (ctx->error) _free(ctx->error);
-    if (ctx->responses) _free(ctx->responses);
     if (ctx->response_context) json_free(ctx->response_context);
     ctx->error              = NULL;
     ctx->verification_state = IN3_WAITING;
     ctx->response_context   = NULL;
-    ctx->responses          = NULL;
     return IN3_WAITING;
   }
 

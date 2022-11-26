@@ -633,6 +633,7 @@ NONULL static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followu
   node_match_t* vnode       = fctx->node;
   node_match_t* node        = ctx->in3_state->nodes;
   int           nodes_count = ctx->in3_state->nodes == NULL ? 1 : req_nodes_len(ctx->in3_state->nodes);
+  d_token_t*    response    = req_get_response(ctx, 0); // first response
 
   // no node - nothing to do here.
   if (!node) return IN3_EIGNORE;
@@ -641,8 +642,8 @@ NONULL static in3_ret_t pick_followup(in3_nodeselect_def_t* data, in3_nl_followu
     handle_times(data, node, ctx->raw_response + n);
 
   // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
-  if (!is_blacklisted(get_node(data, node)) && ctx->responses && d_get(ctx->responses[0], K_IN3) && !d_get(ctx->responses[0], K_ERROR))
-    check_autoupdate(ctx, data, d_get(ctx->responses[0], K_IN3), vnode);
+  if (!is_blacklisted(get_node(data, node)) && response && d_get(response, K_IN3) && !d_get(response, K_ERROR))
+    check_autoupdate(ctx, data, d_get(response, K_IN3), vnode);
 
   // update weights in the cache
   return in3_cache_store_nodelist(ctx->client, data);

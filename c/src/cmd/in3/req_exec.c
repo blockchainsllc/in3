@@ -48,14 +48,15 @@ static void execute(in3_t* c, FILE* f) {
         }
 
         if (ret == IN3_OK) {
+          d_token_t* resp = req_get_response(ctx, 0);
           if (c->flags & FLAGS_KEEP_IN3) {
-            str_range_t rr  = d_to_json(ctx->responses[0]);
+            str_range_t rr  = d_to_json(resp);
             rr.data[rr.len] = 0;
             recorder_print(0, "%s\n", rr.data);
           }
           else {
-            d_token_t* result = d_get(ctx->responses[0], K_RESULT);
-            d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
+            d_token_t* result = d_get(resp, K_RESULT);
+            d_token_t* error  = d_get(resp, K_ERROR);
             char*      r      = d_create_json(ctx->response_context, result ? result : error);
             if (result)
               recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
