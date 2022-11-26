@@ -283,7 +283,7 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
     case T_OBJECT:
       return ctx->len == 1 ? IN3_OK : req_set_error(ctx, "The response must be an array!", IN3_EINVALDT);
     case T_ARRAY:
-      return ctx->len == d_len(ctx->response_context->result) ? IN3_OK : req_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
+      return ctx->len == (unsigned) d_len(ctx->response_context->result) ? IN3_OK : req_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
     default:
       return req_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
   }
