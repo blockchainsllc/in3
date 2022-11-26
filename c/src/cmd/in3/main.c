@@ -22,7 +22,6 @@ static void send_request(in3_t* c, int argc, char** argv, char* method, sb_t* ar
   else
     sb_add_chars(&sb, "}");
   recorder_request(sb.data);
-  printf("## %s\n", sb.data);
 
   in3_client_rpc_raw(c, sb.data, result, error);
   if (*result)
