@@ -204,6 +204,9 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
 
   in3_log_debug("::: exec " COLOR_BRIGHT_BLUE "%s" COLOR_RESET COLOR_MAGENTA " %j " COLOR_RESET "\n", d_get_string(ctx->requests[0], K_METHOD), d_get(ctx->requests[0], K_PARAMS));
 
+  // is it a valid request?
+  if (d_type(d_get(ctx->requests[0], K_METHOD)) != T_STRING) req_set_error(ctx, "No Method defined", IN3_ECONFIG);
+
   return ctx;
 }
 

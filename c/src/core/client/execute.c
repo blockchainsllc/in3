@@ -930,6 +930,32 @@ in3_req_state_t in3_req_exec_state(in3_req_t* req) {
   return in3_req_state(req);
 }
 
+static inline in3_ret_t handle_error(in3_req_t* req, in3_ret_t ret) {
+
+  // we count this is an attempt ( if the raw_response is null, it means we retry because of payments, so we don't count it)
+  if (req->raw_response) req->attempt++;
+
+  // if not, then we clean up
+  response_free(req);
+
+  // should we retry?
+  if (req->attempt < req->client->max_attempts) {
+    in3_log_debug("Retrying send request...\n");
+    // reset the error and try again
+    if (req->error) _free(req->error);
+    req->error              = NULL;
+    req->verification_state = IN3_WAITING;
+    // now try again, which should end in waiting for the next request.
+    return in3_req_execute(req);
+  }
+  else {
+    if (ctx_is_allowed_to_fail(req))
+      req->verification_state = ret = IN3_EIGNORE;
+    // we give up
+    return req->error ? (ret ? ret : IN3_ERPC) : req_set_error(req, "reaching max_attempts and giving up", IN3_ELIMIT);
+  }
+}
+
 static inline in3_ret_t select_nodes(in3_req_t* req) {
   in3_ret_t ret = IN3_OK;
 
@@ -964,9 +990,6 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
   // if there is an error it does not make sense to execute.
   if (req->error) return (req->verification_state && req->verification_state != IN3_WAITING) ? req->verification_state : IN3_EUNKNOWN;
 
-  // is it a valid request?
-  if (!req->request_context || d_type(d_get(req->requests[0], K_METHOD)) != T_STRING) return req_set_error(req, "No Method defined", IN3_ECONFIG);
-
   // if we have required-contextes, we need to check them first
   if (req->required && (ret = in3_req_execute(req->required))) {
     if (ret == IN3_EIGNORE)
@@ -985,7 +1008,7 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
       if (!req->raw_response && !req->response_context && (ret = handle_internally(req)) < 0)
         return req->error ? ret : req_set_error(req, get_error_message(req, ret), ret);
 
-      // if we don't have a nodelist, we try to get it.
+      // if this is an incubed-request, we need the nodelist and pick the nodes.
       if ((ret = select_nodes(req))) return ret;
 
       // if we still don't have an response, we keep on waiting
@@ -994,37 +1017,20 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
       // ok, we have a response, then we try to evaluate the responses
       // verify responses and return the node with the correct result.
       node_match_t* valid_node = NULL;
-      if ((ret = find_valid_result(req, &valid_node)) == IN3_OK && req->in3_state) {
+      ret                      = find_valid_result(req, &valid_node);
+
+      // if all is good and there was a in3 node delivering the response, we may want to do a followup now
+      if (ret == IN3_OK && req->in3_state && valid_node) {
         // allow payments to handle post actions
         in3_nl_followup_ctx_t fctx = {.req = req, .node = valid_node};
         in3_plugin_execute_first_or_none(req, PLGN_ACT_NL_PICK_FOLLOWUP, &fctx);
       }
 
       // we wait or are have successfully verified the response
-      if (ret == IN3_WAITING || ret == IN3_OK) return ret;
-
-      // we count this is an attempt ( if the raw_response is null, it means we retry because of payments, so we don't count it)
-      if (req->raw_response) req->attempt++;
-
-      // if not, then we clean up
-      response_free(req);
-
-      // should we retry?
-      if (req->attempt < req->client->max_attempts) {
-        in3_log_debug("Retrying send request...\n");
-        // reset the error and try again
-        if (req->error) _free(req->error);
-        req->error              = NULL;
-        req->verification_state = IN3_WAITING;
-        // now try again, which should end in waiting for the next request.
-        return in3_req_execute(req);
-      }
-      else {
-        if (ctx_is_allowed_to_fail(req))
-          req->verification_state = ret = IN3_EIGNORE;
-        // we give up
-        return req->error ? (ret ? ret : IN3_ERPC) : req_set_error(req, "reaching max_attempts and giving up", IN3_ELIMIT);
-      }
+      if (ret == IN3_WAITING || ret == IN3_OK)
+        return ret;
+      else
+        return handle_error(req, ret);
     }
 
     case RT_SIGN: {
