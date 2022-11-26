@@ -422,6 +422,9 @@ NONULL static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_nodeselect_def
   if (data->nodelist == NULL && IN3_ECONFIG == init_boot_nodes(data, ctx->client, in3_chain_id(ctx)))
     return IN3_ECONFIG;
 
+  // make sure the in3_state is initialized
+  if (!ctx->in3_state) ctx->in3_state = _calloc(1, sizeof(in3_state_t));
+
   in3_node_filter_t filter = NODE_FILTER_INIT;
   filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
   filter.props             = (w->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_req_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);

@@ -154,7 +154,7 @@ static in3_ret_t recorder_transport_in(void* plugin_data, in3_plugin_act_t actio
 static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   UNUSED_VAR(plugin_data);
   in3_http_request_t* req = plugin_ctx;
-  node_match_t*       m   = req->req->nodes;
+  node_match_t*       m   = req->req->in3_state ? req->req->in3_state->nodes : NULL;
   in3_ret_t           res = rec.transport(NULL, action, plugin_ctx);
   if (action == PLGN_ACT_TRANSPORT_SEND) {
     fprintf(rec.f, ":: request ");
@@ -169,7 +169,7 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
     fflush(rec.f);
   }
   if (action != PLGN_ACT_TRANSPORT_CLEAN) {
-    m         = req->req->nodes;
+    m         = req->req->in3_state ? req->req->in3_state->nodes : NULL;
     char* rpc = d_get_string(d_get(req->req->requests[0], K_IN3), K_RPC);
     int   l   = rpc ? 1 : req_nodes_len(m);
     for (int i = 0; i < l; i++, m = m ? m->next : NULL) {

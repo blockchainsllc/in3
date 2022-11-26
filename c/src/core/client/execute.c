@@ -728,7 +728,7 @@ static void in3_handle_rpc_next(in3_req_t* ctx, ctx_req_transports_t* transports
       in3_http_request_t req = {.req = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       in3_plugin_execute_first(ctx, PLGN_ACT_TRANSPORT_RECEIVE, &req);
 #ifdef DEBUG
-      node_match_t* w = ctx->nodes;
+      node_match_t* w = ctx->in3_state ? ctx->in3_state->nodes : NULL;
       int           j = 0;
       for (; w; j++, w = w->next) {
         if (ctx->raw_response[j].state != IN3_WAITING && ctx->raw_response[j].data.data && ctx->raw_response[j].time) {
@@ -934,7 +934,7 @@ static inline in3_ret_t select_nodes(in3_req_t* req) {
   in3_ret_t ret = IN3_OK;
 
   // we only need to pick nodes, if we don't have an anser or no nodes picked
-  if (req->raw_response || req->in3_state) return ret;
+  if (req->raw_response || (req->in3_state && req->in3_state->nodes)) return ret;
 
   // if the request has a rpc-url or a REST-request, we don't pick nodes.
   if (d_get(d_get(req->requests[0], K_IN3), K_RPC) || is_raw_http(req)) return ret;
@@ -994,7 +994,7 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
       // ok, we have a response, then we try to evaluate the responses
       // verify responses and return the node with the correct result.
       node_match_t* valid_node = NULL;
-      if ((ret = find_valid_result(req, &valid_node)) == IN3_OK) {
+      if ((ret = find_valid_result(req, &valid_node)) == IN3_OK && req->in3_state) {
         // allow payments to handle post actions
         in3_nl_followup_ctx_t fctx = {.req = req, .node = valid_node};
         in3_plugin_execute_first_or_none(req, PLGN_ACT_NL_PICK_FOLLOWUP, &fctx);

@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -697,41 +697,41 @@ static void test_nodelist_update_8() {
 static void test_nodelist_pick_signer_exclusions() {
   in3_t* in3 = in3_for_chain(0x34ff);
   char*  err = in3_configure(in3, "{\"chainId\":\"0x34ff\",\"chainType\":0,\"autoUpdateList\":false,\"signatureCount\":1,\"requestCount\":1,\"maxAttempts\":1,\"maxVerifiedHashes\":0,"
-                                 "\"nodeRegistry\":{"
-                                 "   \"needsUpdate\":false,"
-                                 "   \"contract\": \"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\","
-                                 "   \"registryId\": \"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\","
-                                 "   \"nodeList\": [{"
-                                 "      \"url\":\"https://in3-v2.slock.it/priv/nd-1\","
-                                 "      \"address\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\","
-                                 "      \"props\":\"0x1dd\""
-                                 "    },"
-                                 "    {"
-                                 "      \"url\":\"https://in3-v2.slock.it/priv/nd-2\","
-                                 "      \"address\":\"0x1fe2e9bf29aa1938859af64c413361227d04059a\","
-                                 "      \"props\":\"0x1dd\""
-                                 "    },"
-                                 "    {"
-                                 "      \"url\":\"https://in3-v2.slock.it/goerli/nd-3\","
-                                 "      \"address\":\"0x945f75c0408c0026a3cd204d36f5e47745182fd4\","
-                                 "      \"props\":\"0x1dd\""
-                                 "    }]"
-                                 "}}");
+                                   "\"nodeRegistry\":{"
+                                   "   \"needsUpdate\":false,"
+                                   "   \"contract\": \"0x5f51e413581dd76759e9eed51e63d14c8d1379c8\","
+                                   "   \"registryId\": \"0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea\","
+                                   "   \"nodeList\": [{"
+                                   "      \"url\":\"https://in3-v2.slock.it/priv/nd-1\","
+                                   "      \"address\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\","
+                                   "      \"props\":\"0x1dd\""
+                                   "    },"
+                                   "    {"
+                                   "      \"url\":\"https://in3-v2.slock.it/priv/nd-2\","
+                                   "      \"address\":\"0x1fe2e9bf29aa1938859af64c413361227d04059a\","
+                                   "      \"props\":\"0x1dd\""
+                                   "    },"
+                                   "    {"
+                                   "      \"url\":\"https://in3-v2.slock.it/goerli/nd-3\","
+                                   "      \"address\":\"0x945f75c0408c0026a3cd204d36f5e47745182fd4\","
+                                   "      \"props\":\"0x1dd\""
+                                   "    }]"
+                                   "}}");
   TEST_ASSERT_NULL_MESSAGE(err, err);
   register_transport(in3, test_transport);
 
   size_t test_count = 100; /* we should surely hit a collision by then (unless the code is handling exclusions correctly) */
   for (size_t i = 0; i < test_count; i++) {
     in3_req_t*        ctx  = req_new(in3, "{\"jsonrpc\":\"2.0\","
-                                  "\"method\":\"eth_getTransactionByHash\","
-                                  "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"]}");
+                                                  "\"method\":\"eth_getTransactionByHash\","
+                                                  "\"params\":[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"]}");
     in3_nl_pick_ctx_t pctx = {.type = NL_DATA, .req = ctx};
     TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx));
     pctx.type = NL_SIGNER;
     TEST_ASSERT_EQUAL(IN3_OK, in3_plugin_execute_first(ctx, PLGN_ACT_NL_PICK, &pctx));
-    TEST_ASSERT_NOT_NULL(ctx->nodes);
-    TEST_ASSERT_EQUAL(1, ctx->signers_length);
-    TEST_ASSERT(memcmp(ctx->nodes->address, ctx->signers, 20) != 0);
+    TEST_ASSERT_NOT_NULL(ctx->in3_state->nodes);
+    TEST_ASSERT_EQUAL(1, ctx->in3_state->signers_length);
+    TEST_ASSERT(memcmp(ctx->in3_state->nodes->address, ctx->in3_state->signers, 20) != 0);
     req_free(ctx);
   }
 
