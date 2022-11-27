@@ -196,7 +196,7 @@ void* respond(void* arg) {
             // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
             if (req->error) _free(req->error);
             req->error            = NULL;
-            str_range_t range     = d_to_json(req->responses[0]);
+            str_range_t range     = d_to_json(req_get_response(req, 0));
             range.data[range.len] = 0;
 
             // remove in3
