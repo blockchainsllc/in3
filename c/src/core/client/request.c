@@ -55,25 +55,6 @@ static in3_ret_t in3_plugin_init(in3_req_t* ctx) {
   return IN3_OK;
 }
 
-bool in_property_name(char* c) {
-  for (c++; *c && *c != '"'; c++) {
-    if (*c == '\\') c++;
-  }
-  if (*c) c++;
-  while (*c && (*c == ' ' || *c < 14)) c++;
-  return *c == ':';
-}
-
-in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
-  char*      data = _strdupn(req_data, -1);
-  in3_req_t* r    = req_new(client, data);
-  if (r)
-    in3_cache_add_ptr(&r->cache, data);
-  else
-    _free(data);
-  return r;
-}
-
 void in3_set_chain_id(in3_req_t* req, chain_id_t id) {
   if (!id || in3_chain_id(req) == id) return;
 
@@ -89,6 +70,7 @@ chain_id_t in3_chain_id(const in3_req_t* req) {
   }
   return req->client->chain.id;
 }
+
 in3_ret_t in3_resolve_chain_id(in3_req_t* req, chain_id_t* chain_id) {
   // make sure, we have the correct chain_id
   *chain_id = in3_chain_id(req);
@@ -221,6 +203,16 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
   in3_log_debug("::: exec " COLOR_BRIGHT_BLUE "%s" COLOR_RESET COLOR_MAGENTA " %j " COLOR_RESET "\n", d_get_string(req, K_METHOD), d_get(req, K_PARAMS));
 
   return ctx;
+}
+
+in3_req_t* req_new_clone(in3_t* client, const char* req_data) {
+  char*      data = _strdupn(req_data, -1);
+  in3_req_t* r    = req_new(client, data);
+  if (r)
+    in3_cache_add_ptr(&r->cache, data);
+  else
+    _free(data);
+  return r;
 }
 
 char* req_get_error_data(in3_req_t* ctx) {
@@ -479,7 +471,7 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
   in3_req_t* ctx      = parent->required;
   size_t     req_len  = _strnlen(params, 100000) + _strnlen(method, 100) + 30 + (in3 ? 10 + _strnlen(in3, 100) : 0); // calculate the memory needed to store the json-request
   bool       use_heap = req_len > 1000;                                                                              // anything bigger than 1000 should not be stored on the stack
-  char*      _in3     = in3 ? stack_printx(10 + _strnlen(in3, 100), ",\"in3\":%s", in3) : "";                        // the full optional in3-section should always fit into heap
+  char*      _in3     = in3 ? stack_printx(10 + _strnlen(in3, 100), ",\"in3\":%s", in3) : "";                        // the full optional in3-section should always fit into stack
   char*      req      = use_cache                                                                                    // if we are using the cache we need the exact request as ke, which we will compare to a cached value in order to find the right request
                             ? (use_heap
                                    ? sprintx("{\"method\":\"%s\",\"params\":[%s]%s}", method, params, _in3)
@@ -491,9 +483,10 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
     ctx = find_req(ctx, req);
   else
     for (; ctx; ctx = ctx->required) {
+      d_token_t* r = req_get_request(ctx, 0);
       // we simply check if the method and params of the first request match
-      if (strcmp(d_get_string(req_get_request(ctx, 0), K_METHOD), method)) continue;
-      d_token_t* t = d_get(req_get_request(ctx, 0), K_PARAMS);
+      if (strcmp(d_get_string(r, K_METHOD), method)) continue;
+      d_token_t* t = d_get(r, K_PARAMS);
       if (!t) continue;
       str_range_t p = d_to_json(t);
       if (strncmp(params, p.data + 1, p.len - 2) == 0) break;

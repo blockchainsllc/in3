@@ -876,14 +876,16 @@ in3_ret_t req_remove_required(in3_req_t* parent, in3_req_t* ctx, bool rec) {
 }
 
 in3_req_state_t in3_req_state(in3_req_t* ctx) {
-  if (ctx == NULL) return REQ_SUCCESS;
-  in3_req_state_t required_state = ctx->required ? in3_req_state(ctx->required) : REQ_SUCCESS;
-  if (required_state == REQ_ERROR || ctx->error) return REQ_ERROR;
-  if (ctx->required && required_state != REQ_SUCCESS) return required_state;
-  if (!ctx->raw_response) return REQ_WAITING_TO_SEND;
-  if (ctx->type == RT_RPC && !ctx->response) return REQ_WAITING_FOR_RESPONSE;
-  if (ctx->type == RT_SIGN && ctx->raw_response->state == IN3_WAITING) return REQ_WAITING_FOR_RESPONSE;
-  return REQ_SUCCESS;
+  if (ctx == NULL) return REQ_SUCCESS;                                                                  // SUCCESS is the default
+  if (ctx->error) return REQ_ERROR;                                                                     // if we have an error, the status is clear.
+  if (ctx->required) {                                                                                  // we always handle the required sub contexts first
+    in3_req_state_t required_state = in3_req_state(ctx->required);                                      // recursivly check the state.
+    if (required_state != REQ_SUCCESS) return required_state;                                           // if the the required is not successfull, we will use whatever state it is in.
+  }                                                                                                     //
+  if (!ctx->raw_response) return REQ_WAITING_TO_SEND;                                                   // we have not created the raw_response, which means we have not send the request yet and no internal request has handled it
+  if (ctx->type == RT_RPC && !ctx->response) return REQ_WAITING_FOR_RESPONSE;                           // we have a raw_response, but no response, which means, we need morre responses to verify them.
+  if (ctx->type == RT_SIGN && ctx->raw_response->state == IN3_WAITING) return REQ_WAITING_FOR_RESPONSE; // we are waiting for a signature
+  return REQ_SUCCESS;                                                                                   // since we must have a response and no error, it is looking good.
 }
 
 void req_free(in3_req_t* ctx) {
@@ -967,6 +969,7 @@ static inline in3_ret_t select_nodes(in3_req_t* req) {
   return in3_plugin_execute_first_or_none(req, PLGN_ACT_PAY_PREPARE, req);
 }
 
+// the main execution-function of an request
 in3_ret_t in3_req_execute(in3_req_t* req) {
   in3_ret_t ret = IN3_OK;
 
@@ -982,7 +985,7 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
   }
 
   // if there is response we are done.
-  if (req->response && req->status == IN3_OK) return IN3_OK;
+  if (req->status == IN3_OK && req->response) return IN3_OK;
 
   switch (req->type) {
     case RT_RPC: {
