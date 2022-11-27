@@ -101,7 +101,7 @@ d_token_t* get_result(in3_req_t* ctx) {
     api_set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
     return NULL;
   }
-  else if (!ctx->response_context) {
+  else if (!ctx->response) {
     api_set_error(IN3_ERPC, "No response");
     return NULL;
   }

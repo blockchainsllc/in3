@@ -148,7 +148,7 @@ in3_chain_t* in3_get_chain(in3_t* c, chain_id_t id) {
 }
 
 d_token_t* req_get_response(in3_req_t* req, size_t index) {
-  d_token_t* res = req->response_context ? req->response_context->result : NULL;
+  d_token_t* res = req->response ? req->response->result : NULL;
   switch (d_type(res)) {
     case T_OBJECT: return res;
     case T_ARRAY: return (req->in3_state || !req_is_method(req, "in3_http")) ? d_get_at(res, index) : res;
@@ -226,7 +226,7 @@ char* req_get_error_data(in3_req_t* ctx) {
 char* req_get_result_json(in3_req_t* ctx, int index) {
   assert_in3_req(ctx);
   d_token_t* res = d_get(req_get_response(ctx, (size_t) index), K_RESULT);
-  return res ? d_create_json(ctx->response_context, res) : NULL;
+  return res ? d_create_json(ctx->response, res) : NULL;
 }
 
 char* req_get_response_data(in3_req_t* ctx) {
@@ -549,7 +549,7 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
   in3_ret_t ret = req_add_required(parent, ctx);
 
   // if the request is an internal handled request, we willhave a result already, so we need to update the *result.
-  if (ret == IN3_OK && ctx->response_context) {
+  if (ret == IN3_OK && ctx->response) {
     d_token_t* response = req_get_response(ctx, 0);
     *result             = d_get(response, K_RESULT);
     if (!*result) {
@@ -682,7 +682,7 @@ in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path,
       case REQ_ERROR:
         return req_set_error(req, found->error, found->verification_state ? found->verification_state : IN3_ERPC);
       case REQ_SUCCESS:
-        *result = found->response_context->result;
+        *result = found->response->result;
         return *result ? IN3_OK : req_set_error(req, "error executing provider call", IN3_ERPC);
       case REQ_WAITING_TO_SEND:
       case REQ_WAITING_FOR_RESPONSE:

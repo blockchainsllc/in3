@@ -57,7 +57,7 @@ static void execute(in3_t* c, FILE* f) {
           else {
             d_token_t* result = d_get(resp, K_RESULT);
             d_token_t* error  = d_get(resp, K_ERROR);
-            char*      r      = d_create_json(ctx->response_context, result ? result : error);
+            char*      r      = d_create_json(ctx->response, result ? result : error);
             if (result)
               recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
             else

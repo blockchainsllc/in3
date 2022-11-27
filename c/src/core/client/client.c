@@ -119,10 +119,10 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
       *error = _strdupn(d_string(r), -1);
     else if (d_type(r) == T_OBJECT) {
       char* msg = d_get_string(r, K_MESSAGE);
-      *error    = msg ? _strdupn(msg, -1) : d_create_json(ctx->response_context, r);
+      *error    = msg ? _strdupn(msg, -1) : d_create_json(ctx->response, r);
     }
     else
-      *error = d_create_json(ctx->response_context, r);
+      *error = d_create_json(ctx->response, r);
     res = IN3_ERPC;
     goto clean;
   }
@@ -131,7 +131,7 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
     if (strcmp(d_get_string(response, K_METHOD), "in3_http") == 0) {
       *result = d_is_bytes(response)
                     ? _strdupn((void*) d_bytes(response).data, d_len(response) + 1)
-                    : d_create_json(ctx->response_context, r ? r : response);
+                    : d_create_json(ctx->response, r ? r : response);
       res     = IN3_OK;
     }
     else {
@@ -143,7 +143,7 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
   }
 
   // we have a result and copy it
-  if (result) *result = d_create_json(ctx->response_context, r);
+  if (result) *result = d_create_json(ctx->response, r);
 
 clean:
   req_free(ctx);

@@ -421,7 +421,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
     }
     else {
       //
-      char* c = d_create_json(ctx->response_context, result);
+      char* c = d_create_json(ctx->response, result);
       req_free(ctx);
       return c;
     }

@@ -67,10 +67,10 @@ NONULL static void response_free(in3_req_t* ctx) {
     _free(ctx->raw_response);
   }
 
-  if (ctx->response_context) json_free(ctx->response_context);
-  ctx->response_context = NULL;
-  ctx->raw_response     = NULL;
-  ctx->in3_state        = NULL;
+  if (ctx->response) json_free(ctx->response);
+  ctx->response     = NULL;
+  ctx->raw_response = NULL;
+  ctx->in3_state    = NULL;
 }
 
 NONULL void in3_check_verified_hashes(in3_t* c) {
@@ -251,16 +251,16 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
   const bool is_json = response_data[0] == '{' || response_data[0] == '[' || response_data[0] == '"';
 
   if (is_raw_http(ctx)) {
-    ctx->response_context = is_json ? parse_json(response_data) : NULL;
-    if (!ctx->response_context) {
+    ctx->response = is_json ? parse_json(response_data) : NULL;
+    if (!ctx->response) {
       // we create a context only holding the raw data
-      ctx->response_context               = _calloc(1, sizeof(json_ctx_t));
-      ctx->response_context->c            = response_data;
-      ctx->response_context->len          = 1;
-      ctx->response_context->result       = _calloc(1, sizeof(d_token_t));
-      ctx->response_context->result->len  = len;
-      ctx->response_context->result->data = (uint8_t*) response_data;
-      ctx->response_context->result->state |= TOKEN_STATE_RAW;
+      ctx->response               = _calloc(1, sizeof(json_ctx_t));
+      ctx->response->c            = response_data;
+      ctx->response->len          = 1;
+      ctx->response->result       = _calloc(1, sizeof(d_token_t));
+      ctx->response->result->len  = len;
+      ctx->response->result->data = (uint8_t*) response_data;
+      ctx->response->result->state |= TOKEN_STATE_RAW;
     }
     return IN3_OK;
   }
@@ -268,10 +268,10 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
     assert(len);
   }
 
-  ctx->response_context = is_json ? parse_json(response_data) : parse_binary_str(response_data, len);
+  ctx->response = is_json ? parse_json(response_data) : parse_binary_str(response_data, len);
 
   // handle parse error
-  if (!ctx->response_context) {
+  if (!ctx->response) {
     char* error = is_json ? parse_json_error(response_data) : NULL;
     req_set_error(ctx, "\nError in JSON-response : ", req_set_error(ctx, error ? error : str_remove_html(response_data), IN3_EINVALDT));
     _free(error);
@@ -279,11 +279,11 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
   }
 
   // check response types
-  switch (d_type(ctx->response_context->result)) {
+  switch (d_type(ctx->response->result)) {
     case T_OBJECT:
       return ctx->len == 1 ? IN3_OK : req_set_error(ctx, "The response must be an array!", IN3_EINVALDT);
     case T_ARRAY:
-      return ctx->len == (unsigned) d_len(ctx->response_context->result) ? IN3_OK : req_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
+      return ctx->len == (unsigned) d_len(ctx->response->result) ? IN3_OK : req_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
     default:
       return req_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
   }
@@ -345,7 +345,7 @@ static void clean_up_ctx(in3_req_t* ctx) {
 
   if (ctx->verification_state != IN3_OK && ctx->verification_state != IN3_WAITING) ctx->verification_state = IN3_WAITING;
   if (ctx->error) _free(ctx->error);
-  if (ctx->response_context) json_free(ctx->response_context);
+  if (ctx->response) json_free(ctx->response);
   ctx->error = NULL;
 }
 
@@ -358,10 +358,10 @@ NONULL in3_ret_t in3_retry_same_node(in3_req_t* ctx) {
       _free(ctx->raw_response[i].data.data);
   }
   _free(ctx->raw_response);
-  json_free(ctx->response_context);
+  json_free(ctx->response);
 
-  ctx->raw_response     = NULL;
-  ctx->response_context = NULL;
+  ctx->raw_response = NULL;
+  ctx->response     = NULL;
   return IN3_OK;
 }
 
@@ -501,10 +501,10 @@ static in3_ret_t find_valid_result(in3_req_t* ctx, node_match_t** vnode) {
   if (state && still_pending) {
     in3_log_debug("failed to verify, but waiting for pending\n");
     if (ctx->error) _free(ctx->error);
-    if (ctx->response_context) json_free(ctx->response_context);
+    if (ctx->response) json_free(ctx->response);
     ctx->error              = NULL;
     ctx->verification_state = IN3_WAITING;
-    ctx->response_context   = NULL;
+    ctx->response           = NULL;
     return IN3_WAITING;
   }
 
@@ -644,7 +644,7 @@ NONULL static bool ctx_is_allowed_to_fail(in3_req_t* ctx) {
 in3_req_t* in3_req_last_waiting(in3_req_t* ctx) {
   in3_req_t* last = ctx;
   for (; ctx; ctx = ctx->required) {
-    if (!ctx->response_context) last = ctx;
+    if (!ctx->response) last = ctx;
   }
   return last;
 }
@@ -883,7 +883,7 @@ in3_req_state_t in3_req_state(in3_req_t* ctx) {
   if (required_state == REQ_ERROR || ctx->error) return REQ_ERROR;
   if (ctx->required && required_state != REQ_SUCCESS) return required_state;
   if (!ctx->raw_response) return REQ_WAITING_TO_SEND;
-  if (ctx->type == RT_RPC && !ctx->response_context) return REQ_WAITING_FOR_RESPONSE;
+  if (ctx->type == RT_RPC && !ctx->response) return REQ_WAITING_FOR_RESPONSE;
   if (ctx->type == RT_SIGN && ctx->raw_response->state == IN3_WAITING) return REQ_WAITING_FOR_RESPONSE;
   return REQ_SUCCESS;
 }
@@ -983,13 +983,13 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
   }
 
   // if there is response we are done.
-  if (req->response_context && req->verification_state == IN3_OK) return IN3_OK;
+  if (req->response && req->verification_state == IN3_OK) return IN3_OK;
 
   switch (req->type) {
     case RT_RPC: {
 
       // do we need to handle it internaly?
-      if (!req->raw_response && !req->response_context && (ret = handle_internally(req)) < 0)
+      if (!req->raw_response && !req->response && (ret = handle_internally(req)) < 0)
         // there was weither an error or a WAITING, so we return here
         return req->error ? ret : req_set_error(req, get_error_message(req, ret), ret);
 

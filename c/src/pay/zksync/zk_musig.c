@@ -206,7 +206,7 @@ static in3_ret_t create_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* ms
 
   // only copy the data as json, so we can store them without a json_ctx and can clean up.
   if (sub) {
-    *proof_data = d_create_json(sub->response_context, result);
+    *proof_data = d_create_json(sub->response, result);
     req_remove_required(ctx, sub, false);
     return IN3_OK;
   }

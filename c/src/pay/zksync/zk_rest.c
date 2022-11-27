@@ -30,7 +30,7 @@ in3_ret_t zksync_tx_data(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   TRY_FINAL(req_send_sub_request(ctx->req, "in3_http", sb.data, NULL, &res, &req), _free(sb.data))
 
-  char* resp = d_create_json(req->response_context, res);
+  char* resp = d_create_json(req->response, res);
   in3_rpc_handle_with_string(ctx, resp);
   _free(resp);
   return IN3_OK;
@@ -80,7 +80,7 @@ in3_ret_t zksync_account_history(zksync_config_t* conf, in3_rpc_handle_ctx_t* ct
 
   TRY_FINAL(req_send_sub_request(ctx->req, "in3_http", sb.data, NULL, &res, &req), _free(sb.data))
 
-  char* resp = d_create_json(req->response_context, res);
+  char* resp = d_create_json(req->response, res);
   in3_rpc_handle_with_string(ctx, resp);
   _free(resp);
   return IN3_OK;

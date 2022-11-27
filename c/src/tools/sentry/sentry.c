@@ -28,8 +28,8 @@ static in3_ret_t handle_sentry(void* cptr, in3_plugin_act_t action, void* arg) {
       if (t->req->request_context) {
         req = t->req->request_context->c;
       }
-      if (t->req->response_context) {
-        res = t->req->response_context->c;
+      if (t->req->response) {
+        res = t->req->response->c;
       }
       else if (t->req->raw_response) {
         res = t->req->raw_response->data.data;
