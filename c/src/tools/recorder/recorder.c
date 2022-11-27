@@ -21,11 +21,11 @@ typedef struct ptr {
 
 static ptr_t* global_ptr = NULL;
 void*         add_global(void* ptr) {
-  ptr_t* p   = _malloc(sizeof(ptr_t));
-  p->next    = global_ptr;
-  p->ptr     = ptr;
-  global_ptr = p;
-  return ptr;
+          ptr_t* p   = _malloc(sizeof(ptr_t));
+          p->next    = global_ptr;
+          p->ptr     = ptr;
+          global_ptr = p;
+          return ptr;
 }
 
 typedef struct {

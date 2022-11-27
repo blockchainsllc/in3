@@ -148,7 +148,7 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     return req_set_error(req, "ERROR: in build_unlocking_script: witness missing.", IN3_EINVAL);
   }
 
-  bytes_t **signatures = (bytes_t * * const) &(utxo->signatures), *pub_key = &(utxo->signers[0].pub_key), *unlocking_script = NULL, num_elements = NULL_BYTES;
+  bytes_t **signatures = (bytes_t * *const) &(utxo->signatures), *pub_key = &(utxo->signers[0].pub_key), *unlocking_script = NULL, num_elements = NULL_BYTES;
   switch (utxo->tx_out.script.type) {
     case BTC_P2PK: {
       // Unlocking script format is: DER_SIG_LEN|DER_SIG
