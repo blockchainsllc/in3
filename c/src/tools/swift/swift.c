@@ -140,5 +140,5 @@ int sign_get_curve_type(in3_req_t* r) {
 char* sign_get_metadata(in3_req_t* r) {
   d_token_t* params = d_get(req_get_request(r, 0), K_PARAMS);
   d_token_t* meta   = d_get_at(params, 4);
-  return meta ? d_create_json(r->request_context, meta) : NULL;
+  return meta ? d_create_json(r->request, meta) : NULL;
 }

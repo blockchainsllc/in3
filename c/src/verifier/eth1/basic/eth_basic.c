@@ -157,7 +157,7 @@ static in3_ret_t eth_newFilter(in3_filter_handler_t* filters, in3_rpc_handle_ctx
   TRY_PARAM_GET_REQUIRED_OBJECT(opts, ctx, 0)
   if (!filter_opt_valid(opts)) return req_set_error(ctx->req, "filter option parsing failed", IN3_EINVAL);
 
-  char*     fopt = d_create_json(ctx->req->request_context, opts);
+  char*     fopt = d_create_json(ctx->req->request, opts);
   in3_ret_t res  = filter_add(filters, ctx->req, FILTER_EVENT, fopt);
   if (res < 0) {
     _free(fopt);

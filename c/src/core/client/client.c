@@ -164,12 +164,12 @@ in3_ret_t in3_client_rpc_raw(in3_t* c, const char* request, char** result, char*
 
 static char* create_rpc_error(in3_req_t* ctx, int code, char* error) {
   sb_t          sb       = {0};
-  bool          is_array = ctx && ctx->request_context && d_type(ctx->request_context->result) == T_ARRAY;
+  bool          is_array = ctx && ctx->request && d_type(ctx->request->result) == T_ARRAY;
   uint_fast16_t len      = (ctx && ctx->len) ? ctx->len : 1;
   if (is_array) sb_add_char(&sb, '[');
   for (uint_fast16_t i = 0; i < len; i++)
     sb_add_value(&sb, "{\"id\":%d,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%S\"}}",
-                 (ctx && ctx->request_context && i < ctx->len) ? d_get_int(req_get_request(ctx, i), K_ID) : 0,
+                 (ctx && ctx->request && i < ctx->len) ? d_get_int(req_get_request(ctx, i), K_ID) : 0,
                  code, error);
   if (is_array) sb_add_char(&sb, ']');
   return sb.data;

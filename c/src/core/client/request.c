@@ -157,7 +157,7 @@ d_token_t* req_get_response(in3_req_t* req, size_t index) {
 }
 
 d_token_t* req_get_request(const in3_req_t* req, size_t index) {
-  d_token_t* res = req->request_context ? req->request_context->result : NULL;
+  d_token_t* res = req->request ? req->request->result : NULL;
   switch (d_type(res)) {
     case T_OBJECT: return res;
     case T_ARRAY: return d_get_at(res, index);
@@ -174,11 +174,11 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
   in3_req_t* ctx          = _calloc(1, sizeof(in3_req_t));
   ctx->client             = client;
   ctx->verification_state = IN3_WAITING;
-  ctx->request_context    = parse_json(req_data);
+  ctx->request            = parse_json(req_data);
   client->pending++;
 
   // was the json parseable?
-  if (!ctx->request_context) {
+  if (!ctx->request) {
     in3_log_error("Invalid json-request: %s\n", req_data);
     req_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
     char* msg = parse_json_error(req_data);
@@ -191,10 +191,10 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
 
   // determine the length
   d_token_t* req = req_get_request(ctx, 0);
-  if (d_type(ctx->request_context->result) == T_OBJECT)
+  if (d_type(ctx->request->result) == T_OBJECT)
     ctx->len = 1;
-  else if (d_type(ctx->request_context->result) == T_ARRAY)
-    ctx->len = d_len(ctx->request_context->result);
+  else if (d_type(ctx->request->result) == T_ARRAY)
+    ctx->len = d_len(ctx->request->result);
   else {
     req_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
     return ctx;
@@ -237,7 +237,7 @@ char* req_get_response_data(in3_req_t* ctx) {
   assert_in3_req(ctx);
 
   sb_t sb = {0};
-  if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, '[');
+  if (d_type(ctx->request->result) == T_ARRAY) sb_add_char(&sb, '[');
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
     if (i) sb_add_char(&sb, ',');
     d_token_t*  response = req_get_response(ctx, i);
@@ -255,7 +255,7 @@ char* req_get_response_data(in3_req_t* ctx) {
     else
       sb_add_range(&sb, rr.data, 0, rr.len);
   }
-  if (d_type(ctx->request_context->result) == T_ARRAY) sb_add_char(&sb, ']');
+  if (d_type(ctx->request->result) == T_ARRAY) sb_add_char(&sb, ']');
   return sb.data;
 }
 
@@ -367,7 +367,7 @@ bool req_is_method(const in3_req_t* ctx, const char* method) {
 }
 
 in3_proof_t in3_req_get_proof(in3_req_t* ctx, int i) {
-  if (ctx->request_context) {
+  if (ctx->request) {
     char* verfification = d_get_string(d_get(req_get_request(ctx, (size_t) i), K_IN3), key("verification"));
     if (verfification && strcmp(verfification, "none") == 0) return PROOF_NONE;
     if (verfification && strcmp(verfification, "proof") == 0) return PROOF_STANDARD;

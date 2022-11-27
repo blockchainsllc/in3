@@ -90,13 +90,13 @@ NONULL void in3_check_verified_hashes(in3_t* c) {
 NONULL static void req_free_intern(in3_req_t* ctx, bool is_sub) {
   assert_in3_req(ctx);
   // only for intern requests, we actually free the original request-string
-  if (is_sub && ctx->request_context)
-    _free(ctx->request_context->c);
+  if (is_sub && ctx->request)
+    _free(ctx->request->c);
   ctx->client->pending--;
   if (ctx->error) _free(ctx->error);
   response_free(ctx);
-  if (ctx->request_context)
-    json_free(ctx->request_context);
+  if (ctx->request)
+    json_free(ctx->request);
 
   if (ctx->cache) in3_cache_free(ctx->cache, !is_sub);
   if (ctx->required) req_free_intern(ctx->required, true);
@@ -171,7 +171,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
     else
       sb_add_key_value(sb, "method", d_string(t), add_bytes_to_hash(msg_hash, d_string(t), d_len(t)), true);
     if ((t = d_get(request_token, K_PARAMS))) {
-      if (d_is_binary_ctx(c->request_context)) return req_set_error(c, "only text json input is allowed", IN3_EINVAL);
+      if (d_is_binary_ctx(c->request)) return req_set_error(c, "only text json input is allowed", IN3_EINVAL);
       if (msg_hash.ctx) add_token_to_hash(msg_hash, t);
       sb_add_json(sb, ",\"params\":", t);
     }
@@ -564,7 +564,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
         request->payload_len = d_len(tmp);
         break;
       default:
-        request->payload     = d_create_json(ctx->request_context, tmp);
+        request->payload     = d_create_json(ctx->request, tmp);
         request->payload_len = strlen(request->payload);
         break;
     }
@@ -842,7 +842,7 @@ void in3_sign_ctx_set_signature(
 
 in3_req_t* req_find_required(const in3_req_t* parent, const char* search_method, const char* param_query) {
   for (in3_req_t* r = parent->required; r; r = r->required) {
-    if (!r->request_context) continue;
+    if (!r->request) continue;
     if (req_is_method(r, search_method)) {
       d_token_t* params = d_get(req_get_request(r, 0), K_PARAMS);
       if (param_query && (!params || !params->data || !str_find((void*) params->data, param_query))) continue;

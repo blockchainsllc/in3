@@ -519,15 +519,15 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx, NULL, NULL), _free(unsigned_tx.data);)
 
   // build the RPC-request
-  char* old_req     = ctx->request_context->c;
+  char* old_req     = ctx->request->c;
   char* raw_request = sprintx("{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[\"%B\"]}", signed_tx);
 
   // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
   _free(signed_tx.data);
-  json_free(ctx->request_context);
+  json_free(ctx->request);
 
   // set the new RPC-Request.
-  ctx->request_context                               = parse_json(raw_request);
+  ctx->request                                       = parse_json(raw_request);
   in3_cache_add_ptr(&ctx->cache, raw_request)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL;     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
   in3_cache_add_ptr(&ctx->cache, old_req)->props     = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_NOT_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards, butt only for subrequests
   return IN3_OK;

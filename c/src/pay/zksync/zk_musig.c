@@ -163,7 +163,7 @@ static in3_ret_t verify_proof(zksync_config_t* conf, in3_req_t* ctx, bytes_t* ac
   if (!signer_key) return req_set_error(ctx, "the signer key could not be found!", IN3_EINVAL);
   d_token_t* result     = NULL;
   in3_req_t* sub        = NULL;
-  char*      proof_data = d_create_json(ctx->request_context, proof);
+  char*      proof_data = d_create_json(ctx->request, proof);
   sb_t       sb         = {0};
   sb_add_rawbytes(&sb, "\"0x", *msg, 0);
   sb_add_rawbytes(&sb, "\",\"0x", *account, 0);
