@@ -971,7 +971,7 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
   in3_ret_t ret = IN3_OK;
 
   // if there is an error it does not make sense to execute.
-  if (req->error) return (req->status == IN3_OK && req->status == IN3_WAITING) ? IN3_EUNKNOWN : req->status;
+  if (req->error) return (req->status == IN3_OK || req->status == IN3_WAITING) ? IN3_EUNKNOWN : req->status;
 
   // if we have required-contextes, we need to check them first
   if (req->required && (ret = in3_req_execute(req->required)) != IN3_OK) {
