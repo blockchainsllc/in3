@@ -96,21 +96,21 @@ typedef struct incubed_state {
  * This is generated for each request and represents the current state. it holds the state until the request is finished and must be freed afterwards.
  * */
 typedef struct in3_req {
-  in3_t*          client;             /**< reference to the client*/
-  struct in3_req* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
-  cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
-  in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
-  json_ctx_t*     request_context;    /**< the result of the json-parser for the request.*/
-  json_ctx_t*     response_context;   /**< the result of the json-parser for the response.*/
-  char*           error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
-  in3_state_t*    in3_state;          /**< additional incubed assignements*/
-  d_token_t**     requests;           /**< references to the tokens representring the requests*/
-  d_token_t**     responses;          /**< references to the tokens representring the parsed responses*/
-  uint32_t        id;                 /**< JSON RPC id of request at index 0 */
-  uint_fast16_t   attempt;            /**< the number of attempts */
-  uint_fast16_t   len;                /**< the number of requests */
-  in3_ret_t       verification_state; /**< state of the verification */
-  req_type_t      type;               /**< the type of the request */
+  in3_t*          client;           /**< reference to the client*/
+  struct in3_req* required;         /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
+  cache_entry_t*  cache;            /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
+  in3_response_t* raw_response;     /**< the raw response-data, which should be verified. */
+  json_ctx_t*     request_context;  /**< the result of the json-parser for the request.*/
+  json_ctx_t*     response_context; /**< the result of the json-parser for the response.*/
+  char*           error;            /**< in case of an error this will hold the message, if not it points to `NULL` */
+  in3_state_t*    in3_state;        /**< additional incubed assignements*/
+  d_token_t**     requests;         /**< references to the tokens representring the requests*/
+                                    //  d_token_t**     responses;          /**< references to the tokens representring the parsed responses*/
+  uint32_t      id;                 /**< JSON RPC id of request at index 0 */
+  uint_fast16_t attempt;            /**< the number of attempts */
+  uint_fast16_t len;                /**< the number of requests */
+  in3_ret_t     verification_state; /**< state of the verification */
+  req_type_t    type;               /**< the type of the request */
 } in3_req_t;
 
 /**
@@ -164,6 +164,9 @@ NONULL in3_ret_t in3_send_req(
 NONULL in3_req_t* in3_req_last_waiting(
     in3_req_t* req /**< [in] the request context. */
 );
+
+NONULL d_token_t* req_get_response(in3_req_t* req, size_t index);
+
 /** returns the chain id for the given reques*/
 NONULL chain_id_t in3_chain_id(const in3_req_t* req);
 
