@@ -313,7 +313,7 @@ function impl_solidity(fn, state, includes) {
             res.push('arg.data         = b_concat(2, arg.data, bytes(arg_data.data + 4, arg_data.len - 4));')
             res.push('_free(arg_data.data);')
             res.push('')
-            res.push('if (ctx->req->error) return ctx->req->verification_state;')
+            res.push('if (ctx->req->error) return ctx->req->status;')
             res.push('TRY_FINAL(eth_exec(ctx, &arg, NULL), _free(arg.data.data));')
             res.push('return IN3_OK;')
         } else
@@ -329,7 +329,7 @@ function impl_solidity(fn, state, includes) {
         res.push('arg.wallet       = wallet;')
         res.push('arg.target_level = wallet_get_exec_level(exec, EXL_RECEIPT);')
         res.push('')
-        res.push('if (ctx->req->error) return ctx->req->verification_state;')
+        res.push('if (ctx->req->error) return ctx->req->status;')
         res.push('TRY_FINAL(eth_exec(ctx, &arg, NULL), _free(arg.data.data));')
         res.push('return IN3_OK;')
     }
