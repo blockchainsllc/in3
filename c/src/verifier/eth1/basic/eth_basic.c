@@ -132,7 +132,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   if (d_type(tx_receipt) == T_NULL || d_get_long(tx_receipt, K_BLOCK_NUMBER) == 0) {
     // no tx yet
     // we remove it and try again
-    uint32_t wait = d_get_int(d_get(last_r->requests[0], K_IN3), K_WAIT);
+    uint32_t wait = d_get_int(d_get(req_get_request(last_r, 0), K_IN3), K_WAIT);
     wait          = wait ? wait * 2 : 1000;
     req_remove_required(ctx->req, last_r, false);
     if (wait > 120000) // more than 2 minutes is too long, so we stop here

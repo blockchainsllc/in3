@@ -156,65 +156,69 @@ d_token_t* req_get_response(in3_req_t* req, size_t index) {
   }
 }
 
+d_token_t* req_get_request(const in3_req_t* req, size_t index) {
+  d_token_t* res = req->request_context ? req->request_context->result : NULL;
+  switch (d_type(res)) {
+    case T_OBJECT: return res;
+    case T_ARRAY: return d_get_at(res, index);
+    default: return NULL;
+  }
+}
+
 in3_req_t* req_new(in3_t* client, const char* req_data) {
   assert_in3(client);
   assert(req_data);
 
-  if (client->pending == 0xFFFF) return NULL; // avoid overflows by not creating any new ctx anymore
+  if (req_data == NULL || client->pending == 0xFFFF) return NULL; // avoid overflows by not creating any new ctx anymore
+
   in3_req_t* ctx          = _calloc(1, sizeof(in3_req_t));
   ctx->client             = client;
   ctx->verification_state = IN3_WAITING;
+  ctx->request_context    = parse_json(req_data);
   client->pending++;
 
-  if (req_data != NULL) {
-    ctx->request_context = parse_json(req_data);
-    if (!ctx->request_context) {
-      in3_log_error("Invalid json-request: %s\n", req_data);
-      req_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
-      char* msg = parse_json_error(req_data);
-      if (msg) {
-        req_set_error(ctx, msg, IN3_EINVAL);
-        _free(msg);
-      }
-      return ctx;
+  // was the json parseable?
+  if (!ctx->request_context) {
+    in3_log_error("Invalid json-request: %s\n", req_data);
+    req_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
+    char* msg = parse_json_error(req_data);
+    if (msg) {
+      req_set_error(ctx, msg, IN3_EINVAL);
+      _free(msg);
     }
-
-    if (d_type(ctx->request_context->result) == T_OBJECT) {
-      // it is a single result
-      ctx->requests    = _malloc(sizeof(d_token_t*));
-      ctx->requests[0] = ctx->request_context->result;
-      ctx->len         = 1;
-    }
-    else if (d_type(ctx->request_context->result) == T_ARRAY) {
-      // we have an array, so we need to store the request-data as array
-      d_token_t* t  = d_get_at(ctx->request_context->result, 0);
-      ctx->len      = d_len(ctx->request_context->result);
-      ctx->requests = _malloc(sizeof(d_token_t*) * ctx->len);
-      for (uint_fast16_t i = 0; i < ctx->len; i++, t = d_next(t))
-        ctx->requests[i] = t;
-    }
-    else {
-      req_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
-      return ctx;
-    }
-
-    d_token_t* t = d_get(ctx->request_context->result, K_ID);
-    if (t == NULL) {
-      ctx->id = client->id_count;
-      client->id_count += ctx->len;
-    }
-    else if (d_type(t) == T_INTEGER)
-      ctx->id = d_int(t);
-
-    in3_set_chain_id(ctx, (chain_id_t) d_get_long(d_get(ctx->requests[0], K_IN3), K_CHAIN_ID));
+    return ctx;
   }
+
+  // determine the length
+  d_token_t* req = req_get_request(ctx, 0);
+  if (d_type(ctx->request_context->result) == T_OBJECT)
+    ctx->len = 1;
+  else if (d_type(ctx->request_context->result) == T_ARRAY)
+    ctx->len = d_len(ctx->request_context->result);
+  else {
+    req_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
+    return ctx;
+  }
+
+  // do we have a defined id?
+  d_token_t* t = d_get(req, K_ID);
+  if (t == NULL) {
+    ctx->id = client->id_count;
+    client->id_count += ctx->len;
+  }
+  else if (d_type(t) == T_INTEGER)
+    ctx->id = d_int(t);
+
+  // is there a set chain?
+  in3_set_chain_id(ctx, (chain_id_t) d_get_long(d_get(req, K_IN3), K_CHAIN_ID));
+
+  // is it a valid request?
+  if (d_type(d_get(req, K_METHOD)) != T_STRING) req_set_error(ctx, "No Method defined", IN3_ECONFIG);
+
   // if this is the first request, we initialize the plugins now
   in3_plugin_init(ctx);
 
-  in3_log_debug("::: exec " COLOR_BRIGHT_BLUE "%s" COLOR_RESET COLOR_MAGENTA " %j " COLOR_RESET "\n", d_get_string(ctx->requests[0], K_METHOD), d_get(ctx->requests[0], K_PARAMS));
-
-  // is it a valid request?
-  if (d_type(d_get(ctx->requests[0], K_METHOD)) != T_STRING) req_set_error(ctx, "No Method defined", IN3_ECONFIG);
+  in3_log_debug("::: exec " COLOR_BRIGHT_BLUE "%s" COLOR_RESET COLOR_MAGENTA " %j " COLOR_RESET "\n", d_get_string(req, K_METHOD), d_get(req, K_PARAMS));
 
   return ctx;
 }
@@ -358,14 +362,13 @@ int req_nodes_len(node_match_t* node) {
 }
 
 bool req_is_method(const in3_req_t* ctx, const char* method) {
-  if (!ctx->requests || !ctx->requests[0]) return false;
-  const char* required_method = d_get_string(ctx->requests[0], K_METHOD);
+  const char* required_method = d_get_string(req_get_request(ctx, 0), K_METHOD);
   return (required_method && strcmp(required_method, method) == 0);
 }
 
 in3_proof_t in3_req_get_proof(in3_req_t* ctx, int i) {
-  if (ctx->requests) {
-    char* verfification = d_get_string(d_get(ctx->requests[i], K_IN3), key("verification"));
+  if (ctx->request_context) {
+    char* verfification = d_get_string(d_get(req_get_request(ctx, (size_t) i), K_IN3), key("verification"));
     if (verfification && strcmp(verfification, "none") == 0) return PROOF_NONE;
     if (verfification && strcmp(verfification, "proof") == 0) return PROOF_STANDARD;
   }
@@ -489,8 +492,8 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
   else
     for (; ctx; ctx = ctx->required) {
       // we simply check if the method and params of the first request match
-      if (strcmp(d_get_string(ctx->requests[0], K_METHOD), method)) continue;
-      d_token_t* t = d_get(ctx->requests[0], K_PARAMS);
+      if (strcmp(d_get_string(req_get_request(ctx, 0), K_METHOD), method)) continue;
+      d_token_t* t = d_get(req_get_request(ctx, 0), K_PARAMS);
       if (!t) continue;
       str_range_t p = d_to_json(t);
       if (strncmp(params, p.data + 1, p.len - 2) == 0) break;

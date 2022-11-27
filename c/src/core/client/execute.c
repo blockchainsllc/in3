@@ -45,7 +45,7 @@
 #include <string.h>
 
 NONULL static bool is_raw_http(in3_req_t* ctx) {
-  return !ctx->in3_state && strcmp("in3_http", d_get_string(ctx->requests[0], K_METHOD)) == 0;
+  return !ctx->in3_state && strcmp("in3_http", d_get_string(req_get_request(ctx, 0), K_METHOD)) == 0;
 }
 
 NONULL static void response_free(in3_req_t* ctx) {
@@ -98,7 +98,6 @@ NONULL static void req_free_intern(in3_req_t* ctx, bool is_sub) {
   if (ctx->request_context)
     json_free(ctx->request_context);
 
-  if (ctx->requests) _free(ctx->requests);
   if (ctx->cache) in3_cache_free(ctx->cache, !is_sub);
   if (ctx->required) req_free_intern(ctx->required, true);
 
@@ -160,7 +159,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
   sb_add_char(sb, '[');
 
   for (uint16_t i = 0; i < c->len; i++) {
-    d_token_t *  request_token = c->requests[i], *t;
+    d_token_t *  request_token = req_get_request(c, i), *t;
     in3_proof_t  proof         = no_in3 ? PROOF_NONE : in3_req_get_proof(c, i);
     in3_digest_t msg_hash      = use_msg_hash ? crypto_create_hash(DIGEST_KECCAK) : ((in3_digest_t){0});
 
@@ -405,7 +404,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
     d_token_t* resp   = req_get_response(ctx, i);
     vc.req            = ctx;
     vc.chain          = chain;
-    vc.request        = ctx->requests[i];
+    vc.request        = req_get_request(ctx, i);
     vc.result         = d_get(resp, K_RESULT);
     vc.client         = ctx->client;
     vc.index          = (int) i;
@@ -488,7 +487,7 @@ static in3_ret_t find_valid_result(in3_req_t* ctx, node_match_t** vnode) {
 
     state = verify_response(ctx, chain, node, response + n);
     if (state == IN3_OK) {
-      in3_log_debug(COLOR_GREEN "accepted response for %s from %s\n" COLOR_RESET, d_get_string(ctx->requests[0], K_METHOD), node ? node->url : "intern");
+      in3_log_debug(COLOR_GREEN "accepted response for %s from %s\n" COLOR_RESET, d_get_string(req_get_request(ctx, 0), K_METHOD), node ? node->url : "intern");
       break;
     }
     else if (state == IN3_WAITING)
@@ -535,7 +534,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
 
   if (is_raw_http(ctx)) {
     // prepare response-object
-    d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
+    d_token_t* params = d_get(req_get_request(ctx, 0), K_PARAMS);
     if (d_len(params) < 2) {
       req_set_error(ctx, "invalid number of arguments, must be [METHOD,URL,PAYLOAD,HEADER]", IN3_EINVAL);
       return NULL;
@@ -548,7 +547,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
     request->urls               = _malloc(sizeof(char*));
     request->urls[0]            = _strdupn(d_get_string_at(params, 1), -1);
     request->method             = method ? method : (*request->payload ? "POST" : "GET");
-    request->wait               = d_get_int(d_get(ctx->requests[0], K_IN3), K_WAIT);
+    request->wait               = d_get_int(d_get(req_get_request(ctx, 0), K_IN3), K_WAIT);
     ctx->raw_response           = _calloc(sizeof(in3_response_t), 1);
     ctx->raw_response[0].state  = IN3_WAITING;
 
@@ -582,7 +581,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
 
   in3_ret_t     res;
   node_match_t* node        = ctx->in3_state ? ctx->in3_state->nodes : NULL;
-  char*         rpc         = d_get_string(d_get(ctx->requests[0], K_IN3), K_RPC);
+  char*         rpc         = d_get_string(d_get(req_get_request(ctx, 0), K_IN3), K_RPC);
   int           nodes_count = rpc ? 1 : req_nodes_len(node);
   char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
 
@@ -616,7 +615,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
   request->urls_len           = nodes_count;
   request->urls               = urls;
   request->cptr               = NULL;
-  request->wait               = d_get_int(d_get(ctx->requests[0], K_IN3), K_WAIT);
+  request->wait               = d_get_int(d_get(req_get_request(ctx, 0), K_IN3), K_WAIT);
   request->method             = payload.len ? "POST" : "GET";
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
@@ -650,7 +649,7 @@ in3_req_t* in3_req_last_waiting(in3_req_t* ctx) {
 }
 
 static void init_sign_ctx(in3_req_t* ctx, in3_sign_ctx_t* sign_ctx) {
-  d_token_t* params     = d_get(ctx->requests[0], K_PARAMS);
+  d_token_t* params     = d_get(req_get_request(ctx, 0), K_PARAMS);
   sign_ctx->message     = d_bytes(d_get_at(params, 0));
   sign_ctx->account     = d_bytes(d_get_at(params, 1));
   sign_ctx->digest_type = SIGN_EC_HASH;
@@ -843,9 +842,9 @@ void in3_sign_ctx_set_signature(
 
 in3_req_t* req_find_required(const in3_req_t* parent, const char* search_method, const char* param_query) {
   for (in3_req_t* r = parent->required; r; r = r->required) {
-    if (!r->requests) continue;
+    if (!r->request_context) continue;
     if (req_is_method(r, search_method)) {
-      d_token_t* params = d_get(r->requests[0], K_PARAMS);
+      d_token_t* params = d_get(req_get_request(r, 0), K_PARAMS);
       if (param_query && (!params || !params->data || !str_find((void*) params->data, param_query))) continue;
       return r;
     }
@@ -894,7 +893,7 @@ void req_free(in3_req_t* ctx) {
 
 static inline in3_ret_t handle_internally(in3_req_t* ctx) {
   if (ctx->len != 1) return IN3_OK; //  currently we do not support bulk requests forr internal calls
-  in3_rpc_handle_ctx_t vctx = {.req = ctx, .response = &ctx->raw_response, .request = ctx->requests[0], .method = d_get_string(ctx->requests[0], K_METHOD), .params = d_get(ctx->requests[0], K_PARAMS)};
+  in3_rpc_handle_ctx_t vctx = {.req = ctx, .response = &ctx->raw_response, .request = req_get_request(ctx, 0), .method = d_get_string(req_get_request(ctx, 0), K_METHOD), .params = d_get(req_get_request(ctx, 0), K_PARAMS)};
   in3_ret_t            res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_RPC_HANDLE, &vctx);
   if (res == IN3_OK && ctx->raw_response && ctx->raw_response->data.data) in3_log_debug("internal response: %s\n", ctx->raw_response->data.data);
   return res == IN3_EIGNORE ? IN3_OK : res;
@@ -947,7 +946,7 @@ static inline in3_ret_t select_nodes(in3_req_t* req) {
   if (req->raw_response || (req->in3_state && req->in3_state->nodes)) return ret;
 
   // if the request has a rpc-url or a REST-request, we don't pick nodes.
-  if (d_get(d_get(req->requests[0], K_IN3), K_RPC) || is_raw_http(req)) return ret;
+  if (d_get(d_get(req_get_request(req, 0), K_IN3), K_RPC) || is_raw_http(req)) return ret;
 
   // time to create the in3_state
   if (!req->in3_state) req->in3_state = _calloc(1, sizeof(in3_state_t));

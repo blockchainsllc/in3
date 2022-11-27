@@ -450,7 +450,7 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_req_t* ctx, address_t from, bytes_
   TRY(in3_resolve_chain_id(ctx, &chain_id))
 
   // get the signature from required
-  TRY(req_require_signature(ctx, SIGN_EC_HASH, ECDSA_SECP256K1, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), tx_data ? tx_data : ctx->requests[0], tx_output));
+  TRY(req_require_signature(ctx, SIGN_EC_HASH, ECDSA_SECP256K1, PL_SIGN_ETHTX, &signature, raw_tx, bytes(from, 20), tx_data ? tx_data : req_get_request(ctx, 0), tx_output));
   if (signature.len != 65) return req_set_error(ctx, "Transaction must be signed by a ECDSA-Signature!", IN3_EINVAL);
 
   // if we reached that point we have a valid signature in sig
@@ -510,7 +510,7 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
   // we get the raw transaction from this request
   in3_req_t* sig_ctx = req_find_required(ctx, "sign_ec_hash", NULL);
   if (sig_ctx) {
-    bytes_t raw = d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
+    bytes_t raw = d_get_bytes_at(d_get(req_get_request(sig_ctx, 0), K_PARAMS), 0);
     unsigned_tx = bytes(_malloc(raw.len), raw.len);
     memcpy(unsigned_tx.data, raw.data, raw.len);
   }
@@ -528,7 +528,6 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
 
   // set the new RPC-Request.
   ctx->request_context                               = parse_json(raw_request);
-  ctx->requests[0]                                   = ctx->request_context->result;
   in3_cache_add_ptr(&ctx->cache, raw_request)->props = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_EXTERNAL;     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
   in3_cache_add_ptr(&ctx->cache, old_req)->props     = CACHE_PROP_MUST_FREE | CACHE_PROP_ONLY_NOT_EXTERNAL; // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards, butt only for subrequests
   return IN3_OK;

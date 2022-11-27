@@ -246,10 +246,11 @@ bool filter_remove(in3_filter_handler_t* filters, size_t id) {
 static in3_req_t* req_find_required_for_block(in3_req_t* ctx, uint64_t block_number) {
   // find the subctx for the current blocknumber
   for (in3_req_t* sub_ctx = ctx->required; sub_ctx; sub_ctx = sub_ctx->required) {
-    if (!sub_ctx->requests) continue;
-    const char* required_method = d_get_string(sub_ctx->requests[0], K_METHOD);
+    if (!sub_ctx->request_context) continue;
+    d_token_t*  req             = req_get_request(sub_ctx, 0);
+    const char* required_method = d_get_string(req, K_METHOD);
     if (required_method && strcmp(required_method, "eth_getBlockByNumber")) continue;
-    if (block_number == d_get_long_at(d_get(sub_ctx->requests[0], K_PARAMS), 0)) return sub_ctx;
+    if (block_number == d_get_long_at(d_get(req, K_PARAMS), 0)) return sub_ctx;
   }
   return NULL;
 }

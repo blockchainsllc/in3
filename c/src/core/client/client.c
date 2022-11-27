@@ -167,16 +167,10 @@ static char* create_rpc_error(in3_req_t* ctx, int code, char* error) {
   bool          is_array = ctx && ctx->request_context && d_type(ctx->request_context->result) == T_ARRAY;
   uint_fast16_t len      = (ctx && ctx->len) ? ctx->len : 1;
   if (is_array) sb_add_char(&sb, '[');
-  for (uint_fast16_t i = 0; i < len; i++) {
-    if (i) sb_add_char(&sb, ',');
-    sb_add_chars(&sb, "{\"id\":");
-    sb_add_int(&sb, (ctx && ctx->requests && i < ctx->len) ? d_get_int(ctx->requests[i], K_ID) : 0);
-    sb_add_chars(&sb, ",\"jsonrpc\":\"2.0\",\"error\":{\"code\":");
-    sb_add_int(&sb, code);
-    sb_add_chars(&sb, ",\"message\":\"");
-    sb_add_escaped_chars(&sb, error, -1);
-    sb_add_chars(&sb, "\"}}");
-  }
+  for (uint_fast16_t i = 0; i < len; i++)
+    sb_add_value(&sb, "{\"id\":%d,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%S\"}}",
+                 (ctx && ctx->request_context && i < ctx->len) ? d_get_int(req_get_request(ctx, i), K_ID) : 0,
+                 code, error);
   if (is_array) sb_add_char(&sb, ']');
   return sb.data;
 }

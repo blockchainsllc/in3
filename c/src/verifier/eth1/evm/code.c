@@ -67,9 +67,10 @@ NONULL static in3_req_t* find_pending_code_request(in3_vctx_t* vc, address_t add
   // ok, we need a request, do we have a useable?
   in3_req_t* ctx = vc->req->required;
   while (ctx) {
-    if (strcmp(d_get_string(ctx->requests[0], K_METHOD), "eth_getCode") == 0) {
+    d_token_t* req = req_get_request(ctx, 0);
+    if (strcmp(d_get_string(req, K_METHOD), "eth_getCode") == 0) {
       // the first param of the eth_getCode is the address
-      bytes_t adr = d_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0));
+      bytes_t adr = d_bytes(d_get_at(d_get(req, K_PARAMS), 0));
       if (adr.len == 20 && memcmp(adr.data, address, 20) == 0) return ctx;
     }
     ctx = ctx->required;

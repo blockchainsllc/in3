@@ -181,17 +181,17 @@ void* respond(void* arg) {
           error_response("Request can not be parsed", -32700);
         else if (req->error)
           error_response(req->error, -32603);
-        else if (!is_allowed(d_get_string(req->requests[0], K_METHOD)))
+        else if (!is_allowed(d_get_string(req_get_request(req, 0), K_METHOD)))
           error_response("Method not allowed", -32601);
         else {
           // execute it
-          str_range_t range  = d_to_json(d_get(req->requests[0], key("params")));
+          str_range_t range  = d_to_json(d_get(req_get_request(req, 0), key("params")));
           char*       params = range.data ? alloca(range.len) : NULL;
           if (params) {
             memcpy(params, range.data + 1, range.len - 2);
             params[range.len - 2] = 0;
           }
-          fprintf(stderr, "RPC %s %s\n", d_get_string(req->requests[0], K_METHOD), params); // conceal typing and save position
+          fprintf(stderr, "RPC %s %s\n", d_get_string(req_get_request(req, 0), K_METHOD), params); // conceal typing and save position
           if (in3_send_req(req) == IN3_OK) {
             // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
             if (req->error) _free(req->error);

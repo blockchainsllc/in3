@@ -148,7 +148,7 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     return req_set_error(req, "ERROR: in build_unlocking_script: witness missing.", IN3_EINVAL);
   }
 
-  bytes_t **signatures = (bytes_t * *const) &(utxo->signatures), *pub_key = &(utxo->signers[0].pub_key), *unlocking_script = NULL, num_elements = NULL_BYTES;
+  bytes_t **signatures = (bytes_t * * const) &(utxo->signatures), *pub_key = &(utxo->signers[0].pub_key), *unlocking_script = NULL, num_elements = NULL_BYTES;
   switch (utxo->tx_out.script.type) {
     case BTC_P2PK: {
       // Unlocking script format is: DER_SIG_LEN|DER_SIG
@@ -328,7 +328,7 @@ in3_ret_t btc_sign_tx_in(in3_req_t* req, bytes_t* der_sig, const btc_tx_ctx_t* t
   // -- Obtain DER signature
   bytes_t sig = NULL_BYTES;
   int     l;
-  TRY_CATCH(req_require_signature(req, SIGN_EC_BTC, ECDSA_SECP256K1, PL_SIGN_BTCTX, &sig, hash_message, *signer_id, req->requests[0], sb), _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
+  TRY_CATCH(req_require_signature(req, SIGN_EC_BTC, ECDSA_SECP256K1, PL_SIGN_BTCTX, &sig, hash_message, *signer_id, req_get_request(req, 0), sb), _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->data = _malloc(75);
   TRY_CATCH(crypto_convert(ECDSA_SECP256K1, CONV_SIG65_TO_DER, sig, der_sig->data, &l), _free(der_sig->data); _free(hash_message.data); free_tx_ctx_inputs(&tmp_tx);)
   der_sig->len                  = (uint32_t) l;

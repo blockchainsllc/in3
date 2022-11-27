@@ -40,7 +40,7 @@ static void execute(in3_t* c, FILE* f) {
         recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
       else {
         in3_ret_t ret = in3_send_req(ctx);
-        uint32_t  id  = d_get_int(ctx->requests[0], K_ID);
+        uint32_t  id  = d_get_int(req_get_request(ctx, 0), K_ID);
         if (ctx->error) {
           for (char* x = ctx->error; *x; x++) {
             if (*x == '\n') *x = ' ';

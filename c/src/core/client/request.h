@@ -101,7 +101,6 @@ typedef struct in3_req {
   cache_entry_t*  cache;    /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
 
   json_ctx_t*     request_context; /**< the result of the json-parser for the request.*/
-  d_token_t**     requests;        /**< references to the tokens representring the requests*/
   json_ctx_t*     response;        /**< the result of the json-parser for the response.*/
   in3_response_t* raw_response;    /**< the raw response-data, which should be verified. */
 
@@ -168,6 +167,8 @@ NONULL in3_req_t* in3_req_last_waiting(
 );
 
 NONULL d_token_t* req_get_response(in3_req_t* req, size_t index);
+
+NONULL d_token_t* req_get_request(const in3_req_t* req, size_t index);
 
 /** returns the chain id for the given reques*/
 NONULL chain_id_t in3_chain_id(const in3_req_t* req);

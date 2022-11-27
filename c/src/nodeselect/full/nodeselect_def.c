@@ -425,10 +425,11 @@ NONULL static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_nodeselect_def
   // make sure the in3_state is initialized
   if (!ctx->in3_state) ctx->in3_state = _calloc(1, sizeof(in3_state_t));
 
+  d_token_t*        req    = req_get_request(ctx, 0);
   in3_node_filter_t filter = NODE_FILTER_INIT;
-  filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
+  filter.nodes             = d_get(d_get(req, K_IN3), K_DATA_NODES);
   filter.props             = (w->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_req_get_proof(ctx, 0) != PROOF_NONE ? NODE_PROP_PROOF : 0);
-  filter.exclusions        = parse_signers(d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES)); // we must exclude any manually specified signer nodes
+  filter.exclusions        = parse_signers(d_get(d_get(req, K_IN3), K_SIGNER_NODES)); // we must exclude any manually specified signer nodes
 
   // if incentive is active we should now
 
@@ -460,7 +461,7 @@ NONULL static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_nodeselect_d
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
     in3_node_filter_t filter       = NODE_FILTER_INIT;
-    filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
+    filter.nodes                   = d_get(d_get(req_get_request(ctx, 0), K_IN3), K_SIGNER_NODES);
     filter.props                   = w->node_props | NODE_PROP_SIGNER;
     filter.exclusions              = ctx->in3_state->nodes;
     const in3_ret_t res            = in3_node_list_pick_nodes(ctx, w, data, &signer_nodes, total_sig_cnt, &filter);

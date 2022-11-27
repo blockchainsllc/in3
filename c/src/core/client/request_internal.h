@@ -152,9 +152,6 @@ NONULL in3_ret_t in3_retry_same_node(in3_req_t* req);
   assert(ctx->len >= 1 || ctx->error);                                                                                                 \
   assert(ctx->attempt <= ctx->client->max_attempts);                                                                                   \
   assert(!ctx->len || ctx->request_context);                                                                                           \
-  assert(!ctx->len || ctx->requests);                                                                                                  \
-  assert(!ctx->len || ctx->requests[0]);                                                                                               \
-  assert(!ctx->len || ctx->requests[ctx->len - 1]);                                                                                    \
   assert(ctx->error ? (ctx->verification_state < 0) : (ctx->verification_state == IN3_OK || ctx->verification_state == IN3_WAITING));
 
 #define assert_in3_response(r) \
