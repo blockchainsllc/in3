@@ -190,7 +190,7 @@ in3_ret_t filter_add(in3_filter_handler_t* filters, in3_req_t* ctx, in3_filter_t
   else {
     switch (in3_req_state(block_ctx)) {
       case REQ_ERROR:
-        return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
+        return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", block_ctx->status ? block_ctx->status : IN3_ERPC);
       case REQ_WAITING_FOR_RESPONSE:
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
@@ -267,7 +267,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
   else {
     switch (in3_req_state(block_ctx)) {
       case REQ_ERROR:
-        return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
+        return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", block_ctx->status ? block_ctx->status : IN3_ERPC);
       case REQ_WAITING_FOR_RESPONSE:
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;
@@ -301,7 +301,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
       // check existing ctx
       switch (in3_req_state(logs_ctx)) {
         case REQ_ERROR:
-          return req_set_error(logs_ctx, logs_ctx->error ? logs_ctx->error : "Error fetching logs", logs_ctx->verification_state ? logs_ctx->verification_state : IN3_ERPC);
+          return req_set_error(logs_ctx, logs_ctx->error ? logs_ctx->error : "Error fetching logs", logs_ctx->status ? logs_ctx->status : IN3_ERPC);
         case REQ_WAITING_FOR_RESPONSE:
         case REQ_WAITING_TO_SEND:
           return IN3_WAITING;
@@ -338,7 +338,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
             // check existing ctx
             switch (in3_req_state(block_ctx)) {
               case REQ_ERROR:
-                return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching blocks", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
+                return req_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching blocks", block_ctx->status ? block_ctx->status : IN3_ERPC);
               case REQ_WAITING_FOR_RESPONSE:
               case REQ_WAITING_TO_SEND:
                 return IN3_WAITING;

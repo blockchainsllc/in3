@@ -805,7 +805,7 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   if (sub) { // do we have a result?
     switch (in3_req_state(sub)) {
       case REQ_ERROR:
-        return req_set_error(ctx->req, sub->error, sub->verification_state ? sub->verification_state : IN3_ERPC);
+        return req_set_error(ctx->req, sub->error, sub->status ? sub->status : IN3_ERPC);
       case REQ_SUCCESS: {
         d_token_t* result = d_get(req_get_response(sub, 0), K_RESULT);
         if (result) {

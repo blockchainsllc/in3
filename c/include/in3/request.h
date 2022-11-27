@@ -45,11 +45,11 @@
 extern "C" {
 #endif
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 /**
@@ -107,11 +107,11 @@ typedef struct in3_req {
   char*        error;     /**< in case of an error this will hold the message, if not it points to `NULL` */
   in3_state_t* in3_state; /**< additional incubed assignements*/
 
-  uint32_t      id;                 /**< JSON RPC id of request at index 0 */
-  uint_fast16_t attempt;            /**< the number of attempts */
-  uint_fast16_t len;                /**< the number of requests */
-  in3_ret_t     verification_state; /**< state of the verification */
-  req_type_t    type;               /**< the type of the request */
+  uint32_t      id;      /**< JSON RPC id of request at index 0 */
+  uint_fast16_t attempt; /**< the number of attempts */
+  uint_fast16_t len;     /**< the number of requests */
+  in3_ret_t     status;  /**< state of the verification */
+  req_type_t    type;    /**< the type of the request */
 } in3_req_t;
 
 /**

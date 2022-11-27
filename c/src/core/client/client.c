@@ -52,7 +52,7 @@ in3_req_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
 
   // this happens if the request is not parseable (JSON-error in params)
   if (ctx->error) {
-    ctx->verification_state = IN3_EINVAL;
+    ctx->status = IN3_EINVAL;
     return ctx;
   }
 
@@ -64,7 +64,7 @@ in3_req_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
     ctx->error = NULL;
   }
   else
-    ctx->verification_state = ret;
+    ctx->status = ret;
 
   return ctx; // return context and hope the calle will clean it.
 }
@@ -92,7 +92,7 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
   if (result) result[0] = 0;
   *error = NULL;
 
-  in3_ret_t res = ctx ? ctx->verification_state : IN3_ENOMEM;
+  in3_ret_t res = ctx ? ctx->status : IN3_ENOMEM;
   if (!ctx) return res;
 
   // check parse-errors
@@ -176,7 +176,7 @@ static char* create_rpc_error(in3_req_t* ctx, int code, char* error) {
 }
 
 char* req_get_error_rpc(in3_req_t* ctx, in3_ret_t ret) {
-  return create_rpc_error(ctx, ret ? ret : ctx->verification_state, ctx->error);
+  return create_rpc_error(ctx, ret ? ret : ctx->status, ctx->error);
 }
 
 char* in3_client_exec_req(

@@ -95,12 +95,11 @@ NONULL static void req_free_intern(in3_req_t* ctx, bool is_sub) {
   ctx->client->pending--;
   if (ctx->error) _free(ctx->error);
   response_free(ctx);
-  if (ctx->request)
-    json_free(ctx->request);
-
+  if (ctx->request) json_free(ctx->request);
   if (ctx->cache) in3_cache_free(ctx->cache, !is_sub);
   if (ctx->required) req_free_intern(ctx->required, true);
 
+  // cleanup the verified hasheds
   in3_check_verified_hashes(ctx->client);
   _free(ctx);
 }
@@ -342,7 +341,7 @@ static in3_ret_t handle_error_response(in3_req_t* ctx, node_match_t* node, in3_r
 static void clean_up_ctx(in3_req_t* ctx) {
   assert_in3_req(ctx);
 
-  if (ctx->verification_state != IN3_OK && ctx->verification_state != IN3_WAITING) ctx->verification_state = IN3_WAITING;
+  if (ctx->status != IN3_OK && ctx->status != IN3_WAITING) ctx->status = IN3_WAITING;
   if (ctx->error) _free(ctx->error);
   if (ctx->response) json_free(ctx->response);
   ctx->error = NULL;
@@ -392,11 +391,11 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
       in3_plugin_execute_first(ctx, PLGN_ACT_NL_BLACKLIST, &bctx);
     }
     clear_response(response); // we want to save memory and free the invalid response
-    return ctx->verification_state;
+    return ctx->status;
   }
 
   // this was a internal response, so we don't need to verify the response
-  if (!node) return (ctx->verification_state = IN3_OK);
+  if (!node) return (ctx->status = IN3_OK);
 
   // check each request
   for (uint_fast16_t i = 0; i < ctx->len; i++) {
@@ -437,7 +436,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
     }
 
     // verify the response
-    if (res == IN3_OK) res = ctx->verification_state = in3_plugin_execute_first(ctx, PLGN_ACT_RPC_VERIFY, &vc);
+    if (res == IN3_OK) res = ctx->status = in3_plugin_execute_first(ctx, PLGN_ACT_RPC_VERIFY, &vc);
 
     // Waiting is ok, but we stop here
     if (res == IN3_WAITING)
@@ -464,7 +463,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
   }
 
   // all is ok
-  return (ctx->verification_state = IN3_OK);
+  return (ctx->status = IN3_OK);
 }
 
 static in3_ret_t find_valid_result(in3_req_t* ctx, node_match_t** vnode) {
@@ -501,9 +500,9 @@ static in3_ret_t find_valid_result(in3_req_t* ctx, node_match_t** vnode) {
     in3_log_debug("failed to verify, but waiting for pending\n");
     if (ctx->error) _free(ctx->error);
     if (ctx->response) json_free(ctx->response);
-    ctx->error              = NULL;
-    ctx->verification_state = IN3_WAITING;
-    ctx->response           = NULL;
+    ctx->error    = NULL;
+    ctx->status   = IN3_WAITING;
+    ctx->response = NULL;
     return IN3_WAITING;
   }
 
@@ -810,7 +809,7 @@ in3_ret_t in3_send_req(in3_req_t* ctx) {
       case REQ_ERROR:
       case REQ_SUCCESS:
         transport_cleanup(ctx, &transports, true);
-        return ctx->verification_state;
+        return ctx->status;
       case REQ_WAITING_FOR_RESPONSE:
         in3_handle_rpc_next(ctx, &transports);
         break;
@@ -893,7 +892,8 @@ void req_free(in3_req_t* ctx) {
 
 static inline in3_ret_t handle_internally(in3_req_t* ctx) {
   if (ctx->len != 1) return IN3_OK; //  currently we do not support bulk requests forr internal calls
-  in3_rpc_handle_ctx_t vctx = {.req = ctx, .response = &ctx->raw_response, .request = req_get_request(ctx, 0), .method = d_get_string(req_get_request(ctx, 0), K_METHOD), .params = d_get(req_get_request(ctx, 0), K_PARAMS)};
+  d_token_t*           req  = req_get_request(ctx, 0);
+  in3_rpc_handle_ctx_t vctx = {.req = ctx, .response = &ctx->raw_response, .request = req, .method = d_get_string(req, K_METHOD), .params = d_get(req, K_PARAMS)};
   in3_ret_t            res  = in3_plugin_execute_first_or_none(ctx, PLGN_ACT_RPC_HANDLE, &vctx);
   if (res == IN3_OK && ctx->raw_response && ctx->raw_response->data.data) in3_log_debug("internal response: %s\n", ctx->raw_response->data.data);
   return res == IN3_EIGNORE ? IN3_OK : res;
@@ -926,14 +926,14 @@ static inline in3_ret_t handle_error(in3_req_t* req, in3_ret_t ret) {
     in3_log_debug("Retrying send request...\n");
     // reset the error and try again
     if (req->error) _free(req->error);
-    req->error              = NULL;
-    req->verification_state = IN3_WAITING;
+    req->error  = NULL;
+    req->status = IN3_WAITING;
     // now try again, which should end in waiting for the next request.
     return in3_req_execute(req);
   }
   else {
     if (ctx_is_allowed_to_fail(req))
-      req->verification_state = ret = IN3_EIGNORE;
+      req->status = ret = IN3_EIGNORE;
     // we give up
     return req->error ? (ret ? ret : IN3_ERPC) : req_set_error(req, "reaching max_attempts and giving up", IN3_ELIMIT);
   }
@@ -971,10 +971,10 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
   in3_ret_t ret = IN3_OK;
 
   // if there is an error it does not make sense to execute.
-  if (req->error) return (req->verification_state && req->verification_state != IN3_WAITING) ? req->verification_state : IN3_EUNKNOWN;
+  if (req->error) return (req->status == IN3_OK && req->status == IN3_WAITING) ? IN3_EUNKNOWN : req->status;
 
   // if we have required-contextes, we need to check them first
-  if (req->required && (ret = in3_req_execute(req->required))) {
+  if (req->required && (ret = in3_req_execute(req->required)) != IN3_OK) {
     if (ret == IN3_EIGNORE)
       in3_plugin_execute_first(req, PLGN_ACT_NL_FAILABLE, req);
     else
@@ -982,13 +982,13 @@ in3_ret_t in3_req_execute(in3_req_t* req) {
   }
 
   // if there is response we are done.
-  if (req->response && req->verification_state == IN3_OK) return IN3_OK;
+  if (req->response && req->status == IN3_OK) return IN3_OK;
 
   switch (req->type) {
     case RT_RPC: {
 
       // do we need to handle it internaly?
-      if (!req->raw_response && !req->response && (ret = handle_internally(req)) < 0)
+      if (!req->raw_response && !req->response && (ret = handle_internally(req)) != IN3_OK)
         // there was weither an error or a WAITING, so we return here
         return req->error ? ret : req_set_error(req, get_error_message(req, ret), ret);
 

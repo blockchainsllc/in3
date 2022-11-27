@@ -171,10 +171,10 @@ in3_req_t* req_new(in3_t* client, const char* req_data) {
 
   if (req_data == NULL || client->pending == 0xFFFF) return NULL; // avoid overflows by not creating any new ctx anymore
 
-  in3_req_t* ctx          = _calloc(1, sizeof(in3_req_t));
-  ctx->client             = client;
-  ctx->verification_state = IN3_WAITING;
-  ctx->request            = parse_json(req_data);
+  in3_req_t* ctx = _calloc(1, sizeof(in3_req_t));
+  ctx->client    = client;
+  ctx->status    = IN3_WAITING;
+  ctx->request   = parse_json(req_data);
   client->pending++;
 
   // was the json parseable?
@@ -325,7 +325,7 @@ in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumbe
     ctx->error[0] = 'E';
     ctx->error[1] = 0;
   }
-  ctx->verification_state = errnumber;
+  ctx->status = errnumber;
   return errnumber;
 }
 
@@ -506,7 +506,7 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
 
     switch (in3_req_state(ctx)) {
       case REQ_ERROR:
-        return req_set_error(parent, ctx->error, ctx->verification_state ? ctx->verification_state : IN3_ERPC);
+        return req_set_error(parent, ctx->error, ctx->status ? ctx->status : IN3_ERPC);
       case REQ_SUCCESS:
         *result = strcmp(method, "in3_http") == 0 ? response : d_get(response, K_RESULT);
         if (!*result) {
@@ -683,7 +683,7 @@ in3_ret_t send_http_request(in3_req_t* req, char* url, char* method, char* path,
     _free(rp.data);
     switch (in3_req_state(found)) {
       case REQ_ERROR:
-        return req_set_error(req, found->error, found->verification_state ? found->verification_state : IN3_ERPC);
+        return req_set_error(req, found->error, found->status ? found->status : IN3_ERPC);
       case REQ_SUCCESS:
         *result = found->response->result;
         return *result ? IN3_OK : req_set_error(req, "error executing provider call", IN3_ERPC);

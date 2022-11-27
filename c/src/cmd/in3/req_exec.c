@@ -37,7 +37,7 @@ static void execute(in3_t* c, FILE* f) {
       // time to execute
       in3_req_t* ctx = req_new(c, sb.data);
       if (ctx->error)
-        recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
+        recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->status, ctx->error);
       else {
         in3_ret_t ret = in3_send_req(ctx);
         uint32_t  id  = d_get_int(req_get_request(ctx, 0), K_ID);
@@ -66,7 +66,7 @@ static void execute(in3_t* c, FILE* f) {
           }
         }
         else
-          recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->verification_state, ctx->error == NULL ? "Unknown error" : ctx->error);
+          recorder_print(0, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->status, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
       fflush(stdout);
       req_free(ctx);

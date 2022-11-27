@@ -324,10 +324,10 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_nodeselect_def_t* data, i
 #endif
 
 in3_ret_t update_nodes(in3_t* c, in3_nodeselect_def_t* data) {
-  in3_req_t* ctx          = _calloc(1, sizeof(in3_req_t));
-  ctx->verification_state = IN3_EIGNORE;
-  ctx->error              = _calloc(1, 1);
-  ctx->client             = c;
+  in3_req_t* ctx = _calloc(1, sizeof(in3_req_t));
+  ctx->status    = IN3_EIGNORE;
+  ctx->error     = _calloc(1, 1);
+  ctx->client    = c;
   if (data->nodelist_upd8_params) {
     _free(data->nodelist_upd8_params);
     data->nodelist_upd8_params = NULL;

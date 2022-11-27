@@ -103,15 +103,15 @@ typedef struct in3_req {
   json_ctx_t*     request;      /**< the result of the json-parser for the request.*/
   json_ctx_t*     response;     /**< the result of the json-parser for the response.*/
   in3_response_t* raw_response; /**< the raw response-data, which should be verified. */
+  in3_state_t*    in3_state;    /**< additional incubed assignements*/
 
-  char*        error;     /**< in case of an error this will hold the message, if not it points to `NULL` */
-  in3_state_t* in3_state; /**< additional incubed assignements*/
+  char*     error;  /**< in case of an error this will hold the message, if not it points to `NULL` */
+  in3_ret_t status; /**< state of the verification */
 
-  uint32_t      id;                 /**< JSON RPC id of request at index 0 */
-  uint_fast16_t attempt;            /**< the number of attempts */
-  uint_fast16_t len;                /**< the number of requests */
-  in3_ret_t     verification_state; /**< state of the verification */
-  req_type_t    type;               /**< the type of the request */
+  req_type_t    type;    /**< the type of the request */
+  uint32_t      id;      /**< JSON RPC id of request at index 0 */
+  uint_fast16_t attempt; /**< the number of attempts */
+  uint_fast16_t len;     /**< the number of requests */
 } in3_req_t;
 
 /**

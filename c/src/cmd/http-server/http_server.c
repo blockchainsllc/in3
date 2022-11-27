@@ -209,9 +209,9 @@ void* respond(void* arg) {
             printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %i\r\n\r\n%s\r\n", (int) range.len, range.data);
           }
           else if (req->error)
-            error_response(req->error, req->verification_state);
+            error_response(req->error, req->status);
           else
-            error_response("Could not execute the request", req->verification_state);
+            error_response("Could not execute the request", req->status);
         }
         if (req)
           req_free(req);

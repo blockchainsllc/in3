@@ -213,7 +213,7 @@ static void test_signer_prepare_tx() {
   jtx    = parse_json("{\"success\":true}");
 
   raw_tx = sign_tx(jtx->result, ctx);
-  TEST_ASSERT_TRUE(ctx->type == RT_RPC && ctx->verification_state == IN3_WAITING && ctx->required);
+  TEST_ASSERT_TRUE(ctx->type == RT_RPC && ctx->status == IN3_WAITING && ctx->required);
   TEST_ASSERT_EQUAL(IN3_OK, in3_send_req(ctx->required));
 
   raw_tx = sign_tx(jtx->result, ctx);
