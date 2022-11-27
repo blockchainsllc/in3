@@ -120,7 +120,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   }
 
   // Validate proof
-  d_token_t *ss = d_get(d_get(ctx_->responses[0], K_RESULT), K_STATES), *prf = NULL;
+  d_token_t *ss = d_get(d_get(req_get_response(ctx_, 0), K_RESULT), K_STATES), *prf = NULL;
   for_children_of(sitr, ss) {
     blk = d_get_long(sitr.token, K_BLOCK);
     if (blk <= vh->last_change_block) continue;
@@ -244,7 +244,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   }
 
   vh_free(vh);
-  *vhp = vh_init_nodelist(d_get(ctx_->responses[0], K_RESULT));
+  *vhp = vh_init_nodelist(d_get(req_get_response(ctx_, 0), K_RESULT));
   req_free(ctx_);
   return res;
 }
