@@ -39,6 +39,7 @@
 #define DEBUG
 #endif
 
+#include "../../src/verifier/eth1/nano/rpcs.h"
 #include "../../src/api/core/core_api.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/keys.h"
@@ -103,7 +104,7 @@ static void test_bulk_response() {
   TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":2,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   c->flags = 0;
 
-  //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
+  //  add_response(FN_ETH_BLOCKNUMBER, "[]", "0x2", NULL, NULL);
   in3_req_t* ctx = req_new(c, "[{\"method\":\"eth_blockNumber\",\"params\":[]},{\"method\":\"eth_blockNumber\",\"params\":[]}]");
   TEST_ASSERT_EQUAL(REQ_WAITING_TO_SEND, in3_req_exec_state(ctx));
   in3_http_request_t* req = in3_create_request(ctx);
@@ -175,7 +176,7 @@ static void test_partial_response() {
   TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":3,\"maxAttempts\":1,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   c->flags = 0;
 
-  //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
+  //  add_response(FN_ETH_BLOCKNUMBER, "[]", "0x2", NULL, NULL);
   in3_req_t* ctx = req_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_req_execute(ctx));
   in3_http_request_t* req = in3_create_request(ctx);
@@ -201,7 +202,7 @@ static void test_retry_response() {
   TEST_ASSERT_NULL(in3_configure(c, "{\"autoUpdateList\":false,\"requestCount\":2,\"nodeRegistry\":{\"needsUpdate\":false}}"));
   c->flags = 0;
 
-  //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
+  //  add_response(FN_ETH_BLOCKNUMBER, "[]", "0x2", NULL, NULL);
   in3_req_t* ctx = req_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_req_execute(ctx));
   in3_http_request_t* req = in3_create_request(ctx);
@@ -562,7 +563,7 @@ static void test_configure_validation() {
   in3_free(c);
 }
 
-#define ADD_RESPONSE_SIGS(sigs) add_response("eth_getTransactionByHash",                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             \
+#define ADD_RESPONSE_SIGS(sigs) add_response(FN_ETH_GETTRANSACTIONBYHASH,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             \
                                              "[\"0x715ece6967d0dc6aa6e8e4ee83937d3d4a79fdc644b64f07aa72f877df156be7\"]",                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             \
                                              "{"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     \
                                              "    \"blockHash\":\"0x3b1d2d185af8856ae03743b632ce1ed2c949e5d857870b7dae15f5b0601efff7\","                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             \

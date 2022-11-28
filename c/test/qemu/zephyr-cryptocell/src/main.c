@@ -1,3 +1,4 @@
+#include "../../../../src/signer/pk-signer/rpcs.h"
 #include <stdio.h>
 #include <string.h>
 #include <zephyr/kernel.h>
@@ -75,7 +76,7 @@ int main(void) {
   // send raw rpc-request, which is then verified
   ret = in3_client_rpc(
       in3,            //  the configured client
-      "in3_signData", // the rpc-method you want to call.
+      FN_IN3_SIGNDATA, // the rpc-method you want to call.
       "[\"Hello World\"]",
       &result, // the reference to a pointer which will hold the result
       &error);

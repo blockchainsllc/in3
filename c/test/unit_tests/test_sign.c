@@ -39,6 +39,7 @@
 #define DEBUG
 #endif
 
+#include "../../src/verifier/eth1/nano/rpcs.h"
 #include "../../include/in3/error.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/keys.h"
@@ -71,12 +72,12 @@ static void test_sign() {
   hex_to_bytes("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
   eth_set_pk_signer(c, pk, ECDSA_SECP256K1, NULL);
 
-  add_response("eth_sendRawTransaction", "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
+  add_response(FN_ETH_SENDRAWTRANSACTION, "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
                "\"0x812510201f48a86df62f08e4e6366a63cbcfba509897edcc5605917bc2bf002f\"", NULL, NULL);
-  add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
-  add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
+  add_response(FN_ETH_GASPRICE, "[]", "\"0xffff\"", NULL, NULL);
+  add_response(FN_ETH_GETTRANSACTIONCOUNT, "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
 
-  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\", \"gas\":21000  }]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, FN_ETH_SENDTRANSACTION, "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\", \"gas\":21000  }]");
   TEST_ASSERT_EQUAL(IN3_OK, req_check_response_error(ctx, 0));
   TEST_ASSERT_TRUE(ctx && req_get_error(ctx, 0) == IN3_OK);
   req_free(ctx);
@@ -92,7 +93,7 @@ static void test_tx() {
   in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
   in3_configure(in3, "{\"autoUpdateList\":false,\"nodeRegistry\":{\"needsUpdate\":false}}");
   replace_transport(in3, test_transport);
-  add_response("eth_sendRawTransaction", "[\"0xf892808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567526a06f0103fccdcae0d6b265f8c38ee42f4a722c1cb36230fe8da40315acc30519a8a06252a68b26a5575f76a65ac08a7f684bc37b0c98d9e715d73ddce696b58f2c72\"]",
+  add_response(FN_ETH_SENDRAWTRANSACTION, "[\"0xf892808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567526a06f0103fccdcae0d6b265f8c38ee42f4a722c1cb36230fe8da40315acc30519a8a06252a68b26a5575f76a65ac08a7f684bc37b0c98d9e715d73ddce696b58f2c72\"]",
                "\"0x309f89063df0b28e40af95708edb72041d5715ed1e71701ed4ccb6433218088f\"", NULL, NULL);
 
   // convert the hexstring to bytes
@@ -136,12 +137,12 @@ static void test_sign_hex() {
 
   eth_set_pk_signer_hex(c, "0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303");
 
-  add_response("eth_sendRawTransaction", "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
+  add_response(FN_ETH_SENDRAWTRANSACTION, "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
                "\"0x812510201f48a86df62f08e4e6366a63cbcfba509897edcc5605917bc2bf002f\"", NULL, NULL);
-  add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
-  add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
+  add_response(FN_ETH_GASPRICE, "[]", "\"0xffff\"", NULL, NULL);
+  add_response(FN_ETH_GETTRANSACTIONCOUNT, "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
 
-  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\", \"gas\":21000 }]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, FN_ETH_SENDTRANSACTION, "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\", \"gas\":21000 }]");
   TEST_ASSERT_EQUAL(IN3_OK, req_check_response_error(ctx, 0));
   TEST_ASSERT_TRUE(ctx && req_get_error(ctx, 0) == IN3_OK);
   req_free(ctx);
@@ -150,7 +151,7 @@ static void test_sign_hex() {
 
 static void test_sign_sans_signer_and_from() {
   in3_t*     c   = in3_for_chain(CHAIN_ID_MAINNET);
-  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\", \"gas\":21000  }]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, FN_ETH_SENDTRANSACTION, "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\", \"gas\":21000  }]");
   TEST_ASSERT_NOT_NULL(ctx->error);
   req_free(ctx);
   in3_free(c);

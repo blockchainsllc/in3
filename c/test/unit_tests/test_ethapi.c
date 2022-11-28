@@ -38,6 +38,7 @@
 #define DEBUG
 #endif
 
+#include "../../src/verifier/eth1/nano/rpcs.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/keys.h"
 #include "../../src/core/client/request.h"
@@ -123,12 +124,12 @@ static void test_get_filter_changes() {
   TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterChanges(in3, 1, NULL, NULL));
 
   // Create new filter with options
-  add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf52\"", NULL, NULL);
   json_ctx_t* jopt = parse_json("{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}");
   size_t      fid  = eth_newFilter(in3, jopt);
   TEST_ASSERT_GREATER_THAN(0, fid);
-  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
-  add_response("eth_blockNumber", "[]", "\"0x84cf55\"", NULL, NULL);
+  add_response(FN_ETH_GETLOGS, "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf55\"", NULL, NULL);
   // Get changes
   eth_log_t* logs = NULL;
   in3_ret_t  ret  = eth_getFilterChanges(in3, fid, NULL, &logs);
@@ -136,10 +137,10 @@ static void test_get_filter_changes() {
   json_free(jopt);
 
   // Create block filter
-  add_response("eth_blockNumber", "[]", "\"0x84cf58\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf58\"", NULL, NULL);
   size_t bfid = eth_newBlockFilter(in3);
   TEST_ASSERT_GREATER_THAN(0, bfid);
-  add_response("eth_getBlockByNumber",
+  add_response(FN_ETH_GETBLOCKBYNUMBER,
                "[\"0x84cf59\",false]",
                "{"
                "        \"author\": \"0x0000000000000000000000000000000000000000\","
@@ -168,7 +169,7 @@ static void test_get_filter_changes() {
                "}",
                NULL,
                NULL);
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf59\"", NULL, NULL);
 
   // Get changes
   bytes32_t* hashes = NULL;
@@ -179,7 +180,7 @@ static void test_get_filter_changes() {
   TEST_ASSERT_EQUAL_MEMORY(hashes, blk_hash, 32);
   _free(hashes);
 
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf59\"", NULL, NULL);
   ret = eth_getFilterChanges(in3, bfid, &hashes, NULL);
   TEST_ASSERT_EQUAL(0, ret);
   _free(hashes);
@@ -272,7 +273,7 @@ static void test_get_tx_hash(void) {
 
   // get non-existent txn
   replace_transport(in3, test_transport);
-  add_response("eth_getTransactionByHash", "[\"0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164\"]", "null", NULL, NULL);
+  add_response(FN_ETH_GETTRANSACTIONBYHASH, "[\"0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164\"]", "null", NULL, NULL);
   tx = eth_getTransactionByHash(in3, tx_hash);
   TEST_ASSERT_NULL(tx);
   free(tx);
@@ -303,7 +304,7 @@ static void test_send_tx() {
   in3_t* in3 = in3_for_chain(CHAIN_ID_GOERLI);
   in3_configure(in3, "{\"autoUpdateList\":false,\"nodeRegistry\":{\"needsUpdate\":false}}");
   replace_transport(in3, test_transport);
-  add_response("eth_sendRawTransaction", "[\"0xf86d01850ee6b28000830668a094930e62afa9ceb9889c2177c858dc28810cedbf5d881bc16d674ec80000002ea0f07f44cd0a600823c392bd9d8a7c32ae99bd04014c451df0ebf4050556fe461ea01dd0cf7597621659eace230b0f0d36017b4ef565e0dbda6f34b9e680326318d3\"]",
+  add_response(FN_ETH_SENDRAWTRANSACTION, "[\"0xf86d01850ee6b28000830668a094930e62afa9ceb9889c2177c858dc28810cedbf5d881bc16d674ec80000002ea0f07f44cd0a600823c392bd9d8a7c32ae99bd04014c451df0ebf4050556fe461ea01dd0cf7597621659eace230b0f0d36017b4ef565e0dbda6f34b9e680326318d3\"]",
                "\"0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a\"", NULL, NULL);
 
   // convert the hexstring to bytes
@@ -458,7 +459,7 @@ static void test_estimate_fn(void) {
 
   // Test ABI arg parsing
   in3 = init_in3(test_transport, 0x5);
-  add_response("eth_estimateGas",
+  add_response(FN_ETH_ESTIMATEGAS,
                "[{\"to\":\"0x36643f8d17fe745a69a2fd22188921fade60a98b\",\"data\":\"0x8a843727000000000000000000000000000000000000000000000000000000000000000000000000000000000000000036643f8d17fe745a69a2fd22188921fade60a98b00000000000000000000000000000000000000000000000000000000000000c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe6000000000000000000000000000000000000000000000000000000000000ffff0000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000b536f6d6520737472696e67000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001436643f8d17fe745a69a2fd22188921fade60a98b000000000000000000000000\"},\"latest\"]",
                "\"0x123123\"",
                NULL,
@@ -527,7 +528,7 @@ static void test_eth_call_multiple(void) {
   in3_t*    c = init_in3(test_transport, 0x5);
   c->proof    = PROOF_NONE;
 
-  add_response("eth_call",
+  add_response(FN_ETH_CALL,
                "[{\"to\":\"0x2736d225f85740f42d17987100dc8d58e9e16252\",\"data\":\"0x15625c5e\"},\"latest\"]",
                "\"0x0000000000000000000000000000000000000000000000000000000000000005\"",
                NULL,
@@ -537,7 +538,7 @@ static void test_eth_call_multiple(void) {
   TEST_ASSERT_NOT_NULL(response);
   json_free(response);
 
-  add_response("eth_call",
+  add_response(FN_ETH_CALL,
                "[{\"to\":\"0x2736d225f85740f42d17987100dc8d58e9e16252\",\"data\":\"0x5cf0f3570000000000000000000000000000000000000000000000000000000000000000\"},\"latest\"]",
                "\"0x00000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000784bfa9eb182c3a02dbeb5285e3dba92d717e07a000000000000000000000000000000000000000000000000000000000000ffff000000000000000000000000000000000000000000000000000000000000ffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002168747470733a2f2f696e332e736c6f636b2e69742f6d61696e6e65742f6e642d3100000000000000000000000000000000000000000000000000000000000000\"",
                NULL,
@@ -563,7 +564,7 @@ static void test_eth_call_multiple(void) {
 static void test_get_result_no_error(void) {
   in3_t* c = init_in3(test_transport, CHAIN_ID_MAINNET);
   c->proof = PROOF_NONE;
-  add_response("eth_blockNumber", "[]", NULL, "{}", NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", NULL, "{}", NULL);
   uint64_t blknum = eth_blockNumber(c);
   TEST_ASSERT_EQUAL(0, blknum);
   in3_free(c);
@@ -572,7 +573,7 @@ static void test_get_result_no_error(void) {
 static void test_get_nonexistent_block(void) {
   in3_t* c = init_in3(test_transport, CHAIN_ID_MAINNET);
   c->proof = PROOF_NONE;
-  add_response("eth_getBlockByNumber", "[\"0xffffffffffffffff\",false]", "null", NULL, NULL);
+  add_response(FN_ETH_GETBLOCKBYNUMBER, "[\"0xffffffffffffffff\",false]", "null", NULL, NULL);
   eth_block_t* blk = eth_getBlockByNumber(c, BLKNUM(UINT64_MAX), false);
   TEST_ASSERT_NULL(blk);
   in3_free(c);
@@ -588,7 +589,7 @@ static void test_wait_for_receipt(void) {
   in3_free(c);
 
   c = init_in3(test_transport, CHAIN_ID_GOERLI);
-  add_response("eth_getTransactionReceipt", "[\"0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d\"]", NULL, "Unknown error", NULL);
+  add_response(FN_ETH_GETTRANSACTIONRECEIPT, "[\"0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d\"]", NULL, "Unknown error", NULL);
   r = eth_wait_for_receipt(c, blk_hash);
   TEST_ASSERT_NULL(r);
   in3_free(c);

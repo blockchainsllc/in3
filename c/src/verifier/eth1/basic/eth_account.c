@@ -38,10 +38,12 @@
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
+#include "../../../nodeselect/full/rpcs.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
+#include "../nano/rpcs.h"
 #include <string.h>
 
 static const uint8_t* EMPTY_HASH      = (uint8_t*) "\xc5\xd2\x46\x01\x86\xf7\x23\x3c\x92\x7e\x7d\xb2\xdc\xc7\x03\xc0\xe5\x00\xb6\x53\xca\x82\x27\x3b\x7b\xfa\xd8\x04\x5d\x85\xa4\x70";
@@ -155,13 +157,13 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
 
   // make sure we blockheader is based on the right blocknumber (unless it is a nodelist or a 'latest'-string)
   t = d_get(vc->request, K_PARAMS);
-  if (strcmp(vc->method, "in3_nodeList") && (t = d_get_at(t, d_len(t) - 1)) && d_type(t) == T_INTEGER && rlp_decode_in_list(&header, BLOCKHEADER_NUMBER, &tmp) == 1 && bytes_to_long(tmp.data, tmp.len) != d_long(t))
+  if (strcmp(vc->method, FN_IN3_NODELIST) && (t = d_get_at(t, d_len(t) - 1)) && d_type(t) == T_INTEGER && rlp_decode_in_list(&header, BLOCKHEADER_NUMBER, &tmp) == 1 && bytes_to_long(tmp.data, tmp.len) != d_long(t))
     return vc_err(vc, "the blockheader has the wrong blocknumber");
 
   // get the account this proof is based on
-  if (!(contract = strcmp(vc->method, "in3_nodeList") == 0 ? d_get(vc->result, K_CONTRACT) : d_get_at(d_get(vc->request, K_PARAMS), 0)))
+  if (!(contract = strcmp(vc->method, FN_IN3_NODELIST) == 0 ? d_get(vc->result, K_CONTRACT) : d_get_at(d_get(vc->request, K_PARAMS), 0)))
     return vc_err(vc, "no account found in request");
-  if (strcmp(vc->method, "eth_call") == 0)
+  if (strcmp(vc->method, FN_ETH_CALL) == 0)
     contract = d_getl(d_get_at(d_get(vc->request, K_PARAMS), 0), K_TO, 20);
 
   // now check the results
@@ -175,15 +177,15 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
 
   if (!proofed_account) return vc_err(vc, "the contract this proof is based on was not part of the proof");
 
-  if (strcmp(vc->method, "eth_getBalance") == 0) {
+  if (strcmp(vc->method, FN_ETH_GETBALANCE) == 0) {
     if (!d_eq(vc->result, d_get(proofed_account, K_BALANCE)))
       return vc_err(vc, "the balance in the proof is different");
   }
-  else if (strcmp(vc->method, "eth_getTransactionCount") == 0) {
+  else if (strcmp(vc->method, FN_ETH_GETTRANSACTIONCOUNT) == 0) {
     if (!d_eq(vc->result, d_get(proofed_account, K_NONCE)))
       return vc_err(vc, "the nonce in the proof is different");
   }
-  else if (strcmp(vc->method, "eth_getCode") == 0) {
+  else if (strcmp(vc->method, FN_ETH_GETCODE) == 0) {
     bytes_t data = d_bytes(vc->result);
     if (data.len) {
       if (keccak(data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32).data, hash, 32))
@@ -192,7 +194,7 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
     else if (memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32).data, EMPTY_HASH, 32)) // must be empty
       return vc_err(vc, "the code must be empty");
   }
-  else if (strcmp(vc->method, "eth_getStorageAt") == 0) {
+  else if (strcmp(vc->method, FN_ETH_GETSTORAGEAT) == 0) {
     uint8_t result[32], proofed_result[32];
     d_bytes_to(vc->result, result, 32);
     d_token_t* storage       = d_get(proofed_account, K_STORAGE_PROOF);
@@ -213,7 +215,7 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
     }
     return vc_err(vc, "the storage result does not match");
   }
-  else if (strcmp(vc->method, "eth_call") == 0) {
+  else if (strcmp(vc->method, FN_ETH_CALL) == 0) {
     return IN3_OK;
   }
   else

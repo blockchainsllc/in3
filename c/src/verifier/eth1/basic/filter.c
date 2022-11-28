@@ -37,6 +37,7 @@
 #include "../../../core/client/request_internal.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
+#include "../nano/rpcs.h"
 #include "eth_basic.h"
 #include <inttypes.h>
 #include <stdio.h>
@@ -184,7 +185,7 @@ in3_ret_t filter_add(in3_filter_handler_t* filters, in3_req_t* ctx, in3_filter_t
 
   in3_ret_t  res           = IN3_OK;
   uint64_t   current_block = 0;
-  in3_req_t* block_ctx     = req_find_required(ctx, "eth_blockNumber", NULL);
+  in3_req_t* block_ctx     = req_find_required(ctx, FN_ETH_BLOCKNUMBER, NULL);
   if (!block_ctx)
     return req_add_required(ctx, req_new(ctx->client, _strdupn("{\"method\":\"eth_blockNumber\",\"params\":[]}", -1)));
   else {
@@ -249,7 +250,7 @@ static in3_req_t* req_find_required_for_block(in3_req_t* ctx, uint64_t block_num
     if (!sub_ctx->request) continue;
     d_token_t*  req             = req_get_request(sub_ctx, 0);
     const char* required_method = d_get_string(req, K_METHOD);
-    if (required_method && strcmp(required_method, "eth_getBlockByNumber")) continue;
+    if (required_method && strcmp(required_method, FN_ETH_GETBLOCKBYNUMBER)) continue;
     if (block_number == d_get_long_at(d_get(req, K_PARAMS), 0)) return sub_ctx;
   }
   return NULL;
@@ -261,7 +262,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
     return req_set_error(ctx, "filter with id does not exist", IN3_EUNKNOWN);
 
   // fetch the current block number
-  in3_req_t* block_ctx = req_find_required(ctx, "eth_blockNumber", NULL);
+  in3_req_t* block_ctx = req_find_required(ctx, FN_ETH_BLOCKNUMBER, NULL);
   if (!block_ctx)
     return req_add_required(ctx, req_new(ctx->client, _strdupn("{\"method\":\"eth_blockNumber\",\"params\":[]}", -1)));
   else {
@@ -291,7 +292,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
         return IN3_OK;
       }
 
-      in3_req_t* logs_ctx = req_find_required(ctx, "eth_getLogs", NULL);
+      in3_req_t* logs_ctx = req_find_required(ctx, FN_ETH_GETLOGS, NULL);
       if (!logs_ctx) {
         char* fopt_ = filter_opt_set_fromBlock(fopt, f->last_block, !f->is_first_usage);
         char* req   = sprintx("{\"method\":\"eth_getLogs\",\"params\":[%s]}", fopt_);

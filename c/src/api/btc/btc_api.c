@@ -37,6 +37,7 @@
 #include "../../core/util/mem.h"
 #include "../../verifier/btc/btc_serialize.h"
 #include "../../verifier/btc/btc_types.h"
+#include "../../verifier/btc/rpcs.h"
 #include "../utils/api_utils_priv.h"
 
 /**
@@ -228,7 +229,7 @@ bytes_t* btc_get_transaction_bytes(in3_t* in3, bytes32_t txid) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(txid, 32));
   sb_add_chars(params, "\",false");
-  rpc_exec("getrawtransaction", bytes_t*, hex_to_data(d_string(result)));
+  rpc_exec(FN_GETRAWTRANSACTION, bytes_t*, hex_to_data(d_string(result)));
 }
 
 btc_transaction_t* btc_get_transaction(in3_t* in3, bytes32_t txid) {
@@ -236,7 +237,7 @@ btc_transaction_t* btc_get_transaction(in3_t* in3, bytes32_t txid) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(txid, 32));
   sb_add_chars(params, "\",true");
-  rpc_exec("getrawtransaction", btc_transaction_t*, btc_d_to_tx(result));
+  rpc_exec(FN_GETRAWTRANSACTION, btc_transaction_t*, btc_d_to_tx(result));
 }
 
 btc_blockheader_t* btc_get_blockheader(in3_t* in3, bytes32_t blockhash) {
@@ -244,7 +245,7 @@ btc_blockheader_t* btc_get_blockheader(in3_t* in3, bytes32_t blockhash) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",true");
-  rpc_exec("getblockheader", btc_blockheader_t*, btc_d_to_blockheader(result));
+  rpc_exec(FN_GETBLOCKHEADER, btc_blockheader_t*, btc_d_to_blockheader(result));
 }
 
 bytes_t* btc_get_blockheader_bytes(in3_t* in3, bytes32_t blockhash) {
@@ -252,7 +253,7 @@ bytes_t* btc_get_blockheader_bytes(in3_t* in3, bytes32_t blockhash) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",false");
-  rpc_exec("getblockheader", bytes_t*, hex_to_data(d_string(result)));
+  rpc_exec(FN_GETBLOCKHEADER, bytes_t*, hex_to_data(d_string(result)));
 }
 
 bytes_t* btc_get_block_bytes(in3_t* in3, bytes32_t blockhash) {
@@ -260,7 +261,7 @@ bytes_t* btc_get_block_bytes(in3_t* in3, bytes32_t blockhash) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",false");
-  rpc_exec("getblock", bytes_t*, hex_to_data(d_string(result)));
+  rpc_exec(FN_GETBLOCK, bytes_t*, hex_to_data(d_string(result)));
 }
 
 btc_block_txdata_t* btc_get_block_txdata(in3_t* in3, bytes32_t blockhash) {
@@ -268,7 +269,7 @@ btc_block_txdata_t* btc_get_block_txdata(in3_t* in3, bytes32_t blockhash) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",2");
-  rpc_exec("getblock", btc_block_txdata_t*, btc_d_to_block_txdata(result));
+  rpc_exec(FN_GETBLOCK, btc_block_txdata_t*, btc_d_to_block_txdata(result));
 }
 
 btc_block_txids_t* btc_get_block_txids(in3_t* in3, bytes32_t blockhash) {
@@ -276,5 +277,5 @@ btc_block_txids_t* btc_get_block_txids(in3_t* in3, bytes32_t blockhash) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",1");
-  rpc_exec("getblock", btc_block_txids_t*, btc_d_to_block_txids(result));
+  rpc_exec(FN_GETBLOCK, btc_block_txids_t*, btc_d_to_block_txids(result));
 }

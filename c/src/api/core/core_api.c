@@ -40,6 +40,8 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../signer/pk-signer/rpcs.h"
+#include "../eth1/rpcs.h"
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -275,16 +277,16 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   UNUSED_VAR(ctx); // in case RPC_ONLY is used
 
 #if !defined(RPC_ONLY) || defined(RPC_WEB3_SHA3)
-  TRY_RPC("web3_sha3", in3_sha3(ctx))
+  TRY_RPC(FN_WEB3_SHA3, in3_sha3(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_KECCAK)
   TRY_RPC("keccak", in3_sha3(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_SHA256)
-  TRY_RPC("sha256", in3_sha256(ctx))
+  TRY_RPC(FN_SHA256, in3_sha256(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_WEB3_CLIENTVERSION)
-  TRY_RPC("web3_clientVersion", web3_clientVersion(ctx))
+  TRY_RPC(FN_WEB3_CLIENTVERSION, web3_clientVersion(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CONFIG)
   TRY_RPC("in3_config", in3_config(ctx))
@@ -293,41 +295,41 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
   TRY_RPC("in3_getConfig", in3_getConfig(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CACHECLEAR)
-  TRY_RPC("in3_cacheClear", in3_cacheClear(ctx))
+  TRY_RPC(FN_IN3_CACHECLEAR, in3_cacheClear(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CREATEKEY)
-  TRY_RPC("in3_createKey", in3_createKey(ctx))
+  TRY_RPC(FN_IN3_CREATEKEY, in3_createKey(ctx))
 #endif
 
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BIP32)
-  TRY_RPC("in3_bip32", in3_bip32(ctx))
+  TRY_RPC(FN_IN3_BIP32, in3_bip32(ctx))
 #endif
 
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BIP39_CREATE)
-  TRY_RPC("in3_bip39_create", in3_bip39_create(ctx))
+  TRY_RPC(FN_IN3_BIP39_CREATE, in3_bip39_create(ctx))
 #endif
 
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BIP39_decode)
-  TRY_RPC("in3_bip39_decode", in3_bip39_decode(ctx))
+  TRY_RPC(FN_IN3_BIP39_DECODE, in3_bip39_decode(ctx))
 #endif
 
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BASE58_ENCODE)
-  TRY_RPC("in3_base58_encode", in3_encode(ctx, ENC_BASE58))
+  TRY_RPC(FN_IN3_BASE58_ENCODE, in3_encode(ctx, ENC_BASE58))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BASE58_DECODE)
-  TRY_RPC("in3_base58_decode", in3_decode(ctx, ENC_BASE58))
+  TRY_RPC(FN_IN3_BASE58_DECODE, in3_decode(ctx, ENC_BASE58))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BASE64_ENCODE)
-  TRY_RPC("in3_base64_encode", in3_encode(ctx, ENC_BASE64))
+  TRY_RPC(FN_IN3_BASE64_ENCODE, in3_encode(ctx, ENC_BASE64))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_BASE64_DECODE)
-  TRY_RPC("in3_base64_decode", in3_decode(ctx, ENC_BASE64))
+  TRY_RPC(FN_IN3_BASE64_DECODE, in3_decode(ctx, ENC_BASE64))
 #endif
-  TRY_RPC("in3_ed25519_sign", in3_ed25519_sign(ctx))
-  TRY_RPC("in3_ed25519_pk2pub", in3_ed25519_pk2pub(ctx))
-  TRY_RPC("in3_ed25519_verify", in3_ed25519_verify(ctx))
+  TRY_RPC(FN_IN3_ED25519_SIGN, in3_ed25519_sign(ctx))
+  TRY_RPC(FN_IN3_ED25519_PK2PUB, in3_ed25519_pk2pub(ctx))
+  TRY_RPC(FN_IN3_ED25519_VERIFY, in3_ed25519_verify(ctx))
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CONVERT)
-  TRY_RPC("in3_crypto_convert", in3_crypto_convert(ctx))
+  TRY_RPC(FN_IN3_CRYPTO_CONVERT, in3_crypto_convert(ctx))
 #endif
   return IN3_EIGNORE;
 }

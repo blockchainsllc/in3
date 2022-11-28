@@ -33,6 +33,9 @@
  *******************************************************************************/
 #define IN3_INTERNAL
 
+#include "../../api/eth1/rpcs.h"
+#include "../../nodeselect/full/rpcs.h"
+#include "../../verifier/eth1/nano/rpcs.h"
 #include "../util/crypto.h"
 #include "../util/data.h"
 #include "../util/log.h"
@@ -45,7 +48,7 @@
 #include <string.h>
 
 NONULL static bool is_raw_http(in3_req_t* ctx) {
-  return !ctx->in3_state && strcmp("in3_http", d_get_string(req_get_request(ctx, 0), K_METHOD)) == 0;
+  return !ctx->in3_state && strcmp(FN_IN3_HTTP, d_get_string(req_get_request(ctx, 0), K_METHOD)) == 0;
 }
 
 NONULL static void response_free(in3_req_t* ctx) {
@@ -202,7 +205,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_req_t* c, sb_t* sb, bool no_in3) 
           s[j] = bytes(c->in3_state->signers + j * 20, 20);
         sb_add_bytes(sb, ",\"signers\":", s, c->in3_state->signers_length, true);
       }
-      if ((rc->flags & FLAGS_INCLUDE_CODE) && strcmp(d_get_string(request_token, K_METHOD), "eth_call") == 0)
+      if ((rc->flags & FLAGS_INCLUDE_CODE) && strcmp(d_get_string(request_token, K_METHOD), FN_ETH_CALL) == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
       if (proof == PROOF_FULL)
         sb_add_chars(sb, ",\"useFullProof\":true");
@@ -636,7 +639,7 @@ NONULL void request_free(in3_http_request_t* req) {
 }
 
 NONULL static bool ctx_is_allowed_to_fail(in3_req_t* ctx) {
-  return req_is_method(ctx, "in3_nodeList");
+  return req_is_method(ctx, FN_IN3_NODELIST);
 }
 
 in3_req_t* in3_req_last_waiting(in3_req_t* ctx) {

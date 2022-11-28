@@ -33,6 +33,7 @@
  *******************************************************************************/
 #define IN3_INTERNAL
 
+#include "../../api/eth1/rpcs.h"
 #include "../util/data.h"
 #include "../util/mem.h"
 #include "keys.h"
@@ -128,7 +129,7 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
   }
 
   if ((r = (is_obj ? d_get(response, K_RESULT) : NULL)) == NULL) {
-    if (strcmp(d_get_string(response, K_METHOD), "in3_http") == 0) {
+    if (strcmp(d_get_string(response, K_METHOD), FN_IN3_HTTP) == 0) {
       *result = d_is_bytes(response)
                     ? _strdupn((void*) d_bytes(response).data, d_len(response) + 1)
                     : d_create_json(ctx->response, r ? r : response);

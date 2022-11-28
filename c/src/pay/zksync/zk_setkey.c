@@ -5,6 +5,7 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"
+#include "../../verifier/eth1/nano/rpcs.h"
 #include "zk_helper.h"
 #include "zksync.h"
 #include <assert.h>
@@ -30,7 +31,7 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
   sb_add_chars(&sb, "\"},\"latest\"");
 
   // send request
-  TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_call", sb.data, &result), _free(sb.data))
+  TRY_FINAL(send_provider_request(ctx->req, NULL, FN_ETH_CALL, sb.data, &result), _free(sb.data))
   bytes_t call_res = d_bytes(result);
 
   // check result
@@ -50,7 +51,7 @@ static in3_ret_t auth_pub_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, 
   sb_add_rawbytes(&sb, "\",\"data\":\"0x595a5ebc", bytes(data, 128), 0);
   sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
 
-  TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_sendTransactionAndWait", sb.data, &result), _free(sb.data))
+  TRY_FINAL(send_provider_request(ctx->req, NULL, FN_ETH_SENDTRANSACTIONANDWAIT, sb.data, &result), _free(sb.data))
 
   // was it successfull?
   if (result == NULL || d_type(result) != T_OBJECT || d_get_int(result, K_STATUS) == 0)

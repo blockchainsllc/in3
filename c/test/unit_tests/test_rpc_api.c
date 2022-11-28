@@ -38,6 +38,8 @@
 #ifndef TEST
 #define DEBUG
 #endif
+#include "../../src/verifier/eth1/nano/rpcs.h"
+#include "../../src/api/eth1/rpcs.h"
 #include "../../src/api/core/core_api.h"
 #include "../../src/api/eth1/abi.h"
 #include "../../src/api/eth1/eth_api.h"
@@ -138,41 +140,41 @@ static void test_in3_client_rpc() {
   register_transport(c, test_transport);
 
   // Error response string
-  add_response("eth_blockNumber", "[]", NULL, "\"Error\"", NULL);
-  TEST_ASSERT_EQUAL(IN3_ERPC, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  add_response(FN_ETH_BLOCKNUMBER, "[]", NULL, "\"Error\"", NULL);
+  TEST_ASSERT_EQUAL(IN3_ERPC, in3_client_rpc(c, FN_ETH_BLOCKNUMBER, "[]", &result, &error));
   free(result);
   free(error);
 
   // Error response obj with message
-  add_response("eth_blockNumber", "[]", NULL, "{\"message\":\"Undefined\"}", NULL);
-  TEST_ASSERT_EQUAL(IN3_ERPC, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  add_response(FN_ETH_BLOCKNUMBER, "[]", NULL, "{\"message\":\"Undefined\"}", NULL);
+  TEST_ASSERT_EQUAL(IN3_ERPC, in3_client_rpc(c, FN_ETH_BLOCKNUMBER, "[]", &result, &error));
   free(result);
   free(error);
 
   // Error response obj without message
-  add_response("eth_blockNumber", "[]", NULL, "{\"Failure\":\"Undefined\"}", NULL);
-  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  add_response(FN_ETH_BLOCKNUMBER, "[]", NULL, "{\"Failure\":\"Undefined\"}", NULL);
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, FN_ETH_BLOCKNUMBER, "[]", &result, &error));
   free(result);
   free(error);
 
   // Invalid JSON request
-  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, "eth_blockNumber", "[\"]", &result, &error));
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, FN_ETH_BLOCKNUMBER, "[\"]", &result, &error));
   free(result);
   free(error);
 
   // Invalid calls to in3_client_rpc()
-  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, "eth_blockNumber", "[]", &result, NULL));
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, FN_ETH_BLOCKNUMBER, "[]", &result, NULL));
   free(result);
-  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, "eth_blockNumber", "[]", NULL, NULL));
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, FN_ETH_BLOCKNUMBER, "[]", NULL, NULL));
 
   // Invalid calls to in3_client_rpc_ctx()
-  in3_req_t* ctx = in3_client_rpc_ctx(c, "eth_blockNumber", "[\"]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c, FN_ETH_BLOCKNUMBER, "[\"]");
   TEST_ASSERT_NOT_NULL(ctx->error);
   req_free(ctx);
 
   // test in3_client_exec_req() with keep_in3 set to true
   c->flags |= FLAGS_KEEP_IN3;
-  add_response("eth_blockNumber", "[]", NULL, "{\"message\":\"Undefined\"}", "{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}");
+  add_response(FN_ETH_BLOCKNUMBER, "[]", NULL, "{\"message\":\"Undefined\"}", "{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}");
   char* response = in3_client_exec_req(c, "{\"method\":\"eth_blockNumber\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[]}");
   TEST_ASSERT_NOT_NULL(response);
   TEST_ASSERT_NOT_NULL(str_find(response, "\"in3\":{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}"));
@@ -180,7 +182,7 @@ static void test_in3_client_rpc() {
 
   // test in3_client_exec_req() with keep_in3 set to false
   BITMASK_CLEAR(c->flags, FLAGS_KEEP_IN3);
-  add_response("eth_blockNumber", "[]", NULL, "{\"message\":\"Undefined\"}", "{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}");
+  add_response(FN_ETH_BLOCKNUMBER, "[]", NULL, "{\"message\":\"Undefined\"}", "{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}");
   response = in3_client_exec_req(c, "{\"method\":\"eth_blockNumber\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[]}");
   TEST_ASSERT_NOT_NULL(response);
   free(response);
@@ -188,12 +190,12 @@ static void test_in3_client_rpc() {
   in3_free(c);
 
   //  // Invalid JSON result
-  //  add_response("eth_blockNumber", "[]", "\"\"0x84cf52\"", NULL, NULL);
-  //  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  //  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"\"0x84cf52\"", NULL, NULL);
+  //  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, FN_ETH_BLOCKNUMBER, "[]", &result, &error));
   //
   //  // No result and no error
-  //  add_response("eth_blockNumber", "[]", NULL, NULL, NULL);
-  //  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  //  add_response(FN_ETH_BLOCKNUMBER, "[]", NULL, NULL, NULL);
+  //  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, FN_ETH_BLOCKNUMBER, "[]", &result, &error));
 }
 
 IN3_IMPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract);
@@ -211,7 +213,7 @@ static void test_in3_checksum_rpc() {
   d_token_t*  params = json->result;
   char        ret_checksum[43];
   checksum(params, 0, ret_checksum);
-  in3_ret_t ret = in3_client_rpc(in3, "in3_checksumAddress", param_test, &result, &error);
+  in3_ret_t ret = in3_client_rpc(in3, FN_IN3_CHECKSUMADDRESS, param_test, &result, &error);
   // remove quotes from result
   char str_result[43];
   memcpy(str_result, &result[1], 42);

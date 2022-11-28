@@ -1,3 +1,4 @@
+#include "../../api/eth1/rpcs.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/plugin.h"
 #include "../../core/client/request_internal.h"
@@ -28,7 +29,7 @@ in3_ret_t zksync_tx_data(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
   sb_add_rawbytes(&sb, "/transactions_all/0x", d_get_bytes_at(ctx->params, 0), 32);
   sb_add_chars(&sb, "\"");
 
-  TRY_FINAL(req_send_sub_request(ctx->req, "in3_http", sb.data, NULL, &res, &req), _free(sb.data))
+  TRY_FINAL(req_send_sub_request(ctx->req, FN_IN3_HTTP, sb.data, NULL, &res, &req), _free(sb.data))
 
   char* resp = d_create_json(req->response, res);
   in3_rpc_handle_with_string(ctx, resp);
@@ -78,7 +79,7 @@ in3_ret_t zksync_account_history(zksync_config_t* conf, in3_rpc_handle_ctx_t* ct
   }
   sb_add_chars(&sb, "\"");
 
-  TRY_FINAL(req_send_sub_request(ctx->req, "in3_http", sb.data, NULL, &res, &req), _free(sb.data))
+  TRY_FINAL(req_send_sub_request(ctx->req, FN_IN3_HTTP, sb.data, NULL, &res, &req), _free(sb.data))
 
   char* resp = d_create_json(req->response, res);
   in3_rpc_handle_with_string(ctx, resp);

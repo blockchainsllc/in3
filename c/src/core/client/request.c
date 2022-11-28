@@ -33,6 +33,8 @@
  *******************************************************************************/
 
 #include "request.h"
+#include "../../api/eth1/rpcs.h"
+#include "../../verifier/eth1/nano/rpcs.h"
 #include "../util/debug.h"
 #include "../util/log.h"
 #include "client.h"
@@ -133,7 +135,7 @@ d_token_t* req_get_response(in3_req_t* req, size_t index) {
   d_token_t* res = req->response ? req->response->result : NULL;
   switch (d_type(res)) {
     case T_OBJECT: return res;
-    case T_ARRAY: return (req->in3_state || !req_is_method(req, "in3_http")) ? d_get_at(res, index) : res;
+    case T_ARRAY: return (req->in3_state || !req_is_method(req, FN_IN3_HTTP)) ? d_get_at(res, index) : res;
     default: return req->in3_state ? NULL : res;
   }
 }
@@ -501,7 +503,7 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
       case REQ_ERROR:
         return req_set_error(parent, ctx->error, ctx->status ? ctx->status : IN3_ERPC);
       case REQ_SUCCESS:
-        *result = strcmp(method, "in3_http") == 0 ? response : d_get(response, K_RESULT);
+        *result = strcmp(method, FN_IN3_HTTP) == 0 ? response : d_get(response, K_RESULT);
         if (!*result) {
           d_token_t* error = d_get(response, K_ERROR);
           if (error && allow_error) {
@@ -558,7 +560,7 @@ static in3_ret_t req_send_sub_request_internal(in3_req_t* parent, char* method, 
 }
 
 in3_ret_t req_send_sub_request(in3_req_t* parent, char* method, char* params, char* in3, d_token_t** result, in3_req_t** child) {
-  bool use_cache = strcmp(method, "eth_sendTransaction") == 0; // this subrequest will be converted into eth_sendRawTransaction, so we must keep the original request.
+  bool use_cache = strcmp(method, FN_ETH_SENDTRANSACTION) == 0; // this subrequest will be converted into eth_sendRawTransaction, so we must keep the original request.
   return req_send_sub_request_internal(parent, method, params, in3, result, child, use_cache, false);
 }
 

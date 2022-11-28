@@ -45,6 +45,7 @@
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
+#include "../nano/rpcs.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -62,47 +63,47 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   if (d_type(vc->result) == T_NULL) {
     // check if there's a proof for non-existence
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONBYBLOCKHASHANDINDEX) || defined(RPC_ETH_GETTRANSACTIONBYBLOCKNUMBERANDINDEX)
-    if (VERIFY_RPC("eth_getTransactionByBlockHashAndIndex") || VERIFY_RPC("eth_getTransactionByBlockNumberAndIndex"))
+    if (VERIFY_RPC(FN_ETH_GETTRANSACTIONBYBLOCKHASHANDINDEX) || VERIFY_RPC(FN_ETH_GETTRANSACTIONBYBLOCKNUMBERANDINDEX))
       return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
 #endif
     return IN3_OK;
   }
 
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONBYHASH)
-  if (VERIFY_RPC("eth_getTransactionByHash")) return eth_verify_eth_getTransaction(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
+  if (VERIFY_RPC(FN_ETH_GETTRANSACTIONBYHASH)) return eth_verify_eth_getTransaction(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONBYBLOCKHASHANDINDEX) || defined(RPC_ETH_GETTRANSACTIONBYBLOCKNUMBERANDINDEX)
-  if (VERIFY_RPC("eth_getTransactionByBlockHashAndIndex") || VERIFY_RPC("eth_getTransactionByBlockNumberAndIndex"))
+  if (VERIFY_RPC(FN_ETH_GETTRANSACTIONBYBLOCKHASHANDINDEX) || VERIFY_RPC(FN_ETH_GETTRANSACTIONBYBLOCKNUMBERANDINDEX))
     return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETBLOCKBYNUMBER)
-  if (VERIFY_RPC("eth_getBlockByNumber"))
+  if (VERIFY_RPC(FN_ETH_GETBLOCKBYNUMBER))
     return eth_verify_eth_getBlock(vc, NULL_BYTES, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONCOUNTBYHASH)
-  if (VERIFY_RPC("eth_getBlockTransactionCountByHash"))
+  if (VERIFY_RPC(FN_ETH_GETBLOCKTRANSACTIONCOUNTBYHASH))
     return eth_verify_eth_getBlockTransactionCount(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETTRANSACTIONCOUNTBYNUMBER)
-  if (VERIFY_RPC("eth_getBlockTransactionCountByNumber"))
+  if (VERIFY_RPC(FN_ETH_GETBLOCKTRANSACTIONCOUNTBYNUMBER))
     return eth_verify_eth_getBlockTransactionCount(vc, NULL_BYTES, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETBLOCKBYHASH)
-  if (VERIFY_RPC("eth_getBlockByHash"))
+  if (VERIFY_RPC(FN_ETH_GETBLOCKBYHASH))
     return eth_verify_eth_getBlock(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETBALANCE) || defined(RPC_ETH_GETCODE) || defined(RPC_ETH_GETSTORAGEAT) || defined(RPC_ETH_GETTRANSACTIONCOUNT)
-  if (VERIFY_RPC("eth_getBalance") || VERIFY_RPC("eth_getCode") || VERIFY_RPC("eth_getStorageAt") || VERIFY_RPC("eth_getTransactionCount"))
+  if (VERIFY_RPC(FN_ETH_GETBALANCE) || VERIFY_RPC(FN_ETH_GETCODE) || VERIFY_RPC(FN_ETH_GETSTORAGEAT) || VERIFY_RPC(FN_ETH_GETTRANSACTIONCOUNT))
     return eth_verify_account_proof(vc);
 #endif
-  if (VERIFY_RPC("eth_gasPrice") || VERIFY_RPC("eth_newFilter") || VERIFY_RPC("eth_newBlockFilter") || VERIFY_RPC("eth_newPendingFilter") || VERIFY_RPC("eth_uninstallFilter") || VERIFY_RPC("eth_getFilterChanges"))
+  if (VERIFY_RPC(FN_ETH_GASPRICE) || VERIFY_RPC("eth_newFilter") || VERIFY_RPC("eth_newBlockFilter") || VERIFY_RPC("eth_newPendingFilter") || VERIFY_RPC("eth_uninstallFilter") || VERIFY_RPC("eth_getFilterChanges"))
     return IN3_OK;
 #if !defined(RPC_ONLY) || defined(RPC_ETH_GETLOGS)
-  if (VERIFY_RPC("eth_getLogs")) // for txReceipt, we need the txhash
+  if (VERIFY_RPC(FN_ETH_GETLOGS)) // for txReceipt, we need the txhash
     return eth_verify_eth_getLog(vc, d_len(vc->result));
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_SENDRAWTRANSACTION)
-  if (VERIFY_RPC("eth_sendRawTransaction")) {
+  if (VERIFY_RPC(FN_ETH_SENDRAWTRANSACTION)) {
     bytes32_t hash;
     keccak(d_bytes(d_get_at(d_get(vc->request, K_PARAMS), 0)), hash);
     return bytes_cmp(d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
@@ -119,7 +120,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   tx_data[r.len]      = 0;
   in3_req_t* send_req = NULL;
   in3_req_t* last_r   = NULL;
-  TRY(req_send_sub_request(ctx->req, "eth_sendTransaction", tx_data, NULL, &tx_hash, &send_req))
+  TRY(req_send_sub_request(ctx->req, FN_ETH_SENDTRANSACTION, tx_data, NULL, &tx_hash, &send_req))
   bytes_t th = d_bytes(tx_hash);
   if (!th.data || th.len != 32) return req_set_error(ctx->req, "Invalid Response from sendTransaction, expecting a hash!", IN3_EINVAL);
   // tx was sent, we have a tx_hash
@@ -127,7 +128,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
   bytes_to_hex_string(tx_hash_hex, "\"0x", th, "\"");
 
   // get the tx_receipt
-  TRY(req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, NULL, &tx_receipt, &last_r))
+  TRY(req_send_sub_request(ctx->req, FN_ETH_GETTRANSACTIONRECEIPT, tx_hash_hex, NULL, &tx_receipt, &last_r))
 
   if (d_type(tx_receipt) == T_NULL || d_get_long(tx_receipt, K_BLOCK_NUMBER) == 0) {
     // no tx yet
@@ -140,7 +141,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
     char in3[20];
     sprintf(in3, "{\"wait\":%d}", wait);
 
-    return req_send_sub_request(ctx->req, "eth_getTransactionReceipt", tx_hash_hex, in3, &tx_receipt, &last_r);
+    return req_send_sub_request(ctx->req, FN_ETH_GETTRANSACTIONRECEIPT, tx_hash_hex, in3, &tx_receipt, &last_r);
   }
   else {
     // we have a result and we keep it
@@ -201,10 +202,10 @@ static in3_ret_t eth_handle_intern(in3_filter_handler_t* filters, in3_rpc_handle
 
     // check method to handle internally
 #if !defined(RPC_ONLY) || defined(RPC_ETH_SENDTRANSACTION)
-  TRY_RPC("eth_sendTransaction", handle_eth_sendTransaction(ctx->req, ctx->request))
+  TRY_RPC(FN_ETH_SENDTRANSACTION, handle_eth_sendTransaction(ctx->req, ctx->request))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_SENDTRANSACTIONANDWAIT)
-  TRY_RPC("eth_sendTransactionAndWait", eth_send_transaction_and_wait(ctx))
+  TRY_RPC(FN_ETH_SENDTRANSACTIONANDWAIT, eth_send_transaction_and_wait(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_NEWFILTER)
   TRY_RPC("eth_newFilter", eth_newFilter(filters, ctx))

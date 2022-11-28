@@ -32,6 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../../../../src/verifier/eth1/nano/rpcs.h"
 #include "block_number.h"
 #include "cJSON.h"
 #include "esp_netif.h"
@@ -70,11 +71,11 @@ static const char* TAG = "IN3";
 in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_response_t* result) {
   for (int i = 0; i < urls_len; i++) {
     result[i].state = IN3_OK;
-    if (strstr(payload, "eth_call") != NULL) {
+    if (strstr(payload, FN_ETH_CALL) != NULL) {
       ESP_LOGI(TAG, "eth_call ...\n");
       sb_add_range(&(result[i].data), eth_call_res, 0, eth_call_res_len);
     }
-    else if (strstr(payload, "eth_blockNumber") != NULL) {
+    else if (strstr(payload, FN_ETH_BLOCKNUMBER) != NULL) {
       printf("Returning eth_blockNumber ...\n");
       sb_add_range(&(result[i].data), block_number_res, 0, block_number_res_len);
     }

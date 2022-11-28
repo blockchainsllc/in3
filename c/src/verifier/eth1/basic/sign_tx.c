@@ -32,6 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../../../api/eth1/rpcs.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/client/request_internal.h"
 #include "../../../core/util/crypto.h"
@@ -43,6 +44,7 @@
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
+#include "../nano/rpcs.h"
 #include "eth_basic.h"
 #include <inttypes.h>
 #include <stdio.h>
@@ -145,7 +147,7 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
   // is the nonce set?
   if (!tx->nonce.data) {
     char* payload = sprintx("[\"%B\",\"latest\"]", bytes(tx->from, 20));
-    ret           = get_from_nodes(ctx, "eth_getTransactionCount", payload, &tx->nonce);
+    ret           = get_from_nodes(ctx, FN_ETH_GETTRANSACTIONCOUNT, payload, &tx->nonce);
     _free(payload);
     if (ret == IN3_OK) {
       cache_entry_t* entry = in3_cache_get_entry_by_prop(ctx->cache, CACHE_NONCE);
@@ -178,7 +180,7 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
   if (tx->type < 2) {
     // legacy -tx
     if (!tx->gas_price) {
-      in3_ret_t r = req_send_sub_request(ctx, "eth_gasPrice", "", NULL, &result, NULL);
+      in3_ret_t r = req_send_sub_request(ctx, FN_ETH_GASPRICE, "", NULL, &result, NULL);
       if (r == IN3_OK) {
         tx->gas_price = d_long(result);
         if (tx->gas_prio) tx->gas_price = (tx->gas_price * tx->gas_prio) / 100;
@@ -190,10 +192,10 @@ static in3_ret_t get_nonce_and_gasprice(eth_tx_data_t* tx, in3_req_t* ctx) {
     // tx type 2
 
     // get gas_price
-    uint64_t gas_price = merge_result(&ret, req_send_sub_request(ctx, "eth_gasPrice", "", NULL, &result, NULL)) == IN3_OK ? d_long(result) : 0;
+    uint64_t gas_price = merge_result(&ret, req_send_sub_request(ctx, FN_ETH_GASPRICE, "", NULL, &result, NULL)) == IN3_OK ? d_long(result) : 0;
 
     // get latest block
-    if (merge_result(&ret, req_send_sub_request(ctx, "eth_getBlockByNumber", "\"latest\",false", NULL, &result, NULL)) == IN3_OK && gas_price) {
+    if (merge_result(&ret, req_send_sub_request(ctx, FN_ETH_GETBLOCKBYNUMBER, "\"latest\",false", NULL, &result, NULL)) == IN3_OK && gas_price) {
       uint64_t base_fee = d_get_long(result, K_BASE_GAS_FEE);
       tx->gas_price     = tx->gas_prio ? (gas_price * tx->gas_prio) / 100 : gas_price;
       if (!base_fee)
@@ -293,7 +295,7 @@ static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, eth_tx_data_t* td)
       sb_add_chars(&params, "\",[]");
 
     d_token_t* res;
-    TRY_FINAL(req_send_sub_request(req, "in3_abiEncode", params.data, NULL, &res, NULL), _free(params.data))
+    TRY_FINAL(req_send_sub_request(req, FN_IN3_ABIENCODE, params.data, NULL, &res, NULL), _free(params.data))
 
     if (!d_is_bytes(res) || d_bytes(res).len < 4) return req_set_error(req, "abi encoded data", IN3_EINVAL);
     if (td->data.len) {
@@ -323,7 +325,7 @@ static in3_ret_t simulate_tx(in3_req_t* req, eth_tx_data_t* tx, bytes_t wallet, 
   sb_printx(&sb, "{\"gas\":\"0x%x\",\"data\":\"%B\",\"from\":\"%B\"", init_gas, tx->data, wallet.len == 20 ? wallet : bytes(tx->from, 20));
   if (tx->to.data) sb_printx(&sb, ",\"to\":\"%B\"", tx->to);
   sb_add_char(&sb, '}');
-  if (strcmp(method, "eth_call") == 0) sb_add_chars(&sb, ",\"latest\"");
+  if (strcmp(method, FN_ETH_CALL) == 0) sb_add_chars(&sb, ",\"latest\"");
   TRY_FINAL(req_send_sub_request(req, method, sb.data, NULL, result, NULL), _free(sb.data))
   return IN3_OK;
 }
@@ -333,7 +335,7 @@ static in3_ret_t determine_gas(in3_req_t* req, eth_tx_data_t* tx, bytes_t wallet
   if (tx->data.len > 3) {
     uint64_t   init_gas = 20000000;
     d_token_t* result;
-    TRY(simulate_tx(req, tx, wallet, &result, "eth_estimateGas", init_gas))
+    TRY(simulate_tx(req, tx, wallet, &result, FN_ETH_ESTIMATEGAS, init_gas))
     uint64_t gas = d_long(result);
     if (gas == init_gas) return req_set_error(req, "The transaction would fail if being send this way", IN3_EINVAL);
     tx->gas_limit = (d_long(result) * 12) / 10; // we add 20% buffer
@@ -433,8 +435,8 @@ in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_req_t* ctx, bytes_t* dst, s
   TRY_CATCH(print_fees(ctx, *dst, meta), _free(dst->data))                        // in case of a wallet-tx, it will recreate the tx-data usinf execTransaction
 
   // cleanup subcontexts
-  TRY_CATCH(req_remove_required(ctx, req_find_required(ctx, "eth_getTransactionCount", NULL), false), _free(dst->data))
-  TRY_CATCH(req_remove_required(ctx, req_find_required(ctx, "eth_gasPrice", NULL), false), _free(dst->data))
+  TRY_CATCH(req_remove_required(ctx, req_find_required(ctx, FN_ETH_GETTRANSACTIONCOUNT, NULL), false), _free(dst->data))
+  TRY_CATCH(req_remove_required(ctx, req_find_required(ctx, FN_ETH_GASPRICE, NULL), false), _free(dst->data))
 
   return IN3_OK;
 }

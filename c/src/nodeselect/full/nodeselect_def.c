@@ -11,6 +11,7 @@
 #include "cache.h"
 #include "nodeselect_def_cfg.h"
 #include "registry.h"
+#include "rpcs.h"
 #include <limits.h>
 
 #define BLACKLISTTIME (24 * 3600)
@@ -55,7 +56,7 @@ static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
 
   // do we support this request?
   if (!vc->req) return IN3_EUNKNOWN;
-  if (vc->chain->type != CHAIN_ETH && strcmp(vc->method, "in3_nodeList")) return IN3_EIGNORE;
+  if (vc->chain->type != CHAIN_ETH && strcmp(vc->method, FN_IN3_NODELIST)) return IN3_EIGNORE;
   if (in3_req_get_proof(vc->req, vc->index) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a valid error-response
@@ -63,7 +64,7 @@ static in3_ret_t rpc_verify(in3_nodeselect_def_t* data, in3_vctx_t* vc) {
   UNUSED_VAR(data); // no waring in case RPC_ONLY is used
 
 #if !defined(RPC_ONLY) || defined(RPC_IN3_NODELIST)
-  if (VERIFY_RPC("in3_nodeList")) {
+  if (VERIFY_RPC(FN_IN3_NODELIST)) {
     d_token_t* params = d_get(vc->request, K_PARAMS);
     return eth_verify_in3_nodelist(data, vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
   }
@@ -444,7 +445,7 @@ NONULL static in3_ret_t pick_data(in3_nodeselect_config_t* w, in3_nodeselect_def
 }
 
 NONULL static bool auto_ask_sig(const in3_req_t* ctx) {
-  return (req_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && in3_chain_id(ctx) != CHAIN_ID_BTC);
+  return (req_is_method(ctx, FN_IN3_NODELIST) && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && in3_chain_id(ctx) != CHAIN_ID_BTC);
 }
 
 NONULL static in3_ret_t pick_signer(in3_nodeselect_config_t* w, in3_nodeselect_def_t* data, in3_req_t* ctx) {

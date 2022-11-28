@@ -38,8 +38,11 @@
 #include "helper.h"
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
+#include "../../api/eth1/rpcs.h"
+#include "../../signer/pk-signer/rpcs.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../tools/recorder/recorder.h"
+#include "../../verifier/eth1/nano/rpcs.h"
 #ifdef CMD_ARGS_FILE
 #include CMD_ARGS_FILE
 #else
@@ -206,7 +209,7 @@ char* resolve(in3_t* c, char* name) {
   if (name[0] == '0' && name[1] == 'x') return name;
   if (strstr(name, ".eth")) {
     char *res = NULL, *err = NULL;
-    in3_client_rpc(c, "in3_ens", stack_printx(strlen(name) + 10, "[\"%s\"]", name), &res, &err);
+    in3_client_rpc(c, FN_IN3_ENS, stack_printx(strlen(name) + 10, "[\"%s\"]", name), &res, &err);
     if (err)
       die(stack_printx(strlen(err) + 100, "Could not resolve %s : %s", name, err));
     if (res[0] == '"') {
@@ -366,7 +369,7 @@ void display_result(char* method, char* result) {
   abi_sig_t* req = get_txdata()->abi_sig;
 
   // if the request was a eth_call, we decode the result
-  if (req && (strcmp(method, "call") == 0 || strcmp(method, "eth_call") == 0)) {
+  if (req && (strcmp(method, "call") == 0 || strcmp(method, FN_ETH_CALL) == 0)) {
     int l = strlen(result) / 2 - 1;
     if (l) {
       char*       error = NULL;
@@ -387,7 +390,7 @@ void display_result(char* method, char* result) {
     else
       recorder_print(0, "%s\n", result);
   }
-  else if (is_onlyshow_rawtx() && strcmp(method, "in3_prepareTx") == 0 && get_txdata()->from)
+  else if (is_onlyshow_rawtx() && strcmp(method, FN_IN3_PREPARETX) == 0 && get_txdata()->from)
     recorder_print(0, "%s %s\n", result, get_txdata()->from);
   else {
     if (conf & out_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
@@ -420,12 +423,12 @@ static inline bool is_json(char* c) {
 }
 static inline bool needs_hex_number(char* arg, char* method) {
   // for eth, zksync (but not for eth_feeHistory)
-  return (strncmp(method, "eth_", 4) == 0 || strncmp(method, "zk", 2) == 0 || strncmp(method, "defi_", 5) == 0) && strcmp(method, "eth_feeHistory") && is_convertable_number(arg);
+  return (strncmp(method, "eth_", 4) == 0 || strncmp(method, "zk", 2) == 0 || strncmp(method, "defi_", 5) == 0) && strcmp(method, FN_ETH_FEEHISTORY) && is_convertable_number(arg);
 }
 
 void add_argument(char* arg, sb_t* args, in3_t* c, char* method) {
   if (needs_hex_number(arg, method))
     sb_print(args, "\"%s\"", get_wei(arg));
   else
-    sb_print(args, is_json(arg) ? "%s" : "\"%s\"", strcmp(method, "in3_ens") ? resolve(c, arg) : arg);
+    sb_print(args, is_json(arg) ? "%s" : "\"%s\"", strcmp(method, FN_IN3_ENS) ? resolve(c, arg) : arg);
 }

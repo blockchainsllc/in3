@@ -12,6 +12,7 @@
 #include "btc_sign.h"
 #include "btc_target.h"
 #include "btc_types.h"
+#include "rpcs.h"
 #include <stdlib.h>
 #include <string.h>
 #ifdef BTC_PRE_BPI34
@@ -447,7 +448,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   bytes32_t  hash;
 
 #if !defined(RPC_ONLY) || defined(RPC_GETBLOCK)
-  if (VERIFY_RPC("getblock")) {
+  if (VERIFY_RPC(FN_GETBLOCK)) {
     // mark zksync as experimental
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
 
@@ -458,19 +459,19 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   }
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_GETBLOCKCOUNT)
-  if (VERIFY_RPC("getblockcount")) {
+  if (VERIFY_RPC(FN_GETBLOCKCOUNT)) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     return btc_verify_blockcount(conf, vc);
   }
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_GETBLOCKHASH)
-  if (VERIFY_RPC("getblockhash")) {
+  if (VERIFY_RPC(FN_GETBLOCKHASH)) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     return IN3_OK;
   }
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_GETBLOCKHEADER)
-  if (VERIFY_RPC("getblockheader")) {
+  if (VERIFY_RPC(FN_GETBLOCKHEADER)) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     d_token_t* block_hash = d_get_at(params, 0);
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid blockhash");
@@ -479,14 +480,14 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
   }
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_BTC_PROOFTARGET)
-  if (VERIFY_RPC("btc_proofTarget")) {
+  if (VERIFY_RPC(FN_BTC_PROOFTARGET)) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     return btc_verify_target_proof(conf, vc, params);
   }
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_GETRAWTRANSACTION)
 
-  if (VERIFY_RPC("getrawtransaction")) {
+  if (VERIFY_RPC(FN_GETRAWTRANSACTION)) {
     REQUIRE_EXPERIMENTAL(vc->req, "btc")
     d_token_t* tx_id      = d_get_at(params, 0);
     bool       json       = d_len(params) < 2 ? d_type(vc->result) == T_OBJECT : d_get_int_at(params, 1);
@@ -537,7 +538,7 @@ static in3_ret_t in3_verify_btc(btc_target_conf_t* conf, in3_vctx_t* vc) {
 
   // #if !defined(RPC_ONLY) || defined(RPC_SENDRAWTRANSACTION)
 
-  //   if (VERIFY_RPC("sendrawtransaction")) {
+  //   if (VERIFY_RPC(FN_SENDRAWTRANSACTION)) {
   //     REQUIRE_EXPERIMENTAL(vc->req, "btc")
   //     // Get raw transaction
   //     // verify if transaction is well-formed before sending
@@ -652,7 +653,7 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
       sb_add_chars(&sb, blockhash);
       sb_add_chars(&sb, "\"");
     }
-    TRY_FINAL(req_send_sub_request(ctx->req, "getrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
+    TRY_FINAL(req_send_sub_request(ctx->req, FN_GETRAWTRANSACTION, sb.data, NULL, &result, NULL), _free(sb.data));
     transaction      = bytes(NULL, d_len(result) / 2);
     transaction.data = alloca(transaction.len);
     TRY(hex_to_bytes(d_string(result), -1, transaction.data, transaction.len))
@@ -801,7 +802,7 @@ in3_ret_t btc_sign_raw_tx(in3_req_t* req, bytes_t* raw_tx, address_t signer_id, 
 
 in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
   // This is the RPC that abstracts most of what is done in the background before sending a transaction:
-  in3_req_t* sub = req_find_required(ctx->req, "sendrawtransaction", NULL);
+  in3_req_t* sub = req_find_required(ctx->req, FN_SENDRAWTRANSACTION, NULL);
   if (sub) { // do we have a result?
     switch (in3_req_state(sub)) {
       case REQ_ERROR:
@@ -855,7 +856,7 @@ in3_ret_t send_transaction(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // finally, send transaction
   d_token_t* result = NULL;
-  TRY_FINAL(req_send_sub_request(req, "sendrawtransaction", sb.data, NULL, &result, NULL), _free(sb.data));
+  TRY_FINAL(req_send_sub_request(req, FN_SENDRAWTRANSACTION, sb.data, NULL, &result, NULL), _free(sb.data));
   return in3_rpc_handle_finish(ctx);
 }
 
@@ -868,14 +869,14 @@ static in3_ret_t btc_handle_intern(btc_target_conf_t* conf, in3_rpc_handle_ctx_t
   btc_check_conf(req, conf);
 
 #if !defined(RPC_ONLY) || defined(RPC_CREATEADDRESSES)
-  TRY_RPC("createaddress", btc_create_address(conf, ctx))
+  TRY_RPC(FN_CREATEADDRESS, btc_create_address(conf, ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_GETADDRESSES)
-  TRY_RPC("getaddresses", btc_get_addresses(conf, ctx))
+  TRY_RPC(FN_GETADDRESSES, btc_get_addresses(conf, ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_SENDTRANSACTION)
   // SERVER: sendtransaction(raw_signed_tx)
-  TRY_RPC("sendtransaction", send_transaction(conf, ctx))
+  TRY_RPC(FN_SENDTRANSACTION, send_transaction(conf, ctx))
 #endif
   return IN3_EIGNORE;
 }

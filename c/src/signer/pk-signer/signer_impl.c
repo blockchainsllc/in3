@@ -42,6 +42,7 @@
 #include "../../core/util/utils.h"
 #include "../../verifier/eth1/nano/serialize.h"
 #include "pk-signer_rpc.h"
+#include "rpcs.h"
 #include "signer.h"
 #include <string.h>
 
@@ -49,7 +50,7 @@ in3_ret_t in3_addJsonKey(in3_rpc_handle_ctx_t* ctx, d_token_t* data, char* passp
   address_t  adr    = {0};
   d_token_t* res    = NULL;
   char*      params = sprintx("%j,\"%S\"", data, passphrase);
-  TRY_FINAL(req_send_sub_request(ctx->req, "in3_decryptKey", params, NULL, &res, NULL), _free(params))
+  TRY_FINAL(req_send_sub_request(ctx->req, FN_IN3_DECRYPTKEY, params, NULL, &res, NULL), _free(params))
 
   bytes_t pk = d_bytes(res);
   if (!pk.data && pk.len != 32) return req_set_error(ctx->req, "invalid key", IN3_EINVAL);

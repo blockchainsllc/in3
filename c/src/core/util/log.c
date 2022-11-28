@@ -20,6 +20,7 @@
  * IN THE SOFTWARE.
  */
 
+#include "../../signer/pk-signer/rpcs.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,9 +63,9 @@ static void remove_pk_args(sb_t* sb, char* k) {
 // we remove any log output, which may contain a private key
 static void remove_pk(sb_t* sb) {
   remove_pk_args(sb, "\"pk\":");
-  remove_pk_args(sb, "in3_addRawKey");
-  remove_pk_args(sb, "in3_addMnemonic");
-  remove_pk_args(sb, "in3_addJsonKey");
+  remove_pk_args(sb, FN_IN3_ADDRAWKEY);
+  remove_pk_args(sb, FN_IN3_ADDMNEMONIC);
+  remove_pk_args(sb, FN_IN3_ADDJSONKEY);
 }
 
 static struct {

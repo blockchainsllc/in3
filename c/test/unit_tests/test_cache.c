@@ -39,6 +39,7 @@
 #define DEBUG
 #endif
 
+#include "../../src/nodeselect/full/rpcs.h"
 #include "../../src/core/client/plugin.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -173,7 +174,7 @@ static void test_cache() {
   TEST_ASSERT_EQUAL_INT32(7, nl2->nodelist_length);
 
   // test request
-  in3_req_t* ctx = in3_client_rpc_ctx(c2, "in3_nodeList", "[]");
+  in3_req_t* ctx = in3_client_rpc_ctx(c2, FN_IN3_NODELIST, "[]");
   if (ctx->error) printf("ERROR : %s\n", ctx->error);
   TEST_ASSERT(ctx && ctx->error == NULL);
   req_free(ctx);

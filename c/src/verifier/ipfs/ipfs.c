@@ -5,12 +5,14 @@
 #include "../../core/util/crypto.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
+#include "../../nodeselect/full/rpcs.h"
 #include "../../third-party/multihash/hashes.h"
 #include "../../third-party/multihash/multihash.h"
 #include "../../third-party/nanopb/pb_decode.h"
 #include "../../third-party/nanopb/pb_encode.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
 #include "ipfs.pb.h"
+#include "rpcs.h"
 #include <stdio.h>
 
 #define GOTO_RET(label, val) \
@@ -153,19 +155,19 @@ in3_ret_t in3_verify_ipfs(void* pdata, in3_plugin_act_t action, void* pctx) {
   d_token_t* params = d_get(vc->request, K_PARAMS);
 
   // do we support this request?
-  if (strcmp(vc->method, "in3_nodeList") && d_type(vc->result) != T_STRING)
+  if (strcmp(vc->method, FN_IN3_NODELIST) && d_type(vc->result) != T_STRING)
     return vc_err(vc, "Invalid response!");
 
-  if (strcmp(vc->method, "in3_nodeList") == 0)
+  if (strcmp(vc->method, FN_IN3_NODELIST) == 0)
     return true;
 #if !defined(RPC_ONLY) || defined(RPC_IPFS_GET)
-  if (VERIFY_RPC("ipfs_get"))
+  if (VERIFY_RPC(FN_IPFS_GET))
     return ipfs_verify_hash(d_string(vc->result),
                             d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
                             d_get_string_at(params, 0));
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IPFS_PUT)
-  if (VERIFY_RPC("ipfs_put"))
+  if (VERIFY_RPC(FN_IPFS_PUT))
     return ipfs_verify_hash(d_get_string_at(params, 0),
                             d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
                             d_string(vc->result));

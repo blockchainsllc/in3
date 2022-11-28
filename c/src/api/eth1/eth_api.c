@@ -41,6 +41,7 @@
 #include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/basic/filter.h"
 #include "../../verifier/eth1/nano/rlp.h"
+#include "../../verifier/eth1/nano/rpcs.h"
 #include "../utils/api_utils_priv.h"
 #include "abi.h"
 
@@ -232,28 +233,28 @@ eth_block_t* eth_getBlockByNumber(in3_t* in3, eth_blknum_t number, bool include_
   rpc_init;
   params_add_blk_num_t(params, number);
   params_add_bool(params, include_tx);
-  rpc_exec("eth_getBlockByNumber", eth_block_t*, eth_getBlock(result, include_tx));
+  rpc_exec(FN_ETH_GETBLOCKBYNUMBER, eth_block_t*, eth_getBlock(result, include_tx));
 }
 
 eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t number, bool include_tx) {
   rpc_init;
   params_add_bytes(params, bytes(number, 32));
   params_add_bool(params, include_tx);
-  rpc_exec("eth_getBlockByHash", eth_block_t*, eth_getBlock(result, include_tx));
+  rpc_exec(FN_ETH_GETBLOCKBYHASH, eth_block_t*, eth_getBlock(result, include_tx));
 }
 
 uint256_t eth_getBalance(in3_t* in3, address_t account, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
   params_add_blk_num_t(params, block);
-  rpc_exec("eth_getBalance", uint256_t, uint256_from_bytes(d_bytes(result)));
+  rpc_exec(FN_ETH_GETBALANCE, uint256_t, uint256_from_bytes(d_bytes(result)));
 }
 
 bytes_t eth_getCode(in3_t* in3, address_t account, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
   params_add_blk_num_t(params, block);
-  rpc_exec("eth_getCode", bytes_t, cloned_bytes(d_bytes(result)));
+  rpc_exec(FN_ETH_GETCODE, bytes_t, cloned_bytes(d_bytes(result)));
 }
 
 uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blknum_t block) {
@@ -261,17 +262,17 @@ uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blk
   params_add_bytes(params, bytes(account, 20));
   params_add_bytes(params, bytes(key, 32));
   params_add_blk_num_t(params, block);
-  rpc_exec("eth_getStorageAt", uint256_t, uint256_from_bytes(d_bytes(result)));
+  rpc_exec(FN_ETH_GETSTORAGEAT, uint256_t, uint256_from_bytes(d_bytes(result)));
 }
 
 uint64_t eth_blockNumber(in3_t* in3) {
   rpc_init;
-  rpc_exec("eth_blockNumber", uint64_t, d_long(result));
+  rpc_exec(FN_ETH_BLOCKNUMBER, uint64_t, d_long(result));
 }
 
 uint64_t eth_gasPrice(in3_t* in3) {
   rpc_init;
-  rpc_exec("eth_gasPrice", uint64_t, d_long(result));
+  rpc_exec(FN_ETH_GASPRICE, uint64_t, d_long(result));
 }
 
 static eth_log_t* parse_logs(d_token_t* result) {
@@ -308,7 +309,7 @@ static eth_log_t* parse_logs(d_token_t* result) {
 eth_log_t* eth_getLogs(in3_t* in3, char* fopt) {
   rpc_init;
   sb_add_chars(params, fopt);
-  rpc_exec("eth_getLogs", eth_log_t*, parse_logs(result));
+  rpc_exec(FN_ETH_GETLOGS, eth_log_t*, parse_logs(result));
 }
 
 static json_ctx_t* parse_call_result(abi_sig_t* req, d_token_t* result) {
@@ -389,17 +390,17 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
 
   if (only_estimate) {
     abi_sig_free(req);
-    rpc_exec("eth_estimateGas", uint64_t*, d_to_u64ptr(result));
+    rpc_exec(FN_ETH_ESTIMATEGAS, uint64_t*, d_to_u64ptr(result));
   }
   else {
-    rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
+    rpc_exec(FN_ETH_CALL, json_ctx_t*, parse_call_result(req, result));
   }
   return NULL;
 }
 
 static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) {
   errno             = 0;
-  in3_req_t* ctx    = in3_client_rpc_ctx(in3, "eth_getTransactionReceipt", params);
+  in3_req_t* ctx    = in3_client_rpc_ctx(in3, FN_ETH_GETTRANSACTIONRECEIPT, params);
   d_token_t* result = get_result(ctx);
   if (result) {
     if (d_type(result) == T_NULL) {
@@ -566,13 +567,13 @@ uint64_t eth_chainId(in3_t* in3) {
 uint64_t eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash) {
   rpc_init;
   params_add_bytes(params, bytes(hash, 32));
-  rpc_exec("eth_getBlockTransactionCountByHash", uint64_t, d_long(result));
+  rpc_exec(FN_ETH_GETBLOCKTRANSACTIONCOUNTBYHASH, uint64_t, d_long(result));
 }
 
 uint64_t eth_getBlockTransactionCountByNumber(in3_t* in3, eth_blknum_t block) {
   rpc_init;
   params_add_blk_num_t(params, block);
-  rpc_exec("eth_getBlockTransactionCountByNumber", uint64_t, d_long(result));
+  rpc_exec(FN_ETH_GETBLOCKTRANSACTIONCOUNTBYNUMBER, uint64_t, d_long(result));
 }
 
 json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...) {
@@ -617,28 +618,28 @@ static eth_tx_t* parse_tx(d_token_t* result) {
 eth_tx_t* eth_getTransactionByHash(in3_t* in3, bytes32_t tx_hash) {
   rpc_init;
   params_add_bytes(params, bytes(tx_hash, 32));
-  rpc_exec("eth_getTransactionByHash", eth_tx_t*, parse_tx(result));
+  rpc_exec(FN_ETH_GETTRANSACTIONBYHASH, eth_tx_t*, parse_tx(result));
 }
 
 eth_tx_t* eth_getTransactionByBlockHashAndIndex(in3_t* in3, bytes32_t block_hash, size_t index) {
   rpc_init;
   params_add_bytes(params, bytes(block_hash, 32));
   params_add_number(params, index);
-  rpc_exec("eth_getTransactionByBlockHashAndIndex", eth_tx_t*, parse_tx(result));
+  rpc_exec(FN_ETH_GETTRANSACTIONBYBLOCKHASHANDINDEX, eth_tx_t*, parse_tx(result));
 }
 
 eth_tx_t* eth_getTransactionByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index) {
   rpc_init;
   params_add_blk_num_t(params, block);
   params_add_number(params, index);
-  rpc_exec("eth_getTransactionByBlockNumberAndIndex", eth_tx_t*, parse_tx(result));
+  rpc_exec(FN_ETH_GETTRANSACTIONBYBLOCKNUMBERANDINDEX, eth_tx_t*, parse_tx(result));
 }
 
 uint64_t eth_getTransactionCount(in3_t* in3, address_t address, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(address, 20));
   params_add_blk_num_t(params, block);
-  rpc_exec("eth_getTransactionCount", uint64_t, d_long(result));
+  rpc_exec(FN_ETH_GETTRANSACTIONCOUNT, uint64_t, d_long(result));
 }
 
 static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
@@ -677,7 +678,7 @@ void eth_tx_receipt_free(eth_tx_receipt_t* txr) {
 eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash) {
   rpc_init;
   params_add_bytes(params, bytes(tx_hash, 32));
-  rpc_exec("eth_getTransactionReceipt", eth_tx_receipt_t*, parse_tx_receipt(result));
+  rpc_exec(FN_ETH_GETTRANSACTIONRECEIPT, eth_tx_receipt_t*, parse_tx_receipt(result));
 }
 
 eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index) {
@@ -690,13 +691,13 @@ eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, s
 uint64_t eth_getUncleCountByBlockHash(in3_t* in3, bytes32_t hash) {
   rpc_init;
   params_add_bytes(params, bytes(hash, 32));
-  rpc_exec("eth_getUncleCountByBlockHash", uint64_t, d_long(result));
+  rpc_exec(FN_ETH_GETUNCLECOUNTBYBLOCKHASH, uint64_t, d_long(result));
 }
 
 uint64_t eth_getUncleCountByBlockNumber(in3_t* in3, eth_blknum_t block) {
   rpc_init;
   params_add_blk_num_t(params, block);
-  rpc_exec("eth_getUncleCountByBlockNumber", uint64_t, d_long(result));
+  rpc_exec(FN_ETH_GETUNCLECOUNTBYBLOCKNUMBER, uint64_t, d_long(result));
 }
 
 bytes_t* eth_sendTransaction(in3_t* in3, address_t from, address_t to, OPTIONAL_T(uint64_t) gas, OPTIONAL_T(uint64_t) gas_price, OPTIONAL_T(uint256_t) value, OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce) {
@@ -722,13 +723,13 @@ bytes_t* eth_sendTransaction(in3_t* in3, address_t from, address_t to, OPTIONAL_
   }
   if (nonce.defined) params_add_next_pair(params, "nonce", sb_add_hexuint(params, nonce.value), true);
   sb_add_char(params, '}');
-  rpc_exec("eth_sendTransaction", bytes_t*, b_dup2(d_bytes(result)));
+  rpc_exec(FN_ETH_SENDTRANSACTION, bytes_t*, b_dup2(d_bytes(result)));
 }
 
 bytes_t* eth_sendRawTransaction(in3_t* in3, bytes_t data) {
   rpc_init;
   params_add_bytes(params, data);
-  rpc_exec("eth_sendRawTransaction", bytes_t*, b_dup2(d_bytes(result)));
+  rpc_exec(FN_ETH_SENDRAWTRANSACTION, bytes_t*, b_dup2(d_bytes(result)));
 }
 
 in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]) {

@@ -401,7 +401,9 @@ function getArray(def, name, index) {
 }
 function need_structs(state) { return typeof (state.generate_rpc) == 'object' && state.generate_rpc.structs !== undefined ? state.generate_rpc.structs : true }
 function need_validate(state) { return typeof (state.generate_rpc) == 'object' && state.generate_rpc.validate !== undefined ? state.generate_rpc.validate : true }
-
+function get_constant(name, use_const) {
+    return use_const ? 'FN_' + name.toUpperCase() : '"' + name + '"'
+}
 function getCType(def, name, index, types, api, state) {
     let c = ''
     if (def.array) return getArray(def, name, index)
@@ -437,6 +439,7 @@ function align_vars(src_items, ind, del = ' ', reverse) {
 function generate_rpc(path, api_name, rpcs, descr, state) {
     const types = state.types
     let use_conf = false
+    let use_const = fs.existsSync(path + '/rpcs.h')
     let use_main = ''
     try {
         use_main = fs.readFileSync(`${path}/${api_name}.h`, 'utf8')
@@ -470,7 +473,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
 
     const impl = [
         compliance_header.join('\n') + '\n',
-        `#include "${api_file}_rpc.h"`,
+        `#include "${api_file}_rpc.h"${use_const ? '\n#include "rpcs.h"' : ''}`,
         use_conf ? `#include "${api_file}.h"\n` : '',
 
         `#include "${in3_root}/core/client/keys.h"`,
@@ -524,7 +527,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
             if (t.validate && t.validate.check)
                 t.validate.check.forEach(_ => code.checks.push(_))
         })
-        code.read.push(`  RPC_ASSERT(d_len(ctx->params) <= ${params.length}, "%s only accepts %u arguments.", "${rpc_name}", ${params.length}); `)
+        code.read.push(`  RPC_ASSERT(d_len(ctx->params) <= ${params.length}, "%s only accepts %u arguments.", ${get_constant(rpc_name, use_const)}, ${params.length}); `)
         if (r.descr) {
             if (!direct_impl) header.push(comment('', r.descr))
             if (params.length) impl.push(comment('', r.descr))
@@ -557,7 +560,7 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
                 rpc_exec.push(`#if ${asArray(r.cmakeOptions).map(_ => `defined(${_})`).join(' && ')}`)
         }
         rpc_exec.push(`#if !defined(RPC_ONLY) || defined(RPC_${rpc_name.toUpperCase()})`)
-        rpc_exec.push(`  TRY_RPC("${rpc_name}", ${prefix}${rpc_name}(${use_conf ? 'conf, ' : ''}ctx))`)
+        rpc_exec.push(`  TRY_RPC(${get_constant(rpc_name, use_const)}, ${prefix}${rpc_name}(${use_conf ? 'conf, ' : ''}ctx))`)
         rpc_exec.push('#endif\n')
         if (r.cmakeOptions) rpc_exec.push('#endif')
     })

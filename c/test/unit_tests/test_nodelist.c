@@ -37,6 +37,8 @@
 #define DEBUG
 #endif
 
+#include "../../src/verifier/eth1/nano/rpcs.h"
+#include "../../src/nodeselect/full/rpcs.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../src/core/util/log.h"
@@ -45,7 +47,7 @@
 #include "nodeselect/full/nodelist.h"
 #include "nodeselect/full/nodeselect_def.h"
 
-#define ADD_RESPONSE_NODELIST_3(last_block) add_response("in3_nodeList",                                                                            \
+#define ADD_RESPONSE_NODELIST_3(last_block) add_response(FN_IN3_NODELIST,                                                                            \
                                                          "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",           \
                                                          "{"                                                                                        \
                                                          " \"nodes\": [{"                                                                           \
@@ -85,7 +87,7 @@
                                                          "}",                                                                                       \
                                                          NULL,                                                                                      \
                                                          NULL)
-#define ADD_RESPONSE_NODELIST_2(last_block) add_response("in3_nodeList",                                                                            \
+#define ADD_RESPONSE_NODELIST_2(last_block) add_response(FN_IN3_NODELIST,                                                                            \
                                                          "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",           \
                                                          "{"                                                                                        \
                                                          " \"nodes\": [{"                                                                           \
@@ -115,7 +117,7 @@
                                                          "}",                                                                                       \
                                                          NULL,                                                                                      \
                                                          NULL);
-#define ADD_RESPONSE_BLOCK_NUMBER(nl, blk, blk_hex) add_response("eth_blockNumber",              \
+#define ADD_RESPONSE_BLOCK_NUMBER(nl, blk, blk_hex) add_response(FN_ETH_BLOCKNUMBER,              \
                                                                  "[]",                           \
                                                                  "\"" blk_hex "\"",              \
                                                                  NULL,                           \
@@ -518,7 +520,7 @@ static void test_nodelist_update_5() {
   in3_rand(&s);
 
   ADD_RESPONSE_BLOCK_NUMBER("87989038", "87989050", "0x53E9B3A");
-  add_response("in3_nodeList",
+  add_response(FN_IN3_NODELIST,
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                NULL,
                "\"Internal server error!\"",
@@ -560,7 +562,7 @@ static void test_nodelist_update_6() {
   in3_rand(&s);
 
   ADD_RESPONSE_BLOCK_NUMBER("87989038", "87989050", "0x53E9B3A");
-  add_response("in3_nodeList",
+  add_response(FN_IN3_NODELIST,
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{}",
                NULL,
@@ -651,7 +653,7 @@ static void test_nodelist_update_8() {
   in3_rand(&s);
 
   // test that nodelist_upd8_params are not set when we have an error response
-  add_response("eth_blockNumber",
+  add_response(FN_ETH_BLOCKNUMBER,
                "[]",
                NULL,
                "\"Error: Internal server error\"",
@@ -670,7 +672,7 @@ static void test_nodelist_update_8() {
 
   // test that nodelist_upd8_params are not set when we have a response without proof
   c->proof = PROOF_STANDARD;
-  add_response("eth_getBalance",
+  add_response(FN_ETH_GETBALANCE,
                "[\"0x000000000000000000000000000000000000dead\",\"latest\"]",
                "\"0x2a595770eb8ed0c5827\"",
                NULL,

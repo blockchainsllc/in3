@@ -4,6 +4,7 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/zkcrypto/lib.h"
+#include "../../verifier/eth1/nano/rpcs.h"
 #include "zk_helper.h"
 #include "zksync.h"
 #include <assert.h>
@@ -50,7 +51,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     sb_add_rawbytes(&sb, "\",\"data\":\"0x2d2da806", bytes(account, 20), 32);
     sb_add_rawbytes(&sb, "\",\"value\":\"0x", amount, 0);
     sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
-    TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+    TRY_FINAL(send_provider_request(ctx->req, NULL, FN_ETH_SENDTRANSACTIONANDWAIT, sb.data, &tx_receipt), _free(sb.data))
   }
   else {
 
@@ -61,7 +62,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
       sb_add_rawbytes(&sb, NULL, amount, 32);
       sb_add_chars(&sb, "\",\"gas\":\"0x30d40\"}");
 
-      TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+      TRY_FINAL(send_provider_request(ctx->req, NULL, FN_ETH_SENDTRANSACTIONANDWAIT, sb.data, &tx_receipt), _free(sb.data))
     }
 
     sb_t sb = {0};
@@ -71,7 +72,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
     sb_add_rawbytes(&sb, NULL, bytes(account, 20), 32);
     sb_add_chars(&sb, "\",\"gas\":\"0xffd40\"}");
 
-    TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+    TRY_FINAL(send_provider_request(ctx->req, NULL, FN_ETH_SENDTRANSACTIONANDWAIT, sb.data, &tx_receipt), _free(sb.data))
   }
 
   // now that we have the receipt, we need to find the opId in the log
@@ -88,7 +89,7 @@ in3_ret_t zksync_deposit(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
         sb_add_chars(sb, ",\"priorityOpId\":");
         sb_add_int(sb, bytes_to_long(data.data + 64 - 8, 8));
         sb_add_chars(sb, "}");
-        req_remove_required(ctx->req, req_find_required(ctx->req, "eth_sendTransactionAndWait", NULL), true);
+        req_remove_required(ctx->req, req_find_required(ctx->req, FN_ETH_SENDTRANSACTIONANDWAIT, NULL), true);
         return in3_rpc_handle_finish(ctx);
       }
     }
@@ -120,7 +121,7 @@ in3_ret_t zksync_emergency_withdraw(zksync_config_t* conf, in3_rpc_handle_ctx_t*
   sb_add_rawbytes(&sb, "", bytes(token_conf->address, 20), 32);
   sb_add_rawbytes(&sb, "\",\"from\":\"0x", bytes(account, 20), 20);
   sb_add_chars(&sb, "\",\"gas\":\"0x7a120\"}");
-  TRY_FINAL(send_provider_request(ctx->req, NULL, "eth_sendTransactionAndWait", sb.data, &tx_receipt), _free(sb.data))
+  TRY_FINAL(send_provider_request(ctx->req, NULL, FN_ETH_SENDTRANSACTIONANDWAIT, sb.data, &tx_receipt), _free(sb.data))
   if (d_type(tx_receipt) != T_OBJECT) return req_set_error(ctx->req, "no txreceipt found, which means the transaction was not succesful", IN3_EFIND);
   str_range_t r = d_to_json(tx_receipt);
   r.data[r.len] = 0;

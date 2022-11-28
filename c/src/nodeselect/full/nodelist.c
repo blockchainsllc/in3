@@ -39,6 +39,7 @@
 #include "../../core/util/data.h"
 #include "../../core/util/debug.h"
 #include "cache.h"
+#include "rpcs.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -214,7 +215,7 @@ NONULL static in3_ret_t in3_client_fill_chain_whitelist(in3_nodeselect_def_t* da
 
 NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in3_req_t* parent_ctx) {
   // is there a useable required ctx?
-  in3_req_t* ctx = req_find_required(parent_ctx, "in3_nodeList", NULL);
+  in3_req_t* ctx = req_find_required(parent_ctx, FN_IN3_NODELIST, NULL);
 
   if (ctx) {
     d_token_t* response = req_get_response(ctx, 0);
@@ -460,14 +461,14 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, in3_nodeselect_config_t* w, in
 }
 
 static bool update_in_progress(const in3_req_t* ctx) {
-  return req_is_method(ctx, "in3_nodeList");
+  return req_is_method(ctx, FN_IN3_NODELIST);
 }
 
 in3_ret_t in3_node_list_get(in3_req_t* ctx, in3_nodeselect_def_t* data, bool update, in3_node_t** nodelist, unsigned int* nodelist_length, in3_node_weight_t** weights) {
   in3_ret_t res;
 
   // do we need to update the nodelist?
-  if (data->nodelist_upd8_params || update || req_find_required(ctx, "in3_nodeList", NULL)) {
+  if (data->nodelist_upd8_params || update || req_find_required(ctx, FN_IN3_NODELIST, NULL)) {
     // skip update if update has been postponed or there's already one in progress
     if (postpone_update(data) || update_in_progress(ctx))
       goto SKIP_UPDATE;

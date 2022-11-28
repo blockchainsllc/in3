@@ -39,6 +39,7 @@
 #define DEBUG
 #endif
 
+#include "../../src/verifier/eth1/nano/rpcs.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/request.h"
 #include "../../src/core/util/data.h"
@@ -67,14 +68,14 @@ static void test_filter() {
   register_transport(c, test_transport);
 
   char *result = NULL, *error = NULL;
-  add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf52\"", NULL, NULL);
 
   TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_newFilter", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", &result, &error));
   TEST_ASSERT_NULL(error);
   TEST_ASSERT_NOT_NULL(result);
   TEST_ASSERT_EQUAL_STRING("\"0x1\"", result);
 
-  add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf52\"", NULL, NULL);
 
   free(result);
 
@@ -86,8 +87,8 @@ static void test_filter() {
   free(result);
 
   // now we simulate a blocknumber ..55 which is higher then ..51 we registered
-  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
-  add_response("eth_blockNumber", "[]", "\"0x84cf55\"", NULL, NULL);
+  add_response(FN_ETH_GETLOGS, "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf55\"", NULL, NULL);
 
   TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_NULL(error);
@@ -96,8 +97,8 @@ static void test_filter() {
 
   free(result);
   // now we simulate a blocknumber ..59 which is higher then ..55 we registered
-  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf56\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  add_response(FN_ETH_GETLOGS, "[{\"fromBlock\":\"0x84cf56\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf59\"", NULL, NULL);
 
   TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_NULL(error);
@@ -106,7 +107,7 @@ static void test_filter() {
 
   free(result);
   // now we simulate a blocknumber ..59 which is higher then ..55 we registered
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf59\"", NULL, NULL);
   // because we give him the same block, we will send a second request.
 
   TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
@@ -187,12 +188,12 @@ static void test_filter_creation() {
 
   TEST_ASSERT_FALSE(filter_remove(filters, 1));
   TEST_ASSERT_EQUAL(0, eth_newFilter(c, NULL));
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf59\"", NULL, NULL);
   TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
-  add_response("eth_blockNumber", "[]", "\"0x84cf5a\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf5a\"", NULL, NULL);
   TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
   TEST_ASSERT_TRUE(filter_remove(filters, 1));
-  add_response("eth_blockNumber", "[]", "\"0x84cf5f\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf5f\"", NULL, NULL);
   TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
   TEST_ASSERT_EQUAL(2, filters->count);
   TEST_ASSERT_FALSE(filter_remove(filters, 10));
@@ -209,15 +210,15 @@ static void test_filter_changes() {
 
   char *result = NULL, *error = NULL;
 
-  add_response("eth_blockNumber", "[]", "\"0x84cf58\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf58\"", NULL, NULL);
   TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
   TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x5\"]", &result, &error));
   _free(error);
-  add_response("eth_blockNumber", "[]", "\"0x84cf58\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf58\"", NULL, NULL);
   TEST_ASSERT_EQUAL(IN3_OK, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_EQUAL_STRING("[]", result);
   _free(result);
-  add_response("eth_getBlockByNumber",
+  add_response(FN_ETH_GETBLOCKBYNUMBER,
                "[\"0x84cf59\",false]",
                "{"
                "        \"author\": \"0x0000000000000000000000000000000000000000\","
@@ -246,13 +247,13 @@ static void test_filter_changes() {
                "}",
                NULL,
                NULL);
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf59\"", NULL, NULL);
 
   TEST_ASSERT_EQUAL(IN3_OK, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_EQUAL_STRING("[\"0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9\"]", result);
   _free(result);
 
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  add_response(FN_ETH_BLOCKNUMBER, "[]", "\"0x84cf59\"", NULL, NULL);
   TEST_ASSERT_EQUAL(IN3_OK, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_EQUAL_STRING("[]", result);
   _free(result);

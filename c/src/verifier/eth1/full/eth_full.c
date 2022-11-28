@@ -43,6 +43,7 @@
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/serialize.h"
 #include "../evm/evm.h"
+#include "../nano/rpcs.h"
 #include <string.h>
 
 in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) {
@@ -56,7 +57,7 @@ in3_ret_t in3_verify_eth_full(void* pdata, in3_plugin_act_t action, void* pctx) 
   if (!vc->result) return IN3_OK;
 
 #if !defined(RPC_ONLY) || defined(RPC_ETH_CALL)
-  if (VERIFY_RPC("eth_call")) {
+  if (VERIFY_RPC(FN_ETH_CALL)) {
     if (eth_verify_account_proof(vc) < 0) return vc_err(vc, "proof could not be validated");
     d_token_t* tx        = d_get_at(d_get(vc->request, K_PARAMS), 0);
     bytes_t    address   = d_get_byteskl(tx, K_TO, 20);

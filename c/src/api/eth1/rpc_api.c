@@ -40,14 +40,17 @@
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../signer/pk-signer/rpcs.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/nano/rlp.h"
+#include "../../verifier/eth1/nano/rpcs.h"
 #include "../../verifier/eth1/nano/serialize.h"
 #include "abi.h"
 #include "abi_sigs.h"
 #include "ens.h"
 #include "eth_api.h"
+#include "rpcs.h"
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -198,7 +201,7 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
     d_token_t* tx;
     sb_t       params = sb_stack(alloca(70));
     sb_printx(&params, "\"%B\"", data);
-    TRY(req_send_sub_request(ctx->req, "eth_getTransactionByHash", params.data, NULL, &tx, NULL))
+    TRY(req_send_sub_request(ctx->req, FN_ETH_GETTRANSACTIONBYHASH, params.data, NULL, &tx, NULL))
     bytes_t* raw = serialize_tx(tx);
     data         = *raw;
     _free(raw);
@@ -591,7 +594,7 @@ static in3_ret_t in3_pk2address(in3_rpc_handle_ctx_t* ctx) {
   TRY(crypto_convert(ECDSA_SECP256K1, CONV_PK32_TO_PUB64, private_key, public_key, NULL))
 
   // hash it
-  if (strcmp(ctx->method, "in3_pk2address") == 0) {
+  if (strcmp(ctx->method, FN_IN3_PK2ADDRESS) == 0) {
     keccak(bytes(public_key, 64), hash);
     return in3_rpc_handle_with_bytes(ctx, bytes(hash + 12, 20));
   }
@@ -609,7 +612,7 @@ static in3_ret_t in3_calcDeployAddress(in3_rpc_handle_ctx_t* ctx) {
   // fetch nonce
   if (!nonce.data) {
     d_token_t* result;
-    TRY_SUB_REQUEST(ctx->req, "eth_getTransactionCount", &result, "\"%B\",\"latest\"", sender)
+    TRY_SUB_REQUEST(ctx->req, FN_ETH_GETTRANSACTIONCOUNT, &result, "\"%B\",\"latest\"", sender)
     nonce = d_bytes(result);
   }
 
@@ -647,7 +650,7 @@ static in3_ret_t eth_verify_signature(in3_rpc_handle_ctx_t* ctx) {
 
   sb_add_hexuint(&buf, block);
 
-  if (strcmp(sig_type, "eth_sign") == 0) {
+  if (strcmp(sig_type, FN_ETH_SIGN) == 0) {
     char*     tmp = alloca(msg.len + 30);
     const int l   = snprintx(tmp, msg.len + 30, ETH_SIGN_PREFIX, msg.len);
     memcpy(tmp + l, msg.data, msg.len);
@@ -686,7 +689,7 @@ static in3_ret_t eth_verify_signature(in3_rpc_handle_ctx_t* ctx) {
   d_token_t* result = NULL;
   char*      params = sprintx("{\"to\":\"%B\",\"data\":\"0x1626ba7e%b000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000%b%b\"},\"%s\"",
                               bytes(account, 20), bytes(hash, 32), bytes(sig_len, 4), signature, block ? buf.data : "latest");
-  TRY_FINAL(req_send_sub_request(ctx->req, "eth_call", params, NULL, &result, NULL), _free(params))
+  TRY_FINAL(req_send_sub_request(ctx->req, FN_ETH_CALL, params, NULL, &result, NULL), _free(params))
   if (d_is_bytes(result)) {
     bytes_t res = d_bytes(result);
     if (res.len > 4 && memcmp(res.data, "\x16\x26\xba\x7e", 4) == 0) return in3_rpc_handle_with_string(ctx, "{\"valid\":true}");
@@ -705,7 +708,7 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
   TRY_PARAM_GET_REQUIRED_BYTES(signature, ctx, 1, 65, 65)
   TRY_PARAM_GET_STRING(sig_type, ctx, 2, "raw")
 
-  if (strcmp(sig_type, "eth_sign") == 0)
+  if (strcmp(sig_type, FN_ETH_SIGN) == 0)
     eth_create_prefixed_msg_hash(hash, msg);
   else if (strcmp(sig_type, "hash") == 0) {
     if (msg.len != 32) return req_set_error(ctx->req, "The message hash must be 32 byte", IN3_EINVAL);
@@ -724,15 +727,15 @@ static in3_ret_t in3_ecrecover(in3_rpc_handle_ctx_t* ctx) {
 
 static in3_ret_t in3_sign_data(in3_rpc_handle_ctx_t* ctx) {
   // this function serves both in3_sign_data and eth_sign, but both functions hjave slidly different arguments
-  const bool is_eth_sign = strcmp(ctx->method, "eth_sign") == 0;
+  const bool is_eth_sign = strcmp(ctx->method, FN_ETH_SIGN) == 0;
   bytes_t    data, signer;
   char*      sig_type;
 
   TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, (is_eth_sign ? 1 : 0), 1, 0)
   TRY_PARAM_GET_BYTES(signer, ctx, (is_eth_sign ? 0 : 1), 20, 0)
-  TRY_PARAM_GET_STRING(sig_type, ctx, 2, (is_eth_sign ? "eth_sign" : "raw"))
+  TRY_PARAM_GET_STRING(sig_type, ctx, 2, (is_eth_sign ? FN_ETH_SIGN : "raw"))
 
-  if (strcmp(sig_type, "eth_sign") == 0) {
+  if (strcmp(sig_type, FN_ETH_SIGN) == 0) {
     void* tmp = alloca(32);
     sig_type  = "hash";
     eth_create_prefixed_msg_hash(tmp, data);
@@ -856,7 +859,7 @@ static in3_ret_t in3_signTx(in3_rpc_handle_ctx_t* ctx) {
   bytes_t    tx_raw  = NULL_BYTES;
   bytes_t    from_b;
   bytes_t    data;
-  if (strcmp(ctx->method, "eth_signTransaction") == 0 || d_type(tx_data) == T_OBJECT) {
+  if (strcmp(ctx->method, FN_ETH_SIGNTRANSACTION) == 0 || d_type(tx_data) == T_OBJECT) {
 #if defined(ETH_BASIC) || defined(ETH_FULL)
     TRY(eth_prepare_unsigned_tx(tx_data, ctx->req, &tx_raw, NULL))
     from_b = d_get_bytes(tx_data, K_FROM);
@@ -891,67 +894,67 @@ static in3_ret_t handle_intern(void* pdata, in3_plugin_act_t action, void* plugi
 
   in3_rpc_handle_ctx_t* ctx = plugin_ctx;
 #if !defined(RPC_ONLY) || defined(RPC_ETH_SIGN)
-  TRY_RPC("eth_sign", in3_sign_data(ctx))
+  TRY_RPC(FN_ETH_SIGN, in3_sign_data(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_ETH_SIGNTRANSACTION)
-  TRY_RPC("eth_signTransaction", in3_signTx(ctx))
+  TRY_RPC(FN_ETH_SIGNTRANSACTION, in3_signTx(ctx))
 #endif
 
   if (strncmp(ctx->method, "in3_", 4)) return IN3_EIGNORE; // shortcut
 
 #if !defined(RPC_ONLY) || defined(RPC_IN3_ABIENCODE)
-  TRY_RPC("in3_abiEncode", in3_abiEncode(ctx))
+  TRY_RPC(FN_IN3_ABIENCODE, in3_abiEncode(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_ABIDECODE)
-  TRY_RPC("in3_abiDecode", in3_abiDecode(ctx))
+  TRY_RPC(FN_IN3_ABIDECODE, in3_abiDecode(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_RLPDECODE)
-  TRY_RPC("in3_rlpDecode", in3_rlpDecode(ctx))
+  TRY_RPC(FN_IN3_RLPDECODE, in3_rlpDecode(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_DECODETX)
-  TRY_RPC("in3_decodeTx", in3_decodeTx(ctx))
+  TRY_RPC(FN_IN3_DECODETX, in3_decodeTx(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CHECKSUMADDRESS)
-  TRY_RPC("in3_checksumAddress", in3_checkSumAddress(ctx))
+  TRY_RPC(FN_IN3_CHECKSUMADDRESS, in3_checkSumAddress(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_ENS)
-  TRY_RPC("in3_ens", in3_ens(ctx))
+  TRY_RPC(FN_IN3_ENS, in3_ens(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_TOWEI)
-  TRY_RPC("in3_toWei", in3_toWei(ctx))
+  TRY_RPC(FN_IN3_TOWEI, in3_toWei(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_FROMWEI)
-  TRY_RPC("in3_fromWei", in3_fromWei(ctx))
+  TRY_RPC(FN_IN3_FROMWEI, in3_fromWei(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_PK2ADDRESS)
-  TRY_RPC("in3_pk2address", in3_pk2address(ctx))
+  TRY_RPC(FN_IN3_PK2ADDRESS, in3_pk2address(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_PK2PUBLIC)
-  TRY_RPC("in3_pk2public", in3_pk2address(ctx))
+  TRY_RPC(FN_IN3_PK2PUBLIC, in3_pk2address(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_ECRECOVER)
-  TRY_RPC("in3_ecrecover", in3_ecrecover(ctx))
+  TRY_RPC(FN_IN3_ECRECOVER, in3_ecrecover(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_SIGNDATA)
-  TRY_RPC("in3_signData", in3_sign_data(ctx))
+  TRY_RPC(FN_IN3_SIGNDATA, in3_sign_data(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_DECRYPTKEY)
-  TRY_RPC("in3_decryptKey", in3_decryptKey(ctx))
+  TRY_RPC(FN_IN3_DECRYPTKEY, in3_decryptKey(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_PREPARETX)
-  TRY_RPC("in3_prepareTx", in3_prepareTx(ctx))
+  TRY_RPC(FN_IN3_PREPARETX, in3_prepareTx(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_SIGNTX)
-  TRY_RPC("in3_signTx", in3_signTx(ctx))
+  TRY_RPC(FN_IN3_SIGNTX, in3_signTx(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_CALCDEPLOYADDRESS)
-  TRY_RPC("in3_calcDeployAddress", in3_calcDeployAddress(ctx))
+  TRY_RPC(FN_IN3_CALCDEPLOYADDRESS, in3_calcDeployAddress(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_PGET_INTERNAL_TX)
-  TRY_RPC("in3_get_internal_tx", eth_getInternalTx(ctx))
+  TRY_RPC(FN_IN3_GET_INTERNAL_TX, eth_getInternalTx(ctx))
 #endif
 #if !defined(RPC_ONLY) || defined(RPC_IN3_VERIFYSIGNATURE)
-  TRY_RPC("in3_verifySignature", eth_verify_signature(ctx))
+  TRY_RPC(FN_IN3_VERIFYSIGNATURE, eth_verify_signature(ctx))
 #endif
 
   return IN3_EIGNORE;

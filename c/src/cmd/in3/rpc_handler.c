@@ -1,6 +1,9 @@
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
 #include "../../api/ipfs/ipfs_api.h"
+#include "../../signer/pk-signer/rpcs.h"
+#include "../../verifier/eth1/nano/rpcs.h"
+#include "../../verifier/ipfs/rpcs.h"
 #include "helper.h"
 #include "transport.h"
 #include "tx.h"
@@ -17,7 +20,7 @@ static bool decode_keystore(char* args, int argc, char** argv) {
 }
 static bool _call(in3_t* c, char** method, sb_t* params) {
   encode_abi(c, params, true);
-  *method = "eth_call";
+  *method = FN_ETH_CALL;
   return false;
 }
 
@@ -29,9 +32,9 @@ void* wallet_get_config(in3_t* c);
 static bool _send(in3_t* c, char** method, sb_t* params) {
   encode_abi(c, params, false);
   if (is_onlyshow_rawtx() && (c->plugin_acts & (PLGN_ACT_SIGN | PLGN_ACT_SIGN_ACCOUNT)) == 0)
-    *method = "in3_prepareTx";
+    *method = FN_IN3_PREPARETX;
   else
-    *method = get_txdata()->wait ? "eth_sendTransactionAndWait" : "eth_sendTransaction";
+    *method = get_txdata()->wait ? FN_ETH_SENDTRANSACTIONANDWAIT : FN_ETH_SENDTRANSACTION;
 
 #ifdef MOD_WALLET
   void* conf = wallet_get_config(c);
@@ -129,18 +132,18 @@ bool handle_rpc(in3_t* c, char** method, sb_t* params, int argc, char** argv) {
   CHECK_RPC("call", _call(c, method, params))
   CHECK_RPC("abi_encode", _abi_encode(params))
   CHECK_RPC("abi_decode", _abi_decode(params))
-  CHECK_RPC("ipfs_get", _ipfs_get(c, params))
-  CHECK_RPC("ipfs_put", _ipfs_put(c, params))
+  CHECK_RPC(FN_IPFS_GET, _ipfs_get(c, params))
+  CHECK_RPC(FN_IPFS_PUT, _ipfs_put(c, params))
   CHECK_RPC("in3_weights", exec_weights(c))
   CHECK_RPC("send", _send(c, method, params))
   CHECK_RPC("sign", _sign(params))
   CHECK_RPC("autocompletelist", _autocompletelist())
-  CHECK_RPC("createKey", (*method = "in3_createKey") == NULL)
-  CHECK_RPC("pk2address", (*method = "in3_pk2address") == NULL)
-  CHECK_RPC("pk2public", (*method = "in3_pk2public") == NULL)
-  CHECK_RPC("ecrecover", (*method = "in3_ecrecover") == NULL)
+  CHECK_RPC("createKey", (*method = FN_IN3_CREATEKEY) == NULL)
+  CHECK_RPC("pk2address", (*method = FN_IN3_PK2ADDRESS) == NULL)
+  CHECK_RPC("pk2public", (*method = FN_IN3_PK2PUBLIC) == NULL)
+  CHECK_RPC("ecrecover", (*method = FN_IN3_ECRECOVER) == NULL)
   if (get_txdata()->wait) {
-    CHECK_RPC("eth_sendTransaction", (*method = "eth_sendTransactionAndWait") == NULL)
+    CHECK_RPC(FN_ETH_SENDTRANSACTION, (*method = FN_ETH_SENDTRANSACTIONANDWAIT) == NULL)
   }
   return false;
 }

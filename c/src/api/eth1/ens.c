@@ -7,6 +7,7 @@
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
+#include "../../verifier/eth1/nano/rpcs.h"
 #include <string.h>
 
 static int next_token(const char* c, int p) {
@@ -20,7 +21,7 @@ static in3_req_t* find_pending_ctx(in3_req_t* ctx, bytes_t data) {
   // ok, we need a request, do we have a useable?
   for (ctx = ctx->required; ctx; ctx = ctx->required) {
     d_token_t* req = req_get_request(ctx, 0);
-    if (strcmp(d_get_string(req, K_METHOD), "eth_call") == 0) {
+    if (strcmp(d_get_string(req, K_METHOD), FN_ETH_CALL) == 0) {
       bytes_t ctx_data = d_get_bytes(d_get_at(d_get(req, K_PARAMS), 0), K_DATA);
       if (ctx_data.data && b_cmp(&ctx_data, &data)) return ctx;
     }

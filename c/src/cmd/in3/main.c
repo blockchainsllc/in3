@@ -1,6 +1,7 @@
 #include "../../init/in3_init.h"
 #include "../../nodeselect/full/nodelist.h"
 #include "../../nodeselect/full/nodeselect_def.h"
+#include "../../verifier/eth1/nano/rpcs.h"
 #include "handlers.h"
 #include "helper.h"
 #include "req_exec.h"
@@ -37,7 +38,7 @@ static void send_request(in3_t* c, int argc, char** argv, char* method, sb_t* ar
   if (chain && nl && nl->nodelist_upd8_params && nl->nodelist_upd8_params->exp_last_block) {
     char *r = NULL, *e = NULL;
     if (chain->type == CHAIN_ETH)
-      in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
+      in3_client_rpc(c, FN_ETH_BLOCKNUMBER, "[]", &r, &e);
   }
 #endif
 }

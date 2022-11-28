@@ -39,6 +39,7 @@
 #define DEBUG
 #endif
 
+#include "../../src/verifier/ipfs/rpcs.h"
 #include "../../src/api/ipfs/ipfs_api.h"
 #include "../../src/verifier/ipfs/ipfs.h"
 #include "../test_utils.h"
@@ -66,11 +67,11 @@ void test_in3_ipfs_api() {
   in3_t*  in3 = in3_init_test(CHAIN_ID_IPFS);
   bytes_t b   = {.data = (uint8_t*) LOREM_IPSUM, .len = strlen(LOREM_IPSUM)};
 
-  add_response("ipfs_put", "[\"TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQ=\",\"base64\"]", "\"QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8\"", NULL, NULL);
+  add_response(FN_IPFS_PUT, "[\"TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQ=\",\"base64\"]", "\"QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8\"", NULL, NULL);
   char* multihash = ipfs_put(in3, &b);
   TEST_ASSERT_EQUAL_STRING("QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8", multihash);
 
-  add_response("ipfs_get", "[\"QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8\",\"base64\"]", "\"TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQ=\"", NULL, NULL);
+  add_response(FN_IPFS_GET, "[\"QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8\",\"base64\"]", "\"TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQ=\"", NULL, NULL);
   bytes_t* content = ipfs_get(in3, multihash);
 
   TEST_ASSERT_EQUAL_MEMORY(LOREM_IPSUM, content->data, content->len);
@@ -84,11 +85,11 @@ void test_in3_ipfs_api_long() {
   in3_t*  in3 = in3_init_test(CHAIN_ID_IPFS);
   bytes_t b   = {.data = (uint8_t*) LOREM_IPSUM_LONG, .len = strlen(LOREM_IPSUM_LONG)};
 
-  add_response("ipfs_put", "[\"" LOREM_IPSUM_LONG_B64 "\",\"base64\"]", "\"QmdefnkMuNaAro8sT2i5rufFbJmfd621UFsaoTaaL1Goh9\"", NULL, NULL);
+  add_response(FN_IPFS_PUT, "[\"" LOREM_IPSUM_LONG_B64 "\",\"base64\"]", "\"QmdefnkMuNaAro8sT2i5rufFbJmfd621UFsaoTaaL1Goh9\"", NULL, NULL);
   char* multihash = ipfs_put(in3, &b);
   TEST_ASSERT_EQUAL_STRING("QmdefnkMuNaAro8sT2i5rufFbJmfd621UFsaoTaaL1Goh9", multihash);
 
-  add_response("ipfs_get", "[\"QmdefnkMuNaAro8sT2i5rufFbJmfd621UFsaoTaaL1Goh9\",\"base64\"]", "\"" LOREM_IPSUM_LONG_B64 "\"", NULL, NULL);
+  add_response(FN_IPFS_GET, "[\"QmdefnkMuNaAro8sT2i5rufFbJmfd621UFsaoTaaL1Goh9\",\"base64\"]", "\"" LOREM_IPSUM_LONG_B64 "\"", NULL, NULL);
   bytes_t* content = ipfs_get(in3, multihash);
 
   TEST_ASSERT_EQUAL_MEMORY(LOREM_IPSUM_LONG, content->data, content->len);

@@ -36,6 +36,7 @@
 #include "../../core/util/mem.h"
 #include "../../third-party/libb64/cdecode.h"
 #include "../../third-party/libb64/cencode.h"
+#include "../../verifier/ipfs/rpcs.h"
 #include "../utils/api_utils_priv.h"
 
 static bytes_t* b64_to_bytes(const char* b64) {
@@ -53,7 +54,7 @@ char* ipfs_put(in3_t* in3, const bytes_t* content) {
   sb_add_chars(params, b64);
   sb_add_chars(params, "\",\"base64\"");
   free(b64);
-  rpc_exec("ipfs_put", char*, _strdupn(d_string(result), -1));
+  rpc_exec(FN_IPFS_PUT, char*, _strdupn(d_string(result), -1));
 }
 
 bytes_t* ipfs_get(in3_t* in3, const char* multihash) {
@@ -61,5 +62,5 @@ bytes_t* ipfs_get(in3_t* in3, const char* multihash) {
   sb_add_char(params, '\"');
   sb_add_chars(params, multihash);
   sb_add_chars(params, "\",\"base64\"");
-  rpc_exec("ipfs_get", bytes_t*, b64_to_bytes(d_string(result)));
+  rpc_exec(FN_IPFS_GET, bytes_t*, b64_to_bytes(d_string(result)));
 }
