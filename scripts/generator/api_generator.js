@@ -473,8 +473,9 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
 
     const impl = [
         compliance_header.join('\n') + '\n',
-        `#include "${api_file}_rpc.h"${use_const ? '\n#include "rpcs.h"' : ''}`,
+        `#include "${api_file}_rpc.h"`,
         use_conf ? `#include "${api_file}.h"\n` : '',
+        use_const ? '#include "rpcs.h"' : '',
 
         `#include "${in3_root}/core/client/keys.h"`,
         `#include "${in3_root}/core/client/plugin.h"`,
@@ -601,10 +602,16 @@ function sort_includes(lines) {
     let pos = lines.findIndex(_ => _.startsWith('#include '))
     if (pos >= 0 && includes.length) {
         let a = includes.filter(_ => _.startsWith('#include ".'))
-        let b = includes.filter(_ => !_.startsWith('#include ".'))
+        let b = includes.filter(_ => !_.startsWith('#include ".') && _.indexOf('rpcs.h') == -1)
+        let c = includes.filter(_ => !_.startsWith('#include ".') && _.indexOf('rpcs.h') > 0)
 
         a.sort((_a, _b) => _a.localeCompare(_b))
-        b.sort((_a, _b) => _a.localeCompare(_b))
+        b.sort((_a, _b) => _b.localeCompare(_a))
+
+        if (c.length) b = [...c, '', ...b]
+        else b.reverse()
+
+
         includes = b.length && a.length ? [...b, '', ...a] : [...b, ...a]
 
 
