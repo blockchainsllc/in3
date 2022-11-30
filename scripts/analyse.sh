@@ -10,6 +10,6 @@ cd ..
 docker run \
   --rm \
   -v $(pwd):$(pwd) \
-  docker.slock.it/build-images/cmake:clang14 \
-  /bin/bash -c "cd $(pwd); rm -rf build; mkdir build; cd build; scan-build-14 $OPTS cmake -DEVM_GAS=true -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true .. &&  scan-build-14 $OPTS --exclude ../c/src/third-party --force-analyze-debug-code -o report  make -j8"
+  docker.slock.it/build-images/cmake:clang16 \
+  /bin/bash -c "cd $(pwd); rm -rf build; mkdir build; cd build; scan-build-16 $OPTS cmake -DEVM_GAS=true -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true .. &&  scan-build-16 $OPTS --exclude ../c/src/third-party --force-analyze-debug-code -o report  make -j8"
 cd scripts
