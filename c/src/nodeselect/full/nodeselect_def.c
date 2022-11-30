@@ -163,7 +163,7 @@ static in3_ret_t nodelist_seperate_from_registry(in3_nodeselect_def_t** src, in3
         w->chains[0]               = data;                                              // change the pointer in the wrapper
         *src                       = data;                                              // and in the calling function
 #ifdef THREADSAFE
-        MUTEX_INIT(data->mutex) // mutex is still needed to be threadsafe
+        MUTEX_INIT(data->mutex)                                                         // mutex is still needed to be threadsafe
 #endif
       })
   return IN3_OK;
@@ -797,7 +797,7 @@ in3_ret_t in3_nodeselect_handle_action(void* plugin_data, in3_plugin_act_t actio
       w->chains[0]               = nodelist_get_or_create(c->chain.id);
       data                       = w->chains[0]; // update data-pointer to the new nodelist
 #ifdef THREADSAFE
-      MUTEX_LOCK(data->mutex) // and lock it because we are about to initialize the chain
+      MUTEX_LOCK(data->mutex)                    // and lock it because we are about to initialize the chain
 #endif
       UNLOCK_AND_RETURN(data->nodelist ? IN3_OK : chain_change(w->chains[0], c))
     }

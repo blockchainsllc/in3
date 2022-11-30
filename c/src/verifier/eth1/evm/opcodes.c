@@ -240,7 +240,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   if ((evm->properties & EVM_PROP_CONSTANTINOPL) == 0) return EVM_ERROR_INVALID_OPCODE;
   l = evm_stack_pop_byte(evm, &pos);
   if (l == EVM_ERROR_EMPTY_STACK) return l;
-  if (l < 0) { // the number is out of range
+  if (l < 0) {                                // the number is out of range
     if ((l = evm_stack_pop_ref(evm, &b)) < 0) return EVM_ERROR_EMPTY_STACK;
     if (left == 2 && l == 32 && (*b & 128)) { // signed number return max NUMBER as fault
       memset(res, 0xFF, 32);
@@ -259,7 +259,7 @@ int op_shift(evm_t* evm, uint8_t left) {
     big_shift_left(res, 32, pos);
   else if (left == 0)
     big_shift_right(res, 32, pos);
-  else if (left == 2) { // signed shift right
+  else if (left == 2) {          // signed shift right
     big_shift_right(res, 32, pos);
     if (l == 32 && (*b & 128)) { // the original number was signed
       for (l = 0; l < (pos >> 3); l++) res[l] = 0xFF;

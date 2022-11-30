@@ -157,11 +157,11 @@ void* respond(void* arg) {
   char*  buf  = malloc(65535);
   int    rcvd = recv(r->con, buf, 65535, 0);
 
-  if (rcvd < 0) // receive error
+  if (rcvd < 0)       // receive error
     fprintf(stderr, ("recv() error\n"));
   else if (rcvd == 0) // receive socket closedMAX_CON
     fprintf(stderr, "Client disconnected upexpectedly.\n");
-  else // message received
+  else                // message received
   {
     buf[rcvd] = '\0';
 

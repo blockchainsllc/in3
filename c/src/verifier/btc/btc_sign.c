@@ -21,11 +21,11 @@ static in3_ret_t build_tx_in_hash_msg(in3_req_t* req, bytes_t* hash_message, con
     case BTC_P2SH:
     case BTC_P2PK:
     case BTC_P2PKH: {
-      TRY(btc_serialize_tx(req, &tx_ctx->tx, hash_message)); // write serialized transaction
+      TRY(btc_serialize_tx(req, &tx_ctx->tx, hash_message));                                                                    // write serialized transaction
       if (hash_message->len) {
         hash_message->data = _realloc(hash_message->data, hash_message->len + BTC_TX_IN_SIGHASH_SIZE_BYTES, hash_message->len); // Allocate memory for appending sighash
         hash_message->len += BTC_TX_IN_SIGHASH_SIZE_BYTES;
-        uint_to_le(hash_message, hash_message->len - BTC_TX_IN_SIGHASH_SIZE_BYTES, sighash); // write sighash at the end of the input
+        uint_to_le(hash_message, hash_message->len - BTC_TX_IN_SIGHASH_SIZE_BYTES, sighash);                                    // write sighash at the end of the input
       }
       else {
         return req_set_error(req, "ERROR: in build_tx_in_hash_msg: Failed to build transaction signing message", IN3_EUNKNOWN);
@@ -148,7 +148,7 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     return req_set_error(req, "ERROR: in build_unlocking_script: witness missing.", IN3_EINVAL);
   }
 
-  bytes_t **signatures = (bytes_t * *const) &(utxo->signatures), *pub_key = &(utxo->signers[0].pub_key), *unlocking_script = NULL, num_elements = NULL_BYTES;
+  bytes_t **signatures = (bytes_t * * const) &(utxo->signatures), *pub_key = &(utxo->signers[0].pub_key), *unlocking_script = NULL, num_elements = NULL_BYTES;
   switch (utxo->tx_out.script.type) {
     case BTC_P2PK: {
       // Unlocking script format is: DER_SIG_LEN|DER_SIG
@@ -170,8 +170,8 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
       b->data[index++] = (uint8_t) signatures[0]->len;                  // write DER_SIG_LEN field
       memcpy(b->data + index, signatures[0]->data, signatures[0]->len); // write DER_SIG field
       index += signatures[0]->len;
-      b->data[index++] = (uint8_t) pub_key->len;            // write PUB_KEY_LEN field
-      memcpy(b->data + index, pub_key->data, pub_key->len); // write PUB_KEY field
+      b->data[index++] = (uint8_t) pub_key->len;                        // write PUB_KEY_LEN field
+      memcpy(b->data + index, pub_key->data, pub_key->len);             // write PUB_KEY field
     } break;
     case BTC_V0_P2WPKH: {
       // Unlocking script format is: NUM_ELEMENTS | DER_SIG_LEN | DER_SIG | PUB_KEY_LEN | PUB_KEY
@@ -189,8 +189,8 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
       witness->data[index++] = (uint8_t) signatures[0]->len;                  // write DER_SIG_LEN
       memcpy(witness->data + index, signatures[0]->data, signatures[0]->len); // write DER_SIG
       index += signatures[0]->len;
-      witness->data[index++] = pub_key->len;                      // write PUB_KEY_LEN
-      memcpy(witness->data + index, pub_key->data, pub_key->len); // write PUB_KEY
+      witness->data[index++] = pub_key->len;                                  // write PUB_KEY_LEN
+      memcpy(witness->data + index, pub_key->data, pub_key->len);             // write PUB_KEY
     } break;
     case BTC_P2MS: {
       // Unlocking script format is: ZERO_BYTE | SIG_1_LEN | SIG_1 | SIG_2_LEN | SIG_2 | .....

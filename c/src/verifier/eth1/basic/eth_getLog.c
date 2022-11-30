@@ -100,11 +100,11 @@ static bool matches_filter_topics(d_token_t* tx_params, d_token_t* topics) {
   d_token_t* jts = d_get(tx_params, K_TOPICS);
   int        l   = d_len(jts);
   if (jts == NULL)
-    return true; // topics param is optional
+    return true;  // topics param is optional
   else if (d_type(jts) != T_ARRAY)
     return false; // Unlikely
   else if (l == 0)
-    return true; // [] matches anything
+    return true;  // [] matches anything
   else if (d_type(topics) != T_ARRAY || d_len(topics) > 4 || l > d_len(topics))
     return false;
 

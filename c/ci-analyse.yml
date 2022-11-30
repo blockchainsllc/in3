@@ -29,9 +29,9 @@ coverage:
     - mkdir cov_build; cd cov_build
     - cmake -DIN3API=true -DIN3_LIB=false -DUSE_CURL=false -DTEST=true -DZKSYNC=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
     - make -j8 &&  make CTEST_OUTPUT_ON_FAILURE=1 test
-    - ../scripts/lcov_report.sh | xargs llvm-cov report
-    - ../scripts/lcov_report.sh | xargs llvm-cov show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
-    - ../scripts/lcov_report.sh | xargs llvm-cov export  -format=lcov  > ccov/all-merged/lcov.info
+    - ../scripts/lcov_report.sh | xargs llvm-cov-16 report
+    - ../scripts/lcov_report.sh | xargs llvm-cov-16 show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
+    - ../scripts/lcov_report.sh | xargs llvm-cov-16 export  -format=lcov  > ccov/all-merged/lcov.info
     - lcov_cobertura ccov/all-merged/lcov.info -b $(dirname "$PWD") -o coverage.xml
     - node -p "const fs=require('fs');fs.writeFileSync('coverage.xml',fs.readFileSync('coverage.xml','utf8').split('../../../../../../../../builds/in3/c/in3-core/').join(''),'utf8')"
   artifacts:

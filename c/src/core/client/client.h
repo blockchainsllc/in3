@@ -55,7 +55,7 @@ extern "C" {
 #include <stdint.h>
 #include <time.h>
 
-#define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
+#define IN3_PROTO_VER "2.1.0"       /**< the protocol version used when sending requests from the this client */
 
 #define CHAIN_ID_MAINNET    0x01    /**< chain_id for mainnet */
 #define CHAIN_ID_GOERLI     0x5     /**< chain_id for goerlii */

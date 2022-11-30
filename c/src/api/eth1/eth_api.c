@@ -164,9 +164,9 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       if (include_tx) {
         for_children_of(it, txs) s += get_tx_size(it.token); // add all struct-size for each transaction
       }
-      else                    // or
-        s += 32 * d_len(txs); // just the transaction hashes
-      s += align(extra.len);  // extra-data
+      else                                                   // or
+        s += 32 * d_len(txs);                                // just the transaction hashes
+      s += align(extra.len);                                 // extra-data
       for_children_of(sf, sealed) {
         bytes_t t = d_bytes(sf.token);
         rlp_decode(&t, 0, &t);

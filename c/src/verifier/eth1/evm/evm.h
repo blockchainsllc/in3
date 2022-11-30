@@ -41,7 +41,7 @@
 #ifndef evm_h__
 #define evm_h__
 int exit_zero(void);
-//#define EVM_GAS
+// #define EVM_GAS
 /** the current state of the evm*/
 typedef enum evm_state {
   EVM_STATE_INIT     = 0, /**< just initialised, but not yet started */

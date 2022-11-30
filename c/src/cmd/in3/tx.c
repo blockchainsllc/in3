@@ -21,7 +21,7 @@ static abi_sig_t* prepare_tx(char* fn_sig, char* to, sb_t* args, char* block_num
   sb_t params = SB_NULL;                                             //
   sb_add_chars(&params, "[{");                                       // now we create the transactionobject as json-argument.
   if (to) sb_printx(&params, "\"to\":\"%s\"", to);
-  if (req || data) // if we have a request context or explicitly data we create the data-property
+  if (req || data)                                                   // if we have a request context or explicitly data we create the data-property
     sb_add_value(&params, "\"data\":\"0x%b%b\"", data ? *data : NULL_BYTES, rdata.len && data ? bytes(rdata.data + 4, rdata.len - 4) : rdata);
 
   if (block_number)

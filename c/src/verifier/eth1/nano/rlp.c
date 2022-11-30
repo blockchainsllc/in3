@@ -84,7 +84,7 @@ int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
       if ((int) p == index) return ref(dst, b, l, b->data + i + 1, 2);
       i += l; // + 1;
     }
-    else { // very long list
+    else {    // very long list
       for (l = 0, n = 0; n < (uint8_t) (c - 0xF7); n++) l |= (*(b->data + i + 1 + n)) << (8 * ((c - 0xf7) - n - 1));
       if ((int) p == index) return ref(dst, b, l, b->data + i + c - 0xf7 + 1, 2);
       i += l + c - 0xf7;
@@ -94,9 +94,9 @@ int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
   if (index < 0)
     return i == b->len ? (int) p : -3; /* error */
   else if (i > b->len)
-    return -1; /* error */
+    return -1;                         /* error */
   else
-    return 0; /* data OK, but item at index doesn't exist */
+    return 0;                          /* data OK, but item at index doesn't exist */
 }
 
 int rlp_decode_in_list(bytes_t* b, int index, bytes_t* dst) {

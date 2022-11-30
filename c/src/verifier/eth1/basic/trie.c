@@ -374,30 +374,30 @@ static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path, bytes
               trie_node_set_path(n, node_path);                                                               // with the same path
               set_node_target(trie, n, 1, update_db(trie, b, false));                                         // but now pointing to the branch as  target
             }
-            else {          // otherwise
-              free_node(n); // we can remove it
-              n = b;        // and use the branch as the actual value
-            }               // which will be updaded later
+            else {                                                                                            // otherwise
+              free_node(n);                                                                                   // we can remove it
+              n = b;                                                                                          // and use the branch as the actual value
+            }                                                                                                 // which will be updaded later
           }
-          else                                      // the path end here and it is a Leaf:
-            trie_node_set_item(n, 1, value, false); //  so we can simply replace its value.
+          else                                                                                                // the path end here and it is a Leaf:
+            trie_node_set_item(n, 1, value, false);                                                           //  so we can simply replace its value.
         }
-        else {                                                                                            // does not fit, so we need rebuild the trie
-          b        = trie_node_create_branch(trie, NULL);                                                 // we need a branch
-          rel_path = path + matching;                                                                     // calculate the relative path to the current leaf
-          if (*rel_path == 0xFF)                                                                          //  there is no path the leaf ends right in the branch,
-            trie_node_set_item(b, 16, value, false);                                                      //  so we set the value
-          else                                                                                            // we do have a relative path
-            set_node_target(trie, b, *rel_path,                                                           // and set into the branch
-                            node_key(trie_node_create_leaf(trie, rel_path + 1, value)));                  // the leaf node for our value.
-          trie_node_set_path(n, node_path + matching + 1);                                                // the current node must change its path,
-          set_node_target(trie, b, node_path[matching],                                                   // because it will become a child of the new branch
-                          node_path[matching + 1] == 0xFF && n->type == NODE_EXT                          // if this is a extension and the path collapse now
-                              ? node_key(get_node_target(trie, n, 1))                                     // we remove it and simply set the target directly in the branch
-                              : update_db(trie, n, false));                                               // if not, we use the current extension or value
-          if (matching) node_path[matching] = 0xFF;                                                       // do we need an extension to the branch?
-          n        = matching > 0 ? trie_node_create_ext(trie, node_path, update_db(trie, b, false)) : b; // if so will simply insert one
-          rel_path = NULL;                                                                                // we need to set it to null, since this rel_path does not point to new allocated memory and should not be freed.
+        else {                                                                                                // does not fit, so we need rebuild the trie
+          b        = trie_node_create_branch(trie, NULL);                                                     // we need a branch
+          rel_path = path + matching;                                                                         // calculate the relative path to the current leaf
+          if (*rel_path == 0xFF)                                                                              //  there is no path the leaf ends right in the branch,
+            trie_node_set_item(b, 16, value, false);                                                          //  so we set the value
+          else                                                                                                // we do have a relative path
+            set_node_target(trie, b, *rel_path,                                                               // and set into the branch
+                            node_key(trie_node_create_leaf(trie, rel_path + 1, value)));                      // the leaf node for our value.
+          trie_node_set_path(n, node_path + matching + 1);                                                    // the current node must change its path,
+          set_node_target(trie, b, node_path[matching],                                                       // because it will become a child of the new branch
+                          node_path[matching + 1] == 0xFF && n->type == NODE_EXT                              // if this is a extension and the path collapse now
+                              ? node_key(get_node_target(trie, n, 1))                                         // we remove it and simply set the target directly in the branch
+                              : update_db(trie, n, false));                                                   // if not, we use the current extension or value
+          if (matching) node_path[matching] = 0xFF;                                                           // do we need an extension to the branch?
+          n        = matching > 0 ? trie_node_create_ext(trie, node_path, update_db(trie, b, false)) : b;     // if so will simply insert one
+          rel_path = NULL;                                                                                    // we need to set it to null, since this rel_path does not point to new allocated memory and should not be freed.
         }
     }
   }

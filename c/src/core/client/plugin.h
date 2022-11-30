@@ -579,8 +579,8 @@ typedef struct {
     uint8_t*    address; /**< address of node that is to be blacklisted */
     const char* url;     /**< URL of node that is to be blacklisted */
   };
-  in3_req_t* req;     /**< Request context. */
-  bool       is_addr; /**< Specifies whether the identifier is an address or a url */
+  in3_req_t* req;        /**< Request context. */
+  bool       is_addr;    /**< Specifies whether the identifier is an address or a url */
 } in3_nl_blacklist_ctx_t;
 
 // -------- NL_OFFLINE ---------

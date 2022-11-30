@@ -302,7 +302,7 @@ chainspec_t* chainspec_get(chain_id_t chain_id) {
   chainspec_t* spec = NULL;
 
   // not found -> lazy init
-  if (chain_id == 0x1) // MAINNET
+  if (chain_id == 0x1)      // MAINNET
     spec = chainspec_from_bin(CHAINSPEC_MAINNET);
   else if (chain_id == 0x5) // GOERLI
     spec = chainspec_from_bin(CHAINSPEC_GOERLI);

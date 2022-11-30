@@ -118,7 +118,7 @@ const unsigned int BOOT_NODES_GOERLI_BIN_LEN = 211;
 
 #endif // NO_BOOT_NODES_GOERLI
 
-#else /* IN3_STAGING */
+#else  /* IN3_STAGING */
 
 #ifndef NO_BOOT_NODES_GOERLI
 /*

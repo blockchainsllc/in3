@@ -54,11 +54,11 @@ typedef struct btc_signer_pub_key {
 } btc_signer_pub_key_t;
 
 typedef struct btc_tx {
-  bytes_t  all;     // This transaction, serialized
-  uint32_t version; // btc protocol version
-  uint16_t flag;    // 1 if segwit, 0 otherwise
+  bytes_t  all;       // This transaction, serialized
+  uint32_t version;   // btc protocol version
+  uint16_t flag;      // 1 if segwit, 0 otherwise
   uint32_t input_count;
-  bytes_t  input; // serialized inputs data
+  bytes_t  input;     // serialized inputs data
   uint32_t output_count;
   bytes_t  output;    // serialized outputs data
   bytes_t  witnesses; // serialized witnesses data

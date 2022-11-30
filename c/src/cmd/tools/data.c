@@ -151,11 +151,11 @@ static int read_token(uint8_t* d, size_t* p, int level, int* index, int keyval) 
   (*p)++;
   int l = len > 27 ? len - 27 : 0;
   if (len == 28)
-    len = d[*p]; // 28 = 1 byte len
+    len = d[*p];                                                      // 28 = 1 byte len
   else if (len == 29)
-    len = d[*p] << 8 | d[*p + 1]; // 29 = 2 bytes length
+    len = d[*p] << 8 | d[*p + 1];                                     // 29 = 2 bytes length
   else if (len == 30)
-    len = d[*p] << 16 | d[*p + 1] << 8 | d[*p + 2]; // 30 = 3 bytes length
+    len = d[*p] << 16 | d[*p + 1] << 8 | d[*p + 2];                   // 30 = 3 bytes length
   else if (len == 31)
     len = d[*p] << 24 | d[*p + 1] << 16 | d[*p + 2] << 8 | d[*p + 3]; // 31 = 4 bytes length
 

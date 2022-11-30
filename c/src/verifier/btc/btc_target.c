@@ -174,12 +174,12 @@ in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block
   if (block_number < BIP34_START) return IN3_OK; // for pre bip34, this finalityheader already checked it
 
   // is there a required ctx, which we need to clean up?
-  in3_req_t* ctx = req_find_required(vc->req, FN_BTC_PROOFTARGET, NULL);                                           // do we have an existing required proofTarget-request?
-  if (ctx)                                                                                                         // yes, we do!
-    switch (in3_req_state(ctx)) {                                                                                  // but what is the state?
-      case REQ_ERROR:                                                                                              // there was an error,
-        return req_set_error(vc->req, "Error verifying the target", req_set_error(vc->req, ctx->error, IN3_ERPC)); // so we report it!
-      case REQ_WAITING_FOR_RESPONSE:                                                                               // for an response
+  in3_req_t* ctx = req_find_required(vc->req, FN_BTC_PROOFTARGET, NULL);                                            // do we have an existing required proofTarget-request?
+  if (ctx)                                                                                                          // yes, we do!
+    switch (in3_req_state(ctx)) {                                                                                   // but what is the state?
+      case REQ_ERROR:                                                                                               // there was an error,
+        return req_set_error(vc->req, "Error verifying the target", req_set_error(vc->req, ctx->error, IN3_ERPC));  // so we report it!
+      case REQ_WAITING_FOR_RESPONSE:                                                                                // for an response
       case REQ_WAITING_TO_SEND:
         return IN3_WAITING;                                                                                         // we keep on waiting.
       case REQ_SUCCESS:                                                                                             // if it was successful,

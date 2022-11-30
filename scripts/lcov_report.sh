@@ -1,5 +1,5 @@
 #!/bin/sh
-llvm-profdata merge -o all.profdata -sparse *.profraw **/*.profraw
+llvm-profdata-16 merge -o all.profdata -sparse *.profraw **/*.profraw
 echo "--instr-profile"
 echo "all.profdata"
 for f in test/test*
