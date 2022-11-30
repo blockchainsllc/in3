@@ -52,8 +52,8 @@ clangcheck:
   script:
     - mkdir _build
     - cd _build
-    - scan-build $OPTS cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
-    - scan-build $OPTS --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make 2> err.log || cat err.log
+    - scan-build-16 $OPTS cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-16 $OPTS --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make 2> err.log || cat err.log
     - node ../scripts/create_sast.js .. scan-build <err.log >sast.json || echo "found issues"
 
   artifacts:
