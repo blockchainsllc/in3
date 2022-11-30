@@ -21,11 +21,11 @@ typedef struct ptr {
 
 static ptr_t* global_ptr = NULL;
 void*         add_global(void* ptr) {
-          ptr_t* p   = _malloc(sizeof(ptr_t));
-          p->next    = global_ptr;
-          p->ptr     = ptr;
-          global_ptr = p;
-          return ptr;
+  ptr_t* p   = _malloc(sizeof(ptr_t));
+  p->next    = global_ptr;
+  p->ptr     = ptr;
+  global_ptr = p;
+  return ptr;
 }
 
 typedef struct {
@@ -162,7 +162,7 @@ static in3_ret_t recorder_transport_out(void* plugin_data, in3_plugin_act_t acti
     if (rpc)
       fprintf(rec.f, "%s ", rpc);
     else {
-      for (int i = 0; m; i++, m = m->next)
+      for (; m; m = m->next)
         fprintf(rec.f, "%s ", m->url);
     }
     fprintf(rec.f, "\n     %s\n\n", req->payload);

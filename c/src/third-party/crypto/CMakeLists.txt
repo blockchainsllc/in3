@@ -33,7 +33,7 @@
 ###############################################################################
 string(REGEX MATCH "^[0-9]+" MAJOR_VERSION ${CMAKE_C_COMPILER_VERSION})
 if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND MAJOR_VERSION GREATER 12)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-null-pointer-subtraction")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-null-pointer-subtraction -Wno-implicit-function-declaration -Wno-array-parameter")
 endif()
 
 set(CRYPTO_SRC 

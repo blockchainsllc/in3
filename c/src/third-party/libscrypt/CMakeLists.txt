@@ -31,6 +31,9 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND MAJOR_VERSION GREATER 15)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-parameter -Wno-deprecated-non-prototype")
+endif()
 
 add_static_library(
   NAME     scrypt 
