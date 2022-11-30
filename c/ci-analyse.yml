@@ -19,7 +19,7 @@ variables:
 
 coverage:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:clang14
+  image: docker.slock.it/build-images/cmake:clang16
   coverage: '/TOTAL.*\s+(\d+.\d+\%)\s*$/'
   extends: .only_full
   needs: []
@@ -43,7 +43,7 @@ coverage:
 
 clangcheck:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:clang14
+  image: docker.slock.it/build-images/cmake:clang16
   needs: []
   extends: .only_full
   allow_failure: false
@@ -101,7 +101,7 @@ gcc11check:
 
 valgrind:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:clang14
+  image: docker.slock.it/build-images/cmake:clang16
   extends: .only_full
   #  allow_failure: true
   needs: []
@@ -144,11 +144,11 @@ code_quality:
 format:
   stage: analysis
   needs: []
-  image: docker.slock.it/build-images/cmake:clang14
+  image: docker.slock.it/build-images/cmake:clang16
   tags:
     - short-jobs
   script:
-    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-14 -i
+    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-16 -i
     - git diff --patch --exit-code
 
 #cpd:

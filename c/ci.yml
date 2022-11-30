@@ -123,7 +123,7 @@ clang50:
     - .only_full
 
 clang14:
-  image: docker.slock.it/build-images/cmake:clang14
+  image: docker.slock.it/build-images/cmake:clang16
   extends:
     - .conanbuild
     - .only_full
@@ -195,7 +195,7 @@ test_c:
       - mac_test_c.log
 
 test_rpc:
-  image: docker.slock.it/build-images/cmake:clang14
+  image: docker.slock.it/build-images/cmake:clang16
   stage: test
   needs: []
   tags:
