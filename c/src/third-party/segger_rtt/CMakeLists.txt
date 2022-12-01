@@ -32,10 +32,10 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_library(segger_rtt_o OBJECT
-            SEGGER_RTT.c
-            SEGGER_RTT.h
-            SEGGER_RTT_Conf.h
-            SEGGER_RTT_printf.c
-        )
-add_library(segger_rtt STATIC $<TARGET_OBJECTS:segger_rtt_o>)
+add_static_library(
+  NAME     segger_rtt 
+  
+  SOURCES 
+    SEGGER_RTT.c
+    SEGGER_RTT_printf.c
+)
