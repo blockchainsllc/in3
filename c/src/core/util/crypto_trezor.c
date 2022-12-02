@@ -1,10 +1,13 @@
 #define __USE_GNU
 #define _XOPEN_SOURCE   600
 #define _POSIX_C_SOURCE 200809L
+#define AES_128
+
 
 #include "bytes.h"
 #include "crypto.h"
 #include "debug.h"
+#include "log.h"
 #include "mem.h"
 #include "utils.h"
 #include <stdint.h>
@@ -145,7 +148,8 @@ in3_ret_t crypto_sign_digest(in3_curve_type_t type, const bytes_t digest, const 
     }
     case EDDSA_ED25519: {
 #ifdef ED25519
-      ed25519_sign(digest.data, digest.len, pk, pubkey, dst);
+      UNUSED_VAR(pubkey);
+      ed25519_sign(digest.data, digest.len, pk, dst);
       return IN3_OK;
 #else
       UNUSED_VAR(pubkey);

@@ -5,6 +5,7 @@ a simple protobuf implementation, which is used when calculating the hash for IP
 - version: 0.4.0
 - website: https://github.com/nanopb/nanopb
 - download: https://github.com/nanopb/nanopb/releases/tag/0.4.0
+- License: Zlib license
 - changes:
   - `ipfs.pb.{c,h}` were generated using the python generator script (`generator/protoc`)
   - generating these files requires protobuf python lib to be installed on host

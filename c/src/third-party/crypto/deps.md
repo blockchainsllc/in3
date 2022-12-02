@@ -10,7 +10,7 @@ Changes:
   - rand.c removed the pragma warning
 
 
-- current version: core/2.3.0
+- current version: core/2.5.3
 - src: [https://github.com/trezor/trezor-firmware/tree/master/crypto](https://github.com/trezor/trezor-firmware/tree/master/crypto)
 - License: MIT ( check additional license headers in the src-files )
 

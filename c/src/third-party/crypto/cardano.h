@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016 Pavol Rusnak
+ * Copyright (c) 2013-2021 SatoshiLabs
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -20,12 +20,35 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __SCRIPT_H__
-#define __SCRIPT_H__
+#ifndef __CARDANO_H__
+#define __CARDANO_H__
 
+#include <stdbool.h>
 #include <stdint.h>
+#include "bip32.h"
+#include "options.h"
 
-int script_output_to_address(const uint8_t *script, int scriptlen, char *addr,
-                             int addrsize);
+#if USE_CARDANO
 
-#endif
+#define CARDANO_SECRET_LENGTH 96
+#define CARDANO_ICARUS_PBKDF2_ROUNDS 4096
+
+extern const curve_info ed25519_cardano_info;
+
+int hdnode_private_ckd_cardano(HDNode *inout, uint32_t i);
+
+int secret_from_entropy_cardano_icarus(
+    const uint8_t *pass, int pass_len, const uint8_t *entropy, int entropy_len,
+    uint8_t secret_out[CARDANO_SECRET_LENGTH],
+    void (*progress_callback)(uint32_t current, uint32_t total));
+int secret_from_seed_cardano_ledger(const uint8_t *seed, int seed_len,
+                                    uint8_t secret_out[CARDANO_SECRET_LENGTH]);
+int secret_from_seed_cardano_slip23(const uint8_t *seed, int seed_len,
+                                    uint8_t secret_out[CARDANO_SECRET_LENGTH]);
+
+int hdnode_from_secret_cardano(const uint8_t secret[CARDANO_SECRET_LENGTH],
+                               HDNode *out);
+
+#endif  // USE_CARDANO
+
+#endif  // __CARDANO_H__

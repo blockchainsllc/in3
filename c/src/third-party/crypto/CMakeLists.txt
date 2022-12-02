@@ -38,6 +38,8 @@ endif()
 if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND MAJOR_VERSION GREATER 15)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-parameter")
 endif()
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-#pragma-messages ")
+add_definitions(-DAES_128)
 
 set(CRYPTO_SRC 
   ecdsa.c
@@ -60,6 +62,7 @@ set(CRYPTO_SRC
 
 
   bip39.c
+  bip39_english.c
 
   curves.c
   bip32.c
@@ -82,7 +85,7 @@ if (ED25519)
   )
  ADD_DEFINITIONS(-DUSE_BIP32_25519_CURVES=1)
 else()
- ADD_DEFINITIONS(-DUSE_BIP32_25519_CURVES=0)
+  ADD_DEFINITIONS(-DUSE_BIP32_25519_CURVES=0)
 endif()
 
 
