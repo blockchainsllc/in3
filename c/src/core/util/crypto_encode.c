@@ -64,7 +64,7 @@ int encode(in3_encoding_type_t type, bytes_t src, char* dst) {
       bignum256 bn;
       bn_read_be(val, &bn);
       char   tmp[301];
-      size_t l = bn_format(&bn, "", "", 0, 0, false, 0,tmp, 300);
+      size_t l = bn_format(&bn, "", "", 0, 0, false, 0, tmp, 300);
       memcpy(dst, tmp, l);
       dst[l] = 0;
       return l;

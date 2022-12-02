@@ -3,7 +3,6 @@
 #define _POSIX_C_SOURCE 200809L
 #define AES_128
 
-
 #include "bytes.h"
 #include "crypto.h"
 #include "debug.h"
