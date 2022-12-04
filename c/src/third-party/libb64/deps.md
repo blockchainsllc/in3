@@ -5,6 +5,7 @@ a simple base64 en- and decoder
 - version: 1.2
 - website: http://libb64.sourceforge.net
 - download: https://sourceforge.net/projects/libb64/files/libb64/libb64/libb64-1.2.src.zip/download
+- License: public domain
 - notes:
   - source unchanged - import only C sources
   - usage based on incl. example
