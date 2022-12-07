@@ -36,6 +36,9 @@ include:
   - local: "/c/ci.yml"
   - local: "/c/ci-analyse.yml"
   - local: "/c/ci-deploy.yml"
+  - project: build-images/synopsys-detect
+    ref: main
+    file: "/templates/.gitlab-ci-blackduck.yml"
 
 wasm:
   stage: bindings
