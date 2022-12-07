@@ -251,3 +251,23 @@ brakeman-sast:
   #  when: never
   variables:
     SAST_ANALYZER_IMAGE_TAG: "2.21.1"
+
+black duck scan branches:
+  extends:
+    - .scan
+  stage: analysis
+  variables:
+    VERSION: ${CI_COMMIT_BRANCH}
+  only:
+    - develop
+    - main
+    - master
+
+black duck scan tags:
+  extends:
+    - .scan
+  stage: analysis
+  variables:
+    VERSION: ${CI_COMMIT_TAG}
+  only:
+    - tags
