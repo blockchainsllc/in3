@@ -16,7 +16,7 @@ function resolve_path(parent, import_path) {
         if (!openzep) throw new Error('openzeppelin could not be found in the cache-folder')
         return s + openzep + import_path.replace('@openzeppelin', '')
     }
-    if (import_path.startsWith('../../node_modules/@gnosis.pm/safe-contracts/')) {
+    if (import_path.startsWith('@gnosis.pm/safe-contracts/')) {
         if (parent.indexOf('.cache') == -1) throw new Error('the module is not in the cache-folder')
         let parent_path = parent.split('/')
         let s = ''
@@ -31,7 +31,7 @@ function resolve_inputs(sources, dir) {
     while (true) {
         const missing = []
         Object.keys(sources).forEach(s => {
-            const imports = sources[s].content.split('\n').filter(_ => _.startsWith('import ')).map(l => {
+            const imports = sources[s].content.split('\n').filter(_ => _.startsWith('import ') && _.indexOf('hardhat') < 0).map(l => {
                 const src_path = l.split('"')[1]
                 const dst_path = resolve_path(path.dirname(s), src_path)
                 if (src_path != dst_path) sources[s].content = sources[s].content.replace(src_path, dst_path)
@@ -78,12 +78,17 @@ function compile(ctx) {
     ctx.files.forEach(f => input.sources[path.resolve(ctx.dir + '/' + f)] = { content: fs.readFileSync(ctx.dir + '/' + f, 'utf8') })
     resolve_inputs(input.sources, ctx.dir)
     Object.keys(input.sources).forEach(file => {
-        let lines = input.sources[file].content.split('\n')
-        lines = lines.map(_ => _.trim().startsWith('pragma solidity 0.8') ? _.replace(' 0.8', ' ^0.8') : _)
+        let lines = input.sources[file].content.split('\n').filter(line => {
+            if (line.trim().startsWith('console.log')) return false
+            if (line.indexOf('hardhat/console.sol') > 0) return false
+            return true
+        })
+        lines = lines.map(_ => _.trim().startsWith('pragma solidity') ? 'pragma solidity ^0.8.13;' : _)
         if (!lines.find(_ => _.indexOf('// SPDX-License-Identifier:') >= 0)) lines.splice(0, 0, '// SPDX-License-Identifier: UNLICENSED')
 
         input.sources[file].content = lines.join('\n')
     })
+
     let res = undefined
     fs.writeFileSync(cache + '/' + ctx.api_name + '_input.json', JSON.stringify(input, null, 2), 'utf8')
     if (!cachedTime || Object.keys(input.sources).reduce((p, v) => Math.max(p, fs.lstatSync(v).mtime.getTime()), 0) > cachedTime.getTime()) {
