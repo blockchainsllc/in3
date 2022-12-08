@@ -16,6 +16,15 @@ function resolve_path(parent, import_path) {
         if (!openzep) throw new Error('openzeppelin could not be found in the cache-folder')
         return s + openzep + import_path.replace('@openzeppelin', '')
     }
+    if (import_path.startsWith('../../node_modules/@gnosis.pm/safe-contracts/')) {
+        if (parent.indexOf('.cache') == -1) throw new Error('the module is not in the cache-folder')
+        let parent_path = parent.split('/')
+        let s = ''
+        while (parent_path.pop() != '.cache') s += '../'
+        let safe = fs.readdirSync(parent_path.join('/') + '/.cache').find(_ => _.startsWith('safe-contracts'))
+        if (!safe) throw new Error('safe could not be found in the cache-folder')
+        return s + safe + import_path.substring(import_path.lastIndexOf('/contracts'))
+    }
     return import_path
 }
 function resolve_inputs(sources, dir) {
