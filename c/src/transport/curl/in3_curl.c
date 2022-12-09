@@ -65,38 +65,35 @@ static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, voi
 }
 
 static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload, uint32_t payload_len, struct curl_slist* headers, in3_response_t* r, uint32_t timeout, char* method) {
-  CURL*     curl;
   CURLMcode res;
-
-  curl = curl_easy_init();
-  if (curl) {
-    curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2); // Compliant; enables TLSv1.2 / TLSv1.3 version only
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    if (payload && payload_len) {
-      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
-      curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) payload_len);
-    }
-
-    // curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
-    //    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, (uint64_t) timeout / 1000L);
-    curl_easy_setopt(curl, CURLOPT_PRIVATE, (void*) r);
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
-
-    /* Perform the request, res will get the return code */
-    res = curl_multi_add_handle(cm, curl);
-    if (res != CURLM_OK) {
-      sb_add_chars(&r->data, "Invalid response:");
-      sb_add_chars(&r->data, (char*) curl_easy_strerror((CURLcode) res));
-      r->state = IN3_ERPC;
-    }
-  }
-  else {
+  CURL*     curl = curl_easy_init();
+  if (!curl) {
     sb_add_chars(&r->data, "no curl:");
     r->state = IN3_ECONFIG;
+  }
+
+  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2); // Compliant; enables TLSv1.2 / TLSv1.3 version only
+  curl_easy_setopt(curl, CURLOPT_URL, url);
+  if (payload && payload_len) {
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) payload_len);
+  }
+
+  // curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
+  //    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
+  curl_easy_setopt(curl, CURLOPT_TIMEOUT, (uint64_t) timeout / 1000L);
+  curl_easy_setopt(curl, CURLOPT_PRIVATE, (void*) r);
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
+
+  /* Perform the request, res will get the return code */
+  res = curl_multi_add_handle(cm, curl);
+  if (res != CURLM_OK) {
+    sb_add_chars(&r->data, "Invalid response:");
+    sb_add_chars(&r->data, (char*) curl_easy_strerror((CURLcode) res));
+    r->state = IN3_ERPC;
   }
 }
 
@@ -191,54 +188,54 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
   CURLcode res;
 
   curl = curl_easy_init();
-  if (curl) {
-    curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2); // Compliant; enables TLSv1.2 / TLSv1.3 version only
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    if (payload && req->payload_len) {
-      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
-      curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) req->payload_len);
-    }
-    struct curl_slist* headers = NULL;
-    headers                    = curl_slist_append(headers, "Accept: application/json");
-    if (payload && req->payload_len)
-      headers = curl_slist_append(headers, "Content-Type: application/json");
-    headers = curl_slist_append(headers, "charsets: utf-8");
-    headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
-    for (in3_req_header_t* h = req->headers; h; h = h->next) {
-      if (strchr(h->value, ':')) headers = curl_slist_append(headers, h->value);
-    }
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, (uint64_t) timeout / 1000L);
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, req->method);
-
-    /* Perform the request, res will get the return code */
-    res = curl_easy_perform(curl);
-    /* Check for errors */
-    if (res != CURLE_OK) {
-      long response_code;
-      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-
-      sb_add_chars(&r->data, "Invalid response:");
-      sb_add_chars(&r->data, (char*) curl_easy_strerror(res));
-      r->state = -response_code;
-    }
-    else
-      r->state = IN3_OK;
-    if (!r->data.data) {
-      r->data.data     = _calloc(1, 1);
-      r->data.allocted = 1;
-    }
-
-    curl_slist_free_all(headers);
-    /* always cleanup */
-    curl_easy_cleanup(curl);
-  }
-  else {
+  if (!curl) {
     sb_add_chars(&r->data, "no curl:");
     r->state = IN3_ERPC;
+    return;
   }
+
+  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2); // Compliant; enables TLSv1.2 / TLSv1.3 version only
+  curl_easy_setopt(curl, CURLOPT_URL, url);
+  if (payload && req->payload_len) {
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) req->payload_len);
+  }
+  struct curl_slist* headers = NULL;
+  headers                    = curl_slist_append(headers, "Accept: application/json");
+  if (payload && req->payload_len)
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+  headers = curl_slist_append(headers, "charsets: utf-8");
+  headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
+  for (in3_req_header_t* h = req->headers; h; h = h->next) {
+    if (strchr(h->value, ':')) headers = curl_slist_append(headers, h->value);
+  }
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
+  curl_easy_setopt(curl, CURLOPT_TIMEOUT, (uint64_t) timeout / 1000L);
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, req->method);
+
+  /* Perform the request, res will get the return code */
+  res = curl_easy_perform(curl);
+  /* Check for errors */
+  if (res != CURLE_OK) {
+    long response_code;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+
+    sb_add_chars(&r->data, "Invalid response:");
+    sb_add_chars(&r->data, (char*) curl_easy_strerror(res));
+    r->state = -response_code;
+  }
+  else
+    r->state = IN3_OK;
+  if (!r->data.data) {
+    r->data.data     = _calloc(1, 1);
+    r->data.allocted = 1;
+  }
+
+  curl_slist_free_all(headers);
+  /* always cleanup */
+  curl_easy_cleanup(curl);
 }
 
 in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result, uint32_t timeout, in3_http_request_t* req) {
