@@ -55,6 +55,7 @@ sq_check:
     - sq_build
   stage: analysis
   script:
+    - apt-get install unzip
     - curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
     - unzip -o sonar-scanner.zip -d .sonar
     - .sonar/sonar-scanner-4.6.2.2472-linux/bin/sonar-scanner -Dsonar.cfamily.build-wrapper-output=.sonar/bw-output
