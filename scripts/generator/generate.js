@@ -412,6 +412,23 @@ async function main() {
     // do we have extensions?
     Object.keys(api_conf).forEach(check_extension)
 
+    // fix examples
+    for (const api of Object.keys(docs)) {
+        for (const fn of Object.keys(docs[api])) {
+            const rpc = docs[api][fn]
+            if (!rpc.example && !(rpc.returns || rpc.result || {}).options) {
+                const tc = asArray(testCases[fn]).filter(_ => _.expected_output)[0]
+                if (tc) {
+                    rpc.example = {
+                        request: tc.input,
+                        response: tc.expected_output
+                    }
+                }
+            }
+        }
+    }
+
+
     docs.config.in3_config.params.config.type = config
     config_doc.push('# Configuration\n\n')
     config_doc.push('When creating a new Incubed Instance you can configure it. The Configuration depends on the registered plugins. This page describes the available configuration parameters.\n\n')
