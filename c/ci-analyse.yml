@@ -27,6 +27,7 @@ sq_download:
   needs: []
   stage: analysis
   script:
+    - apt-get install unzip
     - mkdir -p .sonar
     - curl -sSLo build-wrapper-linux-x86.zip  $SONAR_HOST_URL/static/cpp/build-wrapper-linux-x86.zip
     - unzip -o build-wrapper-linux-x86.zip -d .sonar
