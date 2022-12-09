@@ -17,6 +17,53 @@ variables:
     - if: '$CI_COMMIT_REF_NAME == "develop"'
     - if: '$CI_COMMIT_REF_PROTECTED == "true"'
 
+image: docker.slock.it/build-images/cmake:clang16
+
+cache:
+  paths:
+    - .sonar
+
+sq_download:
+  needs: []
+  stage: analysis
+  script:
+    - mkdir -p .sonar
+    - curl -sSLo build-wrapper-linux-x86.zip  $SONAR_HOST_URL/static/cpp/build-wrapper-linux-x86.zip
+    - unzip -o build-wrapper-linux-x86.zip -d .sonar
+  cache:
+    policy: push
+    key: "${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - .sonar
+
+sq_build:
+  needs:
+    - sq_download
+  stage: analysis
+  script:
+    - mkdir build; cd build;  cmake ..
+    - ../.sonar/build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir ../.sonar/bw-output make
+  cache:
+    policy: pull-push
+    key: "${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - .sonar
+
+sq_check:
+  needs:
+    - sq_build
+  stage: analysis
+  script:
+    - curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
+    - unzip -o sonar-scanner.zip -d .sonar
+    - .sonar/sonar-scanner-4.6.2.2472-linux/bin/sonar-scanner -Dsonar.cfamily.build-wrapper-output=.sonar/bw-output
+  cache:
+    policy: pull
+    key: "${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - .sonar
+  allow_failure: true
+
 coverage:
   stage: analysis
   image: docker.slock.it/build-images/cmake:clang16
