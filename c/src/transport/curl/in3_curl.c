@@ -67,12 +67,12 @@ static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, voi
 static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload, uint32_t payload_len, struct curl_slist* headers, in3_response_t* r, uint32_t timeout, char* method) {
   CURLMcode res;
   CURL*     curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2); // Compliant; enables TLSv1.2 / TLSv1.3 version only
   if (!curl) {
     sb_add_chars(&r->data, "no curl:");
     r->state = IN3_ECONFIG;
   }
 
-  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2); // Compliant; enables TLSv1.2 / TLSv1.3 version only
   curl_easy_setopt(curl, CURLOPT_URL, url);
   if (payload && payload_len) {
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
@@ -188,13 +188,13 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
   CURLcode res;
 
   curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2); // Compliant; enables TLSv1.2 / TLSv1.3 version only
   if (!curl) {
     sb_add_chars(&r->data, "no curl:");
     r->state = IN3_ERPC;
     return;
   }
 
-  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2); // Compliant; enables TLSv1.2 / TLSv1.3 version only
   curl_easy_setopt(curl, CURLOPT_URL, url);
   if (payload && req->payload_len) {
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
