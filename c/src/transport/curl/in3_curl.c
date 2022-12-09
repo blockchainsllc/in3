@@ -70,6 +70,7 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
 
   curl = curl_easy_init();
   if (curl) {
+    curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2); // Compliant; enables TLSv1.2 / TLSv1.3 version only
     curl_easy_setopt(curl, CURLOPT_URL, url);
     if (payload && payload_len) {
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
@@ -191,6 +192,7 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
 
   curl = curl_easy_init();
   if (curl) {
+    curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2); // Compliant; enables TLSv1.2 / TLSv1.3 version only
     curl_easy_setopt(curl, CURLOPT_URL, url);
     if (payload && req->payload_len) {
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
