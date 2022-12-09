@@ -268,7 +268,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_nodeselect_def_t* data, in
   // create random seed
   char seed[65] = {0};
   for (int i = 0, j = 0; i < 8; ++i, j += 8)
-    snprintf(seed + j, 65, "%08x", in3_rand(NULL) % 0xFFFFFFFF);
+    snprintf(seed + j, 65, "%08x", in3_rand(NULL) % 0xFFFFFFFF); // NOSONAR because 8x8=64 + \0 = 65 byte buffer
 
   //  bytes32_t rnd;
   //  random_buffer(rnd, 32);
