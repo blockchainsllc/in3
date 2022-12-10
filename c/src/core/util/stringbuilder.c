@@ -99,7 +99,7 @@ sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int len) {
   size_t max = check_size(sb, l + escapes); // ensure we have enough memory allocates
   l          = min(l, max);                 // if we have a limit, we stop there
 
-  memcpy(sb->data + sb->len, chars, l);     // NOSONAR - l can not be too big unless len is bigger then the size
+  memcpy(sb->data + sb->len, chars, l); // NOSONAR - l can not be too big unless len is bigger then the size
   if (escapes) {
     escapes = 0;
     for (size_t i = 0; i < l && i + escapes < max; i++) {
@@ -224,7 +224,7 @@ sb_t* sb_add_int(sb_t* sb, int64_t val) {
   char*  str = NULL;
   if (val < 0) {
     str  = print_dec(tmp, (uintmax_t) (0 - val), &l) - 1;
-    *str = '-';
+    *str = '-'; // NOSONAR - this is ok, since print_dec will always start from the end within tmp, so str will be biffer than tmp
     l++;
   }
   else

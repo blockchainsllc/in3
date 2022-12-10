@@ -707,7 +707,7 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
     sb_add_chars(&addrs, "\",\"addr\":\"");
     if (has_addr && addr.encoded) sb_add_chars(&addrs, addr.encoded);
     sb_add_chars(&addrs, "\",\"raw_addr\":\"");
-    if (has_addr && !is_witness && addr.encoded[0]) sb_add_rawbytes(&addrs, NULL, addr_as_bytes, addr_as_bytes.len);
+    if (has_addr && !is_witness && addr.encoded && addr.encoded[0]) sb_add_rawbytes(&addrs, NULL, addr_as_bytes, addr_as_bytes.len);
     sb_add_chars(&addrs, "\",\"pub_keys\":[");
     if (script_type == BTC_P2MS) {
       // extract public keys

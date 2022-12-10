@@ -29,7 +29,7 @@ static void add_amount(sb_t* sb, zksync_token_t* token, zk_fee_t val) {
       sep          = tmp + l - dec + 2;
     }
     else {
-      memmove(tmp + dec - l + 2, tmp, l + 1);
+      memmove(tmp + dec - l + 2, tmp, l + 1); // NOSONAR - this should be safe
       memset(tmp, '0', dec - l + 2);
       tmp[1] = '.';
       sep    = tmp + 3;
@@ -83,7 +83,7 @@ static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in
   if (!l) return IN3_OK;             // this means we had a "0" which was trimmed away
   for (int i = l - 1; i >= 0; i--) { // now we loop backwards
     if (i + 1 < max_m_len || (i + 1 == max_m_len && memcmp(dec, max_matissa, max_m_len) < 0)) {
-      cl = i + 1;                    // now we know how many bytes actually have value
+      cl = i + 1; // now we know how many bytes actually have value
       break;
     }
 
