@@ -1087,7 +1087,7 @@ char* d_get_property_name(d_token_internal_t* ob, d_key_t k) {
   for (char* s = strchr(r.data, '"'); s && r.data + r.len > s; s = s ? strchr(s + 1, '"') : NULL) {
     char* e = s + 1;
     for (e = strchr(e, '"'); e && r.data + r.len > e; e = strchr(e + 1, '"')) {
-      if (e[-1] == '\\') continue;
+      if (e[-1] == '\\') continue; // NOSONAR - this is safe, because e >= s + 1
       if (keyn(s + 1, e - s - 1) == k) return _strdupn(s + 1, e - s - 1);
       break;
     }
