@@ -288,8 +288,6 @@ NONULL static in3_ret_t ctx_parse_response(in3_req_t* ctx, char* response_data, 
     default:
       return req_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
   }
-
-  return IN3_OK;
 }
 
 static bool is_user_error(d_token_t* error, char** err_msg) {
