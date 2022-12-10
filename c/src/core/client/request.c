@@ -109,12 +109,14 @@ in3_ret_t in3_resolve_chain_id(in3_req_t* req, chain_id_t* chain_id) {
 in3_chain_t* in3_get_chain(in3_t* c, chain_id_t id) {
   in3_chain_t* chain = &c->chain;
   while (chain) {
-    if (chain->id == id) return chain;
-    if (chain->next)
+    if (chain->id == id) return chain; // we have found the chain and return it
+    if (chain->next)                   // continue looping
       chain = chain->next;
-    else
+    else                               // or stop here at the end of the linked list
       break;
   }
+  if (!chain) return NULL; // this should never happen, since the chain will always be be allocated
+
   chain->next = _calloc(1, sizeof(in3_chain_t));
   chain       = chain->next;
   chain->id   = id;
