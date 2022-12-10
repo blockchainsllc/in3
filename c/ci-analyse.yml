@@ -34,7 +34,6 @@ coverage:
   stage: analysis
   image: docker.slock.it/build-images/cmake:clang16
   coverage: '/TOTAL.*\s+(\d+.\d+\%)\s*$/'
-  extends: .only_full
   needs: []
   tags:
     - short-jobs
