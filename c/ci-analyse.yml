@@ -19,9 +19,11 @@ variables:
 
 sonarqube:
   image: docker.slock.it/build-images/cmake:sonar
-  needs: []
+  needs:
+    - coverage
   stage: analysis
   script:
+    - echo "sonar.cfamily.llvm-cov.reportPath=cov_build/ccov/all-merged" >> sonar-project.properties
     - mkdir .sonar
     - mkdir build; cd build;  cmake ..
     - /sonar/build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir ../.sonar/bw-output make
