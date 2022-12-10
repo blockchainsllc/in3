@@ -515,6 +515,7 @@ static in3_ret_t find_valid_result(in3_req_t* ctx, node_match_t** vnode) {
 }
 
 NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
+  if (!ctx) return NULL;
   switch (in3_req_state(ctx)) {
     case REQ_ERROR:
       req_set_error(ctx, "You cannot create an request if the was an error!", IN3_EINVAL);
