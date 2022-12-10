@@ -30,7 +30,9 @@ sonarqube:
     - cd ..
     - /sonar/sonar-scanner-4.6.2.2472-linux/bin/sonar-scanner -Dsonar.cfamily.build-wrapper-output=.sonar/bw-output
   after_script:
+    - echo "prepare sast for $CI_COMMIT_REF_NAME"
     - 'curl -u $SONAR_TOKEN:  "$SONAR_HOST_URL/api/issues/search?componentKeys=in3-core&branch=$CI_COMMIT_REF_NAME&statuses=OPEN,CONFIRMED,REOPENED&severities=BLOCKER,CRITICAL&types=BUG,VULNERABILITY" | node scripts/sonar.js > sonar_sast.json'
+    - cat sonar_sast.json
   artifacts:
     reports:
       sast: sonar_sast.json
