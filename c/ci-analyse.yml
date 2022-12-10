@@ -23,9 +23,9 @@ sonarqube:
     - coverage
   stage: analysis
   script:
-    - echo "sonar.cfamily.llvm-cov.reportPath=cov_build/all.profdata" >> sonar-project.properties
+    - echo "sonar.cfamily.llvm-cov.reportPath=cov_build/coverage.txt" >> sonar-project.properties
     - mkdir .sonar
-    - mkdir build; cd build;  cmake ..
+    - mkdir build; cd build;  cmake -DIN3API=true -DIN3_LIB=false -DUSE_CURL=false -DTEST=true -DZKSYNC=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
     - /sonar/build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir ../.sonar/bw-output make
     - cd ..
     - /sonar/sonar-scanner-4.6.2.2472-linux/bin/sonar-scanner -Dsonar.cfamily.build-wrapper-output=.sonar/bw-output
@@ -44,6 +44,7 @@ coverage:
     - make -j8 &&  make CTEST_OUTPUT_ON_FAILURE=1 test
     - ../scripts/lcov_report.sh | xargs llvm-cov-16 report
     - ../scripts/lcov_report.sh | xargs llvm-cov-16 show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
+    - ../scripts/lcov_report.sh | xargs llvm-cov-16 show --instr-profile > coverage.txt
     - ../scripts/lcov_report.sh | xargs llvm-cov-16 export  -format=lcov  > ccov/all-merged/lcov.info
     - lcov_cobertura ccov/all-merged/lcov.info -b $(dirname "$PWD") -o coverage.xml
     - node -p "const fs=require('fs');fs.writeFileSync('coverage.xml',fs.readFileSync('coverage.xml','utf8').split('../../../../../../../../builds/in3/c/in3-core/').join(''),'utf8')"
@@ -52,6 +53,7 @@ coverage:
       - cov_build/all.profdata
       - cov_build/ccov/all-merged
       - cov_build/coverage.xml
+      - cov_build/coverage.txt
 #    reports:
 #      cobertura: cov_build/coverage.xml
 
