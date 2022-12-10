@@ -136,7 +136,7 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
           node.len = val.data + val.len - node.data;
 
           // check the embedded node
-          return check_node(&node, key, expectedValue, key && *key && *(key + 1) == NULL, last_value, next_hash, depth);
+          return check_node(&node, key, expectedValue, key && *key && *(key + 1) == NULL, last_value, next_hash, depth); // NOSONAR key +1 will always work, since the nodes are nullterminated
         }
         else if (**key == 0xFF) {
           // readed the end, if this is the last node, it is ok.
