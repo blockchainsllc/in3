@@ -31,7 +31,10 @@ void btc_hash160(bytes_t data, address_t dst) {
 }
 
 static void rev_hex(char* hex, uint8_t* dst, int l) {
-  int len = hex ? strlen(hex) : 0, i, j, out_len = (len + 1) >> 1;
+  if (!hex) return;
+  int len     = strlen(hex);
+  int out_len = (len + 1) >> 1;
+  int i, j;
   if (out_len > l)
     out_len = l;
   else if (out_len < l)

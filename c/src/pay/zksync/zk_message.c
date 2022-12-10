@@ -83,7 +83,7 @@ static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in
   if (!l) return IN3_OK;             // this means we had a "0" which was trimmed away
   for (int i = l - 1; i >= 0; i--) { // now we loop backwards
     if (i + 1 < max_m_len || (i + 1 == max_m_len && memcmp(dec, max_matissa, max_m_len) < 0)) {
-      cl = i + 1; // now we know how many bytes actually have value
+      cl = i + 1;                    // now we know how many bytes actually have value
       break;
     }
 
