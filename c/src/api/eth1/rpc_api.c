@@ -225,6 +225,7 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
   if (rlp_decode(&data, 0, &data) != 2)                                            // data is encoded as list,
     return req_set_error(ctx->req, "Invalid Tx-Data, must be a list", IN3_EINVAL); // which we need to decode first
   int len = rlp_decode_len(&data);                                                 // now we can count the elements in the tx
+  if (len < 0) return req_set_error(ctx->req, "Invalid Tx-Data, must be a list", IN3_EINVAL);
 
   sb_printx(&response, "{\"type\":%d,\"hash\":\"%B\"", type, bytes(hash, 32));
 
@@ -280,7 +281,7 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
   }
 
   // determine from-address, but only if we have all the fields or a signed tx
-  if (len && len < MAX_FIELD_LEN && !fields[len]) {
+  if (len && len < (int) MAX_FIELD_LEN && !fields[len]) {
     uint8_t pub[65];                                  // pub key-data
     bytes_t last, v;                                  // bytes structs
     rlp_decode(&data, len - 1, &v);                   // get the s-field,
@@ -301,18 +302,18 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
         int c = bytes_to_int(v.data, v.len);
         r     = 1 - c % 2;
         c     = (c - (36 - c % 2)) / 2;
-        uint8_t tmp[4];                                     // we put it in the tmp,
-        int_to_bytes((uint32_t) c, tmp);                    // so we can create the bytes needed for the unsgined tx
-        bytes_t bb = bytes(tmp, 4);                         // assign the bytes
-        b_optimize_len(&bb);                                // and remove the leading zeros
-        sb_printx(&response, ",\"chainId\":\"%V\"", bb);    // this is for the output
-        rlp_encode_item(rlp, &bb);                          // but now we add the chain_id
-        bb.len = 0;                                         // clear it
-        rlp_encode_item(rlp, &bb);                          // and add a empty r
-        rlp_encode_item(rlp, &bb);                          // and an empty s
+        uint8_t tmp[4];                                  // we put it in the tmp,
+        int_to_bytes((uint32_t) c, tmp);                 // so we can create the bytes needed for the unsgined tx
+        bytes_t bb = bytes(tmp, 4);                      // assign the bytes
+        b_optimize_len(&bb);                             // and remove the leading zeros
+        sb_printx(&response, ",\"chainId\":\"%V\"", bb); // this is for the output
+        rlp_encode_item(rlp, &bb);                       // but now we add the chain_id
+        bb.len = 0;                                      // clear it
+        rlp_encode_item(rlp, &bb);                       // and add a empty r
+        rlp_encode_item(rlp, &bb);                       // and an empty s
       }
-      else if (type == 0 && r > 26)                         // this is for the Legacy-transaction
-        r -= 27;                                            // adding 27 to the recovery-byte,
+      else if (type == 0 && r > 26) // this is for the Legacy-transaction
+        r -= 27;                    // adding 27 to the recovery-byte,
 
       rlp_encode_to_list(rlp);                              // we convert the rlp-data ( without the signature ) to a list
       if (type) bb_replace(rlp, 0, 0, &tt, 1);              // we insert the type (execpt legacy tx)
