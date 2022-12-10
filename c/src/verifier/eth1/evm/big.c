@@ -185,12 +185,12 @@ int big_mul(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, uint8_t* res, wlen_t m
 
   for (ys = lb - 1; ys >= 0 && i; val >>= 8, ys--) {
     for (x = xs, y = ys; x >= 0 && y < lb; x--, y++) val += (uint32_t) a[x] * b[y];
-    out[--i] = val & 0xFF;
+    out[--i] = val & 0xFF; // NOSONAR - i is always greather then sinze it starts with la + lb
   }
 
   for (ys = 0, xs = la - 2; xs >= 0 && i; xs--, val >>= 8) {
     for (x = xs, y = ys; x >= 0 && y < lb; x--, y++) val += (uint32_t) a[x] * b[y];
-    out[--i] = val & 0xFF;
+    out[--i] = val & 0xFF; // NOSONAR - i is always greather then sinze it starts with la + lb
   }
   if (i) out[--i] = val & 0xFF;
   i = la + lb;

@@ -302,7 +302,7 @@ static in3_ret_t transform_abi(in3_req_t* req, d_token_t* tx, eth_tx_data_t* td)
       // if this is a deployment transaction we concate it with the arguments without the functionhash
       bytes_t new_data = get_or_create_cached(req, key("deploy_data"), td->data.len + d_len(res) - 4);
       memcpy(new_data.data, td->data.data, td->data.len);
-      memcpy(new_data.data + td->data.len, d_bytes(res).data + 4, d_len(res) - 4);
+      memcpy(new_data.data + td->data.len, d_bytes(res).data + 4, d_len(res) - 4); // NOSONAR - this is safe, because res.len>4 and new_data is big enough
       td->data = new_data;
     }
     else
