@@ -48,7 +48,7 @@
 #include <string.h>
 
 NONULL static bool is_raw_http(in3_req_t* ctx) {
-  return !ctx->in3_state && strcmp(FN_IN3_HTTP, d_get_string(req_get_request(ctx, 0), K_METHOD)) == 0;
+  return ctx && !ctx->in3_state && strcmp(FN_IN3_HTTP, d_get_string(req_get_request(ctx, 0), K_METHOD)) == 0;
 }
 
 NONULL static void response_free(in3_req_t* ctx) {
@@ -586,7 +586,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
   char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
 
   for (int n = 0; n < nodes_count; n++) {
-    urls[n] = _strdupn(rpc ? rpc : node->url, -1);
+    urls[n] = _strdupn(rpc ? rpc : node->url, -1); // NOSONAR - nodes_count will be 0 if there is no node!
     assert(urls[n] != NULL);
 
     // this is all we need to do if we have a rpc-node
