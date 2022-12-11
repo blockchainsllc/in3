@@ -31,7 +31,7 @@ sonarqube:
     - /sonar/sonar-scanner-4.6.2.2472-linux/bin/sonar-scanner -Dsonar.cfamily.build-wrapper-output=.sonar/bw-output
   after_script:
     - export PROJECT=$(grep projectKey sonar-project.properties |  cut -d "=" -f 2)
-    - 'curl -v -u $SONAR_TOKEN:  "$SONAR_HOST_URL/api/issues/search?componentKeys=$PROJECT&branch=${CI_COMMIT_REF_NAME}&statuses=${STATUSES}&severities=${SEVERITIES}&types=${TYPES}" | node scripts/sonar.js > sonar_sast.json'
+    - 'curl -v -u $SONAR_TOKEN:  "$SONAR_HOST_URL/api/issues/search?componentKeys=$PROJECT&branch=${CI_COMMIT_REF_NAME}&statuses=${STATUSES}&severities=${SEVERITIES}&types=${TYPES}" | node /sonar/sonar.js > sonar_sast.json'
   artifacts:
     reports:
       sast: sonar_sast.json
