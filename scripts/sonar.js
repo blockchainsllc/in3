@@ -21,7 +21,10 @@ function convert(data) {
                 name: 'sonarqube'
             },
             description: '',
-            location: { file: data.component.substring(data.component.indexOf(':') + 1), line: data.line || data.textRange.startLine },
+            location: {
+                file: data.component.substring(data.component.indexOf(':') + 1),
+                start_line: data.line || data.textRange.startLine
+            },
             confidence: 'High',
             severity: levels[data.severity || 'MAJOR'],
             identifiers: [{
