@@ -172,16 +172,6 @@ uint64_t b_read_long(bytes_t* b, size_t* pos) {
   *pos += 8;
   return val;
 }
-char* b_new_chars(bytes_t* b, size_t* pos) {
-  if (!b || !pos) return NULL;
-  size_t n = (*pos >= b->len) ? b->len - 1 : *pos;
-  size_t l = strnlen((const char*) b->data + n, b->len - n);
-  char*  r = _malloc(l + 1);
-  memcpy(r, b->data + n, l + 1);
-  n += l + 1;
-  *pos = n;
-  return r;
-}
 
 bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len) {
   bytes_t* r = _malloc(sizeof(bytes_t));
