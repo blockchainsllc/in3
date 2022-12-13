@@ -20,6 +20,8 @@
 #define IN3_VERSION "local"
 #endif
 
+#define __OPTION_VALUE_MAX_SIZE 10240
+
 static bool set_chainId(char* value, sb_t* conf) {
   if (strstr(value, "://") == NULL) return false;
   sb_add_chars(conf, "{\"rpc\":\"");
@@ -63,13 +65,13 @@ bool show_version() {
 #ifdef NODESELECT_DEF
 static bool set_nodelist(in3_t* c, char* nodes, sb_t* sb, bool update) {
   if (!update) c->flags = FLAGS_STATS | FLAGS_BOOT_WEIGHTS | (c->flags & FLAGS_ALLOW_EXPERIMENTAL);
-  char*                 cpy = alloca(strlen(nodes) + 1);
-  in3_nodeselect_def_t* nl  = in3_nodeselect_def_data(c);
+  in3_nodeselect_def_t* nl = in3_nodeselect_def_data(c);
   if (!update && nl && nl->nodelist_upd8_params) {
     _free(nl->nodelist_upd8_params);
     nl->nodelist_upd8_params = NULL;
   }
-  memcpy(cpy, nodes, strlen(nodes) + 1);
+  char* cpy;
+  _strncpy(cpy, nodes, __OPTION_VALUE_MAX_SIZE);
   char* s = NULL;
   sb_add_chars(sb, "{\"nodeRegistry\":{\"needsUpdate\":false,\"nodeList\":[");
   for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
@@ -99,7 +101,7 @@ static bool set_data(char* value) {
   if (strcmp(value, "-") == 0)
     get_txdata()->data = get_std_in();
   else if (*value == '0' && value[1] == 'x')
-    get_txdata()->data = hex_to_new_bytes(value + 2, strlen(value) - 2);
+    get_txdata()->data = hex_to_new_bytes(value + 2, strnlen(value, __OPTION_VALUE_MAX_SIZE) - 2);
   else {
     FILE*   f          = fopen(value, "r");
     bytes_t content    = readFile(f);
@@ -123,7 +125,7 @@ static bool set_uint32(uint32_t* dst, char* value) {
   return true;
 }
 static bool set_create2(char* value, sb_t* sb) {
-  if (strlen(value) != 176) die("create2-arguments must have the form -zc2 <creator>:<codehash>:<saltarg>");
+  if (strnlen(value, __OPTION_VALUE_MAX_SIZE) != 176) die("create2-arguments must have the form -zc2 <creator>:<codehash>:<saltarg>");
   char tmp[177];
   memcpy(tmp, value, 177);
   tmp[42] = tmp[109] = 0;
