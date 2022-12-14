@@ -96,22 +96,22 @@ typedef struct incubed_state {
  * This is generated for each request and represents the current state. it holds the state until the request is finished and must be freed afterwards.
  * */
 typedef struct in3_req {
-  in3_t*          client;   /**< reference to the client*/
-  struct in3_req* required; /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
-  cache_entry_t*  cache;    /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
+  in3_t*          client;       /**< reference to the client*/
+  struct in3_req* required;     /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
+  cache_entry_t*  cache;        /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
 
   json_ctx_t*     request;      /**< the result of the json-parser for the request.*/
   json_ctx_t*     response;     /**< the result of the json-parser for the response.*/
   in3_response_t* raw_response; /**< the raw response-data, which should be verified. */
   in3_state_t*    in3_state;    /**< additional incubed assignements*/
 
-  char*     error;  /**< in case of an error this will hold the message, if not it points to `NULL` */
-  in3_ret_t status; /**< state of the verification */
+  char*     error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
+  in3_ret_t status;             /**< state of the verification */
 
-  req_type_t    type;    /**< the type of the request */
-  uint32_t      id;      /**< JSON RPC id of request at index 0 */
-  uint_fast16_t attempt; /**< the number of attempts */
-  uint_fast16_t len;     /**< the number of requests */
+  req_type_t    type;           /**< the type of the request */
+  uint32_t      id;             /**< JSON RPC id of request at index 0 */
+  uint_fast16_t attempt;        /**< the number of attempts */
+  uint_fast16_t len;            /**< the number of requests */
 } in3_req_t;
 
 /**

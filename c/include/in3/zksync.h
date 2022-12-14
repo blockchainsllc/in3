@@ -135,8 +135,8 @@ typedef struct zksync_config {
   char**               musig_urls;          /**< urls to get signatureshares, the order must be in the same order as the pub_keys */
   uint_fast8_t         musig_len;           /**< number of urls */
   struct pay_criteria* incentive;           /**< incentive payment configuration */
-  char*                proof_verify_method; /**< the rpc-method used to verify the proof before creating a signature */
-  char*                proof_create_method; /**< the rpc-method used to create the proof before creating a signature */
+  const char*          proof_verify_method; /**< the rpc-method used to verify the proof before creating a signature */
+  const char*          proof_create_method; /**< the rpc-method used to create the proof before creating a signature */
 } zksync_config_t;
 
 typedef struct valid {

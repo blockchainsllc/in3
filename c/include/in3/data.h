@@ -160,20 +160,20 @@ bool                         d_eq(d_token_t* a, d_token_t* b);                  
 NONULL d_key_t               keyn(const char* c, const size_t len);                                                                /**< generates the keyhash for the given stringrange as defined by len */
 d_key_t                      ikey(json_ctx_t* ctx, const char* name);                                                              /**<  returnes the indexed key for the given name. */
 
-d_token_t* d_get(d_token_t* item, const uint16_t key);                          /**< returns the token with the given propertyname (only if item is a object) */
-d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); /**< returns the token with the given propertyname or if not found, tries the other. (only if item is a object) */
-d_token_t* d_get_at(d_token_t* item, const uint32_t index);                     /**< returns the token of an array with the given index */
-d_token_t* d_next(d_token_t* item);                                             /**< returns the next sibling of an array or object */
+d_token_t* d_get(d_token_t* item, const uint16_t key);                                                                             /**< returns the token with the given propertyname (only if item is a object) */
+d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2);                                                    /**< returns the token with the given propertyname or if not found, tries the other. (only if item is a object) */
+d_token_t* d_get_at(d_token_t* item, const uint32_t index);                                                                        /**< returns the token of an array with the given index */
+d_token_t* d_next(d_token_t* item);                                                                                                /**< returns the next sibling of an array or object */
 
-NONULL void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
-NONULL json_ctx_t* parse_binary(const bytes_t* data);                     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_binary_str(const char* data, int len);           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-NONULL char*       parse_json_error(const char* js);                      /**< parses the json, but only return an error if the json is invalid. The returning string must be freed! */
-NONULL json_ctx_t* parse_json(const char* js);                            /**< parses json-data, which needs to be freed after usage! */
-NONULL json_ctx_t* parse_json_indexed(const char* js);                    /**< parses json-data, which needs to be freed after usage! */
-NONULL void        json_free(json_ctx_t* parser_ctx);                     /**< frees the parse-context after usage */
-NONULL str_range_t d_to_json(const d_token_t* item);                      /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
-char*              d_create_json(json_ctx_t* ctx, d_token_t* item);       /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
+NONULL void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t);                                                          /**< write the token as binary data into the builder */
+NONULL json_ctx_t* parse_binary(const bytes_t* data);                                                                              /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_binary_str(const char* data, int len);                                                                    /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+NONULL char*       parse_json_error(const char* js);                                                                               /**< parses the json, but only return an error if the json is invalid. The returning string must be freed! */
+NONULL json_ctx_t* parse_json(const char* js);                                                                                     /**< parses json-data, which needs to be freed after usage! */
+NONULL json_ctx_t* parse_json_indexed(const char* js);                                                                             /**< parses json-data, which needs to be freed after usage! */
+NONULL void        json_free(json_ctx_t* parser_ctx);                                                                              /**< frees the parse-context after usage */
+NONULL str_range_t d_to_json(const d_token_t* item);                                                                               /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
+char*              d_create_json(json_ctx_t* ctx, d_token_t* item);                                                                /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
 
 json_ctx_t*       json_create();
 NONULL d_token_t* json_create_null(json_ctx_t* jp);
