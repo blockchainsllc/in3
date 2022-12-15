@@ -515,26 +515,28 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
             set: [],
             checks: []
         }
-        Object.keys(r.params || {}).forEach((p, i) => {
-            const t = getCType(r.params[p], p, i, types, api_name, { ...state, path })
-            asArray(t.type_includes).forEach(i => type_includes.indexOf(i) < 0 ? type_includes.push(i) : '')
-            params.push(t.args)
-            t.code_def.split(';').forEach(_ => code.pre.push('  ' + _.trim() + ';'))
-            code.read.push('  ' + t.code_read)
-            code.pass.push(t.code_pass)
-            if (t.code_set) asArray(t.code_set).forEach(_ => code.set.push('  ' + _.trim() + ';'))
-            if (t.type_defs)
-                Object.keys(t.type_defs).forEach(_ => type_defs[_] = t.type_defs[_])
-            if (t.validate && t.validate.check)
-                t.validate.check.forEach(_ => code.checks.push(_))
-        })
-        code.read.push(`  RPC_ASSERT(d_len(ctx->params) <= ${params.length}, "%s only accepts %u arguments.", ${get_constant(rpc_name, use_const)}, ${params.length}); `)
+        if (!r._rpc_impl) {
+            Object.keys(r.params || {}).forEach((p, i) => {
+                const t = getCType(r.params[p], p, i, types, api_name, { ...state, path })
+                asArray(t.type_includes).forEach(i => type_includes.indexOf(i) < 0 ? type_includes.push(i) : '')
+                params.push(t.args)
+                t.code_def.split(';').forEach(_ => code.pre.push('  ' + _.trim() + ';'))
+                code.read.push('  ' + t.code_read)
+                code.pass.push(t.code_pass)
+                if (t.code_set) asArray(t.code_set).forEach(_ => code.set.push('  ' + _.trim() + ';'))
+                if (t.type_defs)
+                    Object.keys(t.type_defs).forEach(_ => type_defs[_] = t.type_defs[_])
+                if (t.validate && t.validate.check)
+                    t.validate.check.forEach(_ => code.checks.push(_))
+            })
+            code.read.push(`  RPC_ASSERT(d_len(ctx->params) <= ${params.length}, "%s only accepts %u arguments.", ${get_constant(rpc_name, use_const)}, ${params.length}); `)
+        }
         if (r.descr) {
             if (!direct_impl) header.push(comment('', r.descr))
-            if (params.length) impl.push(comment('', r.descr))
+            if (params.length && !r._rpc_impl) impl.push(comment('', r.descr))
         }
         if (!direct_impl) header.push(`in3_ret_t ${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx${params.length ? ', ' + params.join(', ') : ''});\n`)
-        if (params.length || direct_impl) {
+        if ((params.length || direct_impl) && !r._rpc_impl) {
             if (!direct_impl) prefix = 'handle_'
             if (r.cmakeOptions) impl.push(`#if ${asArray(r.cmakeOptions).map(_ => `defined(${_})`).join(' && ')}`)
             impl.push(`static in3_ret_t ${prefix}${rpc_name}(${conf}in3_rpc_handle_ctx_t* ctx) {`)
@@ -560,8 +562,13 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
             else
                 rpc_exec.push(`#if ${asArray(r.cmakeOptions).map(_ => `defined(${_})`).join(' && ')}`)
         }
+
+
         rpc_exec.push(`#if !defined(RPC_ONLY) || defined(RPC_${rpc_name.toUpperCase()})`)
-        rpc_exec.push(`  TRY_RPC(${get_constant(rpc_name, use_const)}, ${prefix}${rpc_name}(${use_conf ? 'conf, ' : ''}ctx))`)
+        if (r._rpc_impl)
+            rpc_exec.push(`  ${r._rpc_impl}`)
+        else
+            rpc_exec.push(`  TRY_RPC(${get_constant(rpc_name, use_const)}, ${prefix}${rpc_name}(${use_conf ? 'conf, ' : ''}ctx))`)
         rpc_exec.push('#endif\n')
         if (r.cmakeOptions) rpc_exec.push('#endif')
     })

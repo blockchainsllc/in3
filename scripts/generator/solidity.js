@@ -212,6 +212,7 @@ function create_def(ctx) {
         }
 
         ctx.functions.push(sig)
+        const fn_name = ctr ? '' : (ctx.sol.prefix + '_' + snake_case(fn.name))
         if (ctr) {
             ctx.allapis[ctx.sol.deploy][ctx.sol.deploy + '_deploy_' + ctx.api_name] = def
             def.src = ctx.dir
@@ -219,7 +220,6 @@ function create_def(ctx) {
             def.cmakeOptions = ['MOD_CONTRACTS_DEPLOY']
         }
         else {
-            const fn_name = ctx.sol.prefix + '_' + snake_case(fn.name)
             const c = (custom && custom[fn_name]) || {}
             if (c.skipGenerate) continue
             ctx.api[fn_name] = def
@@ -230,6 +230,7 @@ function create_def(ctx) {
         fn.inputs.forEach(n => def.params[n.name] = fix_type(n, ctx, sig))
         if (fn.stateMutability == 'view') {
             def.solidity.sig = create_sig(fn, true, true)
+            def._rpc_impl = `TRY_READ(FN_${fn_name.toUpperCase()}, "${def.solidity.sig}")`
             def.result = {
                 descr: "the resulting data structure"
             }
@@ -241,7 +242,6 @@ function create_def(ctx) {
             }
         }
         else {
-
             def.solidity.sig = create_sig(fn, true, false)
             def.result = {
                 descr: "The transaction data. Depending on the execl_level different properties will be defined.",
@@ -267,6 +267,8 @@ function create_def(ctx) {
             let id = ctx.contract.evm.methodIdentifiers[create_sig(fn, false)]
             while (id && id.startsWith('0')) id = id.substring(1)
             if (id) all_hashes[def.solidity.sig] = id
+            if (!ctr) def._rpc_impl = `TRY_SEND(FN_${fn_name.toUpperCase()}, "${def.solidity.sig}")`
+
         }
     }
 
@@ -305,13 +307,16 @@ function impl_solidity(fn, state, includes) {
     const abi_include = '#include "../../in3/c/src/api/eth1/abi.h"'
     const wallet_include = '#include "../wallet/wallet.h"'
     const l1_include = '#include "../eth_wallet/eth_wallet.h"'
+    const contracts_include = '#include "contracts.h"'
     if (includes.indexOf(abi_include) < 0) includes.push(abi_include)
     if (includes.indexOf(wallet_include) < 0) includes.push(wallet_include)
     if (includes.indexOf(l1_include) < 0) includes.push(l1_include)
+    if (includes.indexOf(contracts_include) < 0) includes.push(contracts_include)
     const sol = fn.solidity
     let res = []
-    if (sol.fn.stateMutability == 'view')
-        res.push(`SEND_ETH_CALL${sol.fn.inputs.length == 0 ? '_NO_ARGS' : ''}(ctx, contract, "${sol.sig}"${sol.fn.inputs.map(to_arg).join('')})`)
+    if (sol.fn.stateMutability == 'view') {
+        //   res.push(`SEND_ETH_CALL${sol.fn.inputs.length == 0 ? '_NO_ARGS' : ''}(ctx, contract, "${sol.sig}"${sol.fn.inputs.map(to_arg).join('')})`)
+    }
     else if (sol.deploy && sol.fn.type == 'constructor') {
         let gas = sol.ctx.contract.evm.gasEstimates.creation.totalCost
         gas = gas == 'infinite' ? 460000 : parseInt(gas) + 500000
@@ -333,6 +338,7 @@ function impl_solidity(fn, state, includes) {
         } else
             res.push('return eth_exec(ctx, &arg, NULL);')
     }
+    /*
     else {
         res.push('TRY(wallet_check(ctx->req, &wallet, WT_ETH))')
         res.push('')
@@ -347,7 +353,7 @@ function impl_solidity(fn, state, includes) {
         res.push('TRY_FINAL(eth_exec(ctx, &arg, NULL), _free(arg.data.data));')
         res.push('return IN3_OK;')
     }
-
+*/
     return res
 }
 
