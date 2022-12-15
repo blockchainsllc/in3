@@ -1229,3 +1229,20 @@ bool d_is_bytes(const d_token_t* item) {
     default: return false;
   }
 }
+
+json_ctx_t* json_slice_array(d_token_t* array, size_t offset, size_t len) {
+  d_token_t* start = d_get_at(array, offset);
+  if (!start && len) return NULL;
+  size_t cnt_elements = len;
+  size_t token_len    = 0;
+  for (d_token_t* t = start; t && len; t = d_next(t), len--)
+    token_len += d_token_size(t);
+  if (len) return NULL;
+  json_ctx_t* res    = _calloc(sizeof(json_ctx_t), 1);
+  res->allocated     = token_len + 1;
+  res->result        = malloc(res->allocated * sizeof(d_token_t));
+  res->result[0].len = cnt_elements | (T_ARRAY << 28);
+  if (start) memcpy(res->result + 1, start, token_len * sizeof(d_token_t));
+  for (size_t i = 1; i <= token_len; i++) res->result[i].state &= ~TOKEN_STATE_ALLOCATED;
+  return res;
+}

@@ -242,7 +242,7 @@ static sb_t* add_fn_sig(sb_t* sb, abi_coder_t* coder) {
   return sb;
 }
 
-static void create_fn_hash(char* fn_name, int fn_len, abi_coder_t* arguments, uint8_t* dst) {
+static void create_fn_hash(const char* fn_name, int fn_len, abi_coder_t* arguments, uint8_t* dst) {
   sb_t      sb = {0};
   bytes32_t hash;
   sb_add_range(&sb, fn_name, 0, fn_len);
@@ -276,11 +276,11 @@ char* find_end(char* str) {
   return src;
 }
 
-abi_sig_t* abi_sig_create(char* signature, char** error) {
+abi_sig_t* abi_sig_create(const char* signature, char** error) {
   *error            = NULL;
   char* input_start = strchr(signature, '(');
-  if (!input_start) input_start = signature;
-  char* input_end    = *input_start == '(' ? find_end(input_start) : signature;
+  if (!input_start) input_start = (char*) signature;
+  char* input_end    = *input_start == '(' ? find_end(input_start) : (char*) signature;
   char* output_start = strchr(input_end, ':');
   output_start       = output_start && output_start[1] ? output_start + 1 : NULL;
 
