@@ -149,6 +149,8 @@ exports.generate_solidity = async function ({ generate_rpc, types, api_name, api
 function resolve_type(f, includeNames = true) {
     if (f.type == 'tuple')
         return '(' + f.components.map(_ => resolve_type(_, includeNames)).join() + ')'
+    if (f.type == 'tuple[]')
+        return '(' + f.components.map(_ => resolve_type(_, includeNames)).join() + ')[]'
     return f.type + (includeNames ? ' ' + f.name : '')
 }
 function create_sig(fn, includeNames, includeOutput) {

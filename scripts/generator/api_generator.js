@@ -594,10 +594,10 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
             `);
     if (checked_prefix) impl.push(`  if (strncmp(ctx->method, "${checked_prefix}", ${checked_prefix.length})) return IN3_EIGNORE; \n`)
     rpc_exec.forEach(_ => impl.push(_))
-    if (!checked_prefix || fs.readdirSync(path + '/..').filter(_ => _.startsWith(api_name)).length > 1)
+    if (!checked_prefix || api_name == 'origin' || fs.readdirSync(path + '/..').filter(_ => _.startsWith(api_name)).length > 1)
         impl.push(`  return IN3_EIGNORE; `)
     else
-        impl.push(`  return rpc_throw(ctx->req, "unknown %s method", "${api_name}"); `)
+        impl.push(`  return rpc_throw(ctx->req, "unknown %s method (%s) ", "${api_name}", ctx->method); `)
     impl.push('}')
     state.files[`${path}/${api_file}_rpc.c`] = { lines: impl }
 

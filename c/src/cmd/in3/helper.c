@@ -57,7 +57,7 @@
 #define IN3_VERSION "local"
 #endif
 
-#define __HELPER_MAX_RESULT_SIZE 40960
+#define __HELPER_MAX_RESULT_SIZE 512000
 #define __HELPER_MAX_ARG_SIZE    127
 
 void die(char* msg) {

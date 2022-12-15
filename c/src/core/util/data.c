@@ -428,14 +428,14 @@ static NONULL int parse_key(json_ctx_t* jp) {
 }
 
 static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
-  uint64_t value = 0;                        // the resulting value (if it is a integer)
-  jp->c--;                                   // NOSONAR -> we also need to include the previous character!
+  uint64_t value = 0; // the resulting value (if it is a integer)
+  jp->c--;            // NOSONAR -> we also need to include the previous character!
 
   for (int i = 0; i < 21; i++) {             // we are not accepting more than 20 characters, since a uint64 can hold up to 18446744073709552000 (which has 20 digits)
     if (jp->c[i] >= '0' && jp->c[i] <= '9')  // NOSONAR - as long as this is a digit
       value = value * 10 + (jp->c[i] - '0'); // NOSONAR - we handle it and add it to the value.
     else {
-      switch (jp->c[i]) {                    // we found a non digit character
+      switch (jp->c[i]) { // we found a non digit character
         case '.':
         case '-':
         case '+':
@@ -590,7 +590,7 @@ static NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
             return 0;
           }
           default:
-            return JSON_E_INVALID_CHAR;       // invalid character or end
+            return JSON_E_INVALID_CHAR; // invalid character or end
         }
         res = parse_object(jp, p_index, res); // parse the value
         if (res < 0) return res;
@@ -733,12 +733,12 @@ json_ctx_t* parse_json_indexed(const char* js) {
   parser->allocated  = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
   parser->result     = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
   parser->keys       = _malloc(JSON_INDEXD_PAGE);
-  const int res      = parse_object(parser, -1, 0);                   // now parse starting without parent (-1)
-  if (res < 0) {                                                      // error parsing?
-    json_free(parser);                                                // clean up
-    return NULL;                                                      // and return null
-  }                                                                   //
-  parser->c = (char*) js;                                             // since this pointer changed during parsing, we set it back to the original string
+  const int res      = parse_object(parser, -1, 0); // now parse starting without parent (-1)
+  if (res < 0) {                                    // error parsing?
+    json_free(parser);                              // clean up
+    return NULL;                                    // and return null
+  }                                                 //
+  parser->c = (char*) js;                           // since this pointer changed during parsing, we set it back to the original string
   return parser;
 }
 
@@ -874,20 +874,20 @@ static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p, size_t max) {
   if ((*p + l) > max) return -3;                     // check limits
 
   if (len == 28)
-    len = d[*p];                                                                                        // 28 = 1 byte len
-  else if (len == 29)                                                                                   //
-    len = d[*p] << 8 | d[*p + 1];                                                                       // 29 = 2 bytes length
-  else if (len == 30)                                                                                   //
-    len = d[*p] << 16 | d[*p + 1] << 8 | d[*p + 2];                                                     // 30 = 3 bytes length
-  else if (len == 31)                                                                                   //
-    len = d[*p] << 24 | d[*p + 1] << 16 | d[*p + 2] << 8 | d[*p + 3];                                   // 31 = 4 bytes length
-  *p += l;                                                                                              // jump to the data
+    len = d[*p];                                                      // 28 = 1 byte len
+  else if (len == 29)                                                 //
+    len = d[*p] << 8 | d[*p + 1];                                     // 29 = 2 bytes length
+  else if (len == 30)                                                 //
+    len = d[*p] << 16 | d[*p + 1] << 8 | d[*p + 2];                   // 30 = 3 bytes length
+  else if (len == 31)                                                 //
+    len = d[*p] << 24 | d[*p + 1] << 16 | d[*p + 2] << 8 | d[*p + 3]; // 31 = 4 bytes length
+  *p += l;                                                            // jump to the data
 
-  if (type == T_NULL && len > 0) {                                                                      // special token giving the number of tokens, so we can allocate the exact number
-    if (len > JSON_MAX_ALLOWED_TOKENS) return -4;                                                       // security check so we are not allocating too much memory
-    if (jp->allocated == 0) {                                                                           // first time?
-      jp->result    = _malloc(sizeof(d_token_t) * len);                                                 // use malloc
-      jp->allocated = len;                                                                              //
+  if (type == T_NULL && len > 0) {                      // special token giving the number of tokens, so we can allocate the exact number
+    if (len > JSON_MAX_ALLOWED_TOKENS) return -4;       // security check so we are not allocating too much memory
+    if (jp->allocated == 0) {                           // first time?
+      jp->result    = _malloc(sizeof(d_token_t) * len); // use malloc
+      jp->allocated = len;                              //
     }
     else if (len > jp->allocated) {                                                                     // otherwise
       jp->result    = _realloc(jp->result, len * sizeof(d_token_t), jp->allocated * sizeof(d_token_t)); // realloc
@@ -1232,7 +1232,7 @@ bool d_is_bytes(const d_token_t* item) {
 
 json_ctx_t* json_slice_array(d_token_t* array, size_t offset, size_t len) {
   d_token_t* start = d_get_at(array, offset);
-  if (!start) return NULL;
+  if (!start && len) return NULL;
   size_t cnt_elements = len;
   size_t token_len    = 0;
   for (d_token_t* t = start; t && len; t = d_next(t), len--)
@@ -1242,7 +1242,7 @@ json_ctx_t* json_slice_array(d_token_t* array, size_t offset, size_t len) {
   res->allocated     = token_len + 1;
   res->result        = malloc(res->allocated * sizeof(d_token_t));
   res->result[0].len = cnt_elements | (T_ARRAY << 28);
-  memcpy(res->result + 1, start, token_len * sizeof(d_token_t));
+  if (start) memcpy(res->result + 1, start, token_len * sizeof(d_token_t));
   for (size_t i = 1; i <= token_len; i++) res->result[i].state &= ~TOKEN_STATE_ALLOCATED;
   return res;
 }
