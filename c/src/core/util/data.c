@@ -1241,7 +1241,7 @@ json_ctx_t* json_slice_array(d_token_t* array, size_t offset, size_t len) {
   json_ctx_t* res    = _calloc(sizeof(json_ctx_t), 1);
   res->allocated     = token_len + 1;
   res->len           = token_len + 1;
-  res->result        = malloc(res->allocated * sizeof(d_token_t));
+  res->result        = _calloc(res->allocated * sizeof(d_token_t), 1);
   res->result[0].len = cnt_elements | (T_ARRAY << 28);
   if (start) memcpy(res->result + 1, start, token_len * sizeof(d_token_t));
   for (size_t i = 1; i <= token_len; i++) res->result[i].state &= ~TOKEN_STATE_ALLOCATED;
