@@ -104,7 +104,6 @@ NONULL bytes_t                 bytes_dup(const bytes_t a);                      
 NONULL uint8_t                 b_read_byte(bytes_t* b, size_t* pos);                                                             /**< reads a byte on the current position and updates the pos afterwards. */
 NONULL uint32_t                b_read_int(bytes_t* b, size_t* pos);                                                              /**< reads a integer on the current position and updates the pos afterwards. */
 NONULL uint64_t                b_read_long(bytes_t* b, size_t* pos);                                                             /**< reads a long on the current position and updates the pos afterwards. */
-NONULL char*                   b_new_chars(bytes_t* b, size_t* pos);                                                             /**< creates a new string (needs to be freed) on the current position and updates the pos afterwards. */
 NONULL bytes_t*                b_new_fixed_bytes(bytes_t* b, size_t* pos, int len);                                              /**< reads bytes with a fixed length on the current position and updates the pos afterwards. */
 bytes_builder_t*               bb_newl(size_t l);                                                                                /**< creates a new bytes_builder */
 NONULL void                    bb_free(bytes_builder_t* bb);                                                                     /**< frees a bytebuilder and its content. */

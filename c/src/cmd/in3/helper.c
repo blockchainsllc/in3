@@ -39,6 +39,7 @@
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
 #include "../../api/eth1/rpcs.h"
+#include "../../core/util/log.h"
 #include "../../signer/pk-signer/rpcs.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../tools/recorder/recorder.h"
@@ -55,6 +56,9 @@
 #ifndef IN3_VERSION
 #define IN3_VERSION "local"
 #endif
+
+#define __HELPER_MAX_RESULT_SIZE 512000
+#define __HELPER_MAX_ARG_SIZE    127
 
 void die(char* msg) {
   recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
@@ -98,8 +102,8 @@ void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
   // handle options
   if (handle_option(c, name, value, &sb, argc, argv)) return;
   if (!sb.data) {
-    char* _name = alloca(strlen(name + 1));
-    strcpy(_name, name);
+    char* _name;
+    _strncpy(_name, name, __HELPER_MAX_ARG_SIZE);
     char* p = strtok(_name, ".");
     sb_add_char(&sb, '{');
     int b = 1;
@@ -206,6 +210,7 @@ char* get_wei(char* val) {
 
 char* resolve(in3_t* c, char* name) {
   if (!name) return NULL;
+  if (strnlen(name, __HELPER_MAX_ARG_SIZE) == __HELPER_MAX_ARG_SIZE) return NULL; // argument is too big
   if (name[0] == '0' && name[1] == 'x') return name;
   if (strstr(name, ".eth")) {
     char *res = NULL, *err = NULL;
@@ -339,7 +344,8 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method, in3_curve_type_t 
 }
 
 char* get_argument(int argc, char* argv[], char* alias, char* arg, bool has_value) {
-  int l = strlen(arg);
+  int l = strnlen(arg, __HELPER_MAX_ARG_SIZE);
+  if (l == __HELPER_MAX_ARG_SIZE) in3_log_warn("Argument received is too big and is going to be truncated");
   for (int i = 1; i < argc; i++) {
     if (alias && strcmp(alias, argv[i]) == 0)
       return has_value ? (i + 1 < argc ? argv[i + 1] : NULL) : argv[i];
@@ -359,7 +365,21 @@ uint32_t* get_output_conf() {
   return &conf;
 }
 
-void display_result(char* method, char* result) {
+void display_result(char* method, char* _result) {
+  if (!_result) die("Received result was null");
+
+  char* result;
+  if (strnlen(_result, __HELPER_MAX_RESULT_SIZE) < __HELPER_MAX_RESULT_SIZE) {
+    result = _result;
+  }
+  else {
+    // result is too big. Truncate
+    in3_log_warn("received result is too big and was truncated");
+    result = alloca(__HELPER_MAX_RESULT_SIZE);
+    strncpy(result, _result, __HELPER_MAX_RESULT_SIZE);
+    result[__HELPER_MAX_RESULT_SIZE - 1] = '\0'; // ensure null termination
+  }
+
   // if the result is a string, we remove the quotes
   if ((conf & out_human) == 0 && result[0] == '"' && result[strlen(result) - 1] == '"') {
     memmove(result, result + 1, strlen(result));

@@ -132,7 +132,9 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
     n->props      = b_read_long(b, &pos);
     memcpy(n->address, b->data + pos, 20);
     pos += 20;
-    n->url = b_new_chars(b, &pos);
+    size_t url_l = strnlen((char*) b->data + pos, b->len - pos);
+    n->url       = _strdupn((char*) b->data + pos, (int) url_l);
+    pos += url_l + 1;
     BIT_CLEAR(n->attrs, ATTR_WHITELISTED);
   }
 

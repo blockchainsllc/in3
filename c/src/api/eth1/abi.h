@@ -129,8 +129,8 @@ void abi_sig_free(
  *
  */
 abi_sig_t* abi_sig_create(
-    char*  signature, /**< the abi signature */
-    char** error      /**< the a pointer to error, which will hold the error message in case of an error. This does not need to be freed, since those messages are constant strings. */
+    const char* signature, /**< the abi signature */
+    char**      error      /**< the a pointer to error, which will hold the error message in case of an error. This does not need to be freed, since those messages are constant strings. */
 );
 
 /**

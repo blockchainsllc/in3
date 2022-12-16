@@ -127,38 +127,15 @@ clear the screen
 #define COLOR_CYAN    "\x1B[36m"
 #define COLOR_WHITE   "\x1B[37m"
 #define COLOR_DEFAULT "\x1B[39m"
-#else
-#define COLOR_RESET   " " // Reset to default colors
-#define COLOR_CLEAR   " " // Clear screen, reposition cursor to top left
-#define COLOR_BLACK   " "
-#define COLOR_RED     " "
-#define COLOR_GREEN   " "
-#define COLOR_YELLOW  " "
-#define COLOR_BLUE    " "
-#define COLOR_MAGENTA " "
-#define COLOR_CYAN    " "
-#define COLOR_WHITE   " "
-#define COLOR_DEFAULT " "
-#endif
 
-#define COLOR_RED_STR           COLOR_RED "%s" COLOR_RESET
-#define COLOR_GREEN_STR         COLOR_GREEN "%s" COLOR_RESET
-#define COLOR_GREEN_S2          COLOR_GREEN "%-10s" COLOR_RESET
-#define COLOR_GREEN_X1          COLOR_GREEN "%01x" COLOR_RESET
-#define COLOR_GREEN_STR_INT     COLOR_GREEN "%s%i" COLOR_RESET
-#define COLOR_YELLOW_STR        COLOR_YELLOW "%s" COLOR_RESET
-#define COLOR_YELLOW_STR        COLOR_YELLOW "%s" COLOR_RESET
-#define COLOR_MAGENTA_STR       COLOR_MAGENTA "%s" COLOR_RESET
-#define COLOR_YELLOW_PRIu64     COLOR_YELLOW "%5" PRIu64 "" COLOR_RESET
-#define COLOR_YELLOW_PRIu64plus COLOR_YELLOW "%5" PRIu64 "" COLOR_RESET
-#define COLOR_BRIGHT_BLACK      "\x1B[90m"
-#define COLOR_BRIGHT_RED        "\x1B[91m"
-#define COLOR_BRIGHT_GREEN      "\x1B[92m"
-#define COLOR_BRIGHT_YELLOW     "\x1B[93m"
-#define COLOR_BRIGHT_BLUE       "\x1B[94m"
-#define COLOR_BRIGHT_MAGENTA    "\x1B[95m"
-#define COLOR_BRIGHT_CYAN       "\x1B[96m"
-#define COLOR_BRIGHT_WHITE      "\x1B[97m"
+#define COLOR_BRIGHT_BLACK   "\x1B[90m"
+#define COLOR_BRIGHT_RED     "\x1B[91m"
+#define COLOR_BRIGHT_GREEN   "\x1B[92m"
+#define COLOR_BRIGHT_YELLOW  "\x1B[93m"
+#define COLOR_BRIGHT_BLUE    "\x1B[94m"
+#define COLOR_BRIGHT_MAGENTA "\x1B[95m"
+#define COLOR_BRIGHT_CYAN    "\x1B[96m"
+#define COLOR_BRIGHT_WHITE   "\x1B[97m"
 
 #define COLOR_BG_DEFAULT "\x1B[24;49m"
 #define COLOR_BG_BLACK   "\x1B[24;40m"
@@ -178,3 +155,57 @@ clear the screen
 #define COLOR_BG_BRIGHT_MAGENTA "\x1B[4;105m"
 #define COLOR_BG_BRIGHT_CYAN    "\x1B[4;106m"
 #define COLOR_BG_BRIGHT_WHITE   "\x1B[4;107m"
+
+#else
+#define COLOR_RESET   " " // Reset to default colors
+#define COLOR_CLEAR   " " // Clear screen, reposition cursor to top left
+#define COLOR_BLACK   " "
+#define COLOR_RED     " "
+#define COLOR_GREEN   " "
+#define COLOR_YELLOW  " "
+#define COLOR_BLUE    " "
+#define COLOR_MAGENTA " "
+#define COLOR_CYAN    " "
+#define COLOR_WHITE   " "
+#define COLOR_DEFAULT " "
+
+#define COLOR_BRIGHT_BLACK   ""
+#define COLOR_BRIGHT_RED     ""
+#define COLOR_BRIGHT_GREEN   ""
+#define COLOR_BRIGHT_YELLOW  ""
+#define COLOR_BRIGHT_BLUE    ""
+#define COLOR_BRIGHT_MAGENTA ""
+#define COLOR_BRIGHT_CYAN    ""
+#define COLOR_BRIGHT_WHITE   ""
+
+#define COLOR_BG_DEFAULT ""
+#define COLOR_BG_BLACK   ""
+#define COLOR_BG_RED     ""
+#define COLOR_BG_GREEN   ""
+#define COLOR_BG_YELLOW  ""
+#define COLOR_BG_BLUE    ""
+#define COLOR_BG_MAGENTA ""
+#define COLOR_BG_CYAN    ""
+#define COLOR_BG_WHITE   ""
+
+#define COLOR_BG_BRIGHT_BLACK   ""
+#define COLOR_BG_BRIGHT_RED     ""
+#define COLOR_BG_BRIGHT_GREEN   ""
+#define COLOR_BG_BRIGHT_YELLOW  ""
+#define COLOR_BG_BRIGHT_BLUE    ""
+#define COLOR_BG_BRIGHT_MAGENTA ""
+#define COLOR_BG_BRIGHT_CYAN    ""
+#define COLOR_BG_BRIGHT_WHITE   ""
+
+#endif
+
+#define COLOR_RED_STR           COLOR_RED "%s" COLOR_RESET
+#define COLOR_GREEN_STR         COLOR_GREEN "%s" COLOR_RESET
+#define COLOR_GREEN_S2          COLOR_GREEN "%-10s" COLOR_RESET
+#define COLOR_GREEN_X1          COLOR_GREEN "%01x" COLOR_RESET
+#define COLOR_GREEN_STR_INT     COLOR_GREEN "%s%i" COLOR_RESET
+#define COLOR_YELLOW_STR        COLOR_YELLOW "%s" COLOR_RESET
+#define COLOR_YELLOW_STR        COLOR_YELLOW "%s" COLOR_RESET
+#define COLOR_MAGENTA_STR       COLOR_MAGENTA "%s" COLOR_RESET
+#define COLOR_YELLOW_PRIu64     COLOR_YELLOW "%5" PRIu64 "" COLOR_RESET
+#define COLOR_YELLOW_PRIu64plus COLOR_YELLOW "%5" PRIu64 "" COLOR_RESET

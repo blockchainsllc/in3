@@ -161,7 +161,7 @@ typedef struct in3_nodeselect_def {
     uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
     uint64_t  timestamp;      /**< approx. time when nodelist must be updated (i.e. when reported last_block will be considered final) */
     address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
-  } * nodelist_upd8_params;
+  }* nodelist_upd8_params;
 
   chain_id_t                 chain_id;           /**< the chain_id of the data */
   struct in3_nodeselect_def* next;               /**< the next in the linked list */
