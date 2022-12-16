@@ -302,8 +302,10 @@ function create_fn(config, method, path, def) {
     fn.result = {
         descr: [response.summary, response.description].filter(_ => _).join('\n\n').trim()
     }
-    if (response.content || (response.schema && response))
+    if (response.content || (response.schema && response)) {
+        fn._generate_openapi.return_type = response.content && Object.keys(response.content)[0]
         fn.result.type = get_type(config, response.content || (response.schema && response), [base_name + '_result', base_name + '_' + method + '_result'], fn.result);
+    }
     else {
         fn._generate_openapi.empty_response = true
         fn.result = {
@@ -394,7 +396,7 @@ function impl_openapi(fn, state) {
         case 'uint64': res.push(`${ind}sb_add_int(&_data, (int64_t) ${def.body});`); break
         default: res.push(`${ind}sb_add_json(&_data, "", ${state.generate_rpc && state.generate_rpc.structs ? def.body + '.json' : def.body});`);
     }
-
+    if (def.return_type) res.push(`${ind}return_type = "${def.return_type}";`)
     res[res.length - 1] += ')'
     return res
 }
