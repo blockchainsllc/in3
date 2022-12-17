@@ -719,11 +719,8 @@ json_ctx_t* parse_json(const char* js) {
   if (res < 0) {                                                      // error parsing?
     json_free(parser);                                                // clean up
     return NULL;                                                      // and return null
-  }                                                                   //
-  parser->c = (char*) js;                                             // since this pointer changed during parsing, we set it back to the original string
-  for (size_t i = 0; i < parser->len; i++) {
-    //    if (d_is_bytes(parser->result + i) && d_type(parser->result + i) == T_STRING) d_bytes(parser->result + i);
   }
+  parser->c = (char*) js;                                             // since this pointer changed during parsing, we set it back to the original string
   return parser;
 }
 
