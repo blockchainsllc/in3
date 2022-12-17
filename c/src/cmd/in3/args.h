@@ -93,7 +93,6 @@ const char* help_args = "\
 --human                       -h     human readable, which removes the json -structure and oly displays the values\n\
 --test-request                -tr    runs test request when showing in3_weights\n\
 --test-health-request         -thr   runs test request including health-check when showing in3_weights\n\
---multisig                    -ms    adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig...\n\
 --ms.signatures               -sigs  add additional signatures, which will be useds when sending through a multisig!\n\
 --response.in                 -ri    read response from stdin\n\
 --response.out                -ro    write raw response to stdout\n\
@@ -193,7 +192,6 @@ const char* aliases[] = {
     "h", "human=true",
     "tr", "test-request=true",
     "thr", "test-health-request=true",
-    "ms", "multisig",
     "sigs", "ms.signatures",
     "ri", "response.in=true",
     "ro", "response.out=true",

@@ -1,0 +1,18 @@
+[
+  {
+    "descr": "in3_addMnemonic",
+    "request": {
+      "method": "in3_addMnemonic",
+      "params": [
+        "time mouse jealous change lyrics carpet wise tuition merit second believe benefit obtain until purchase egg tissue myself toilet window across coffee peace awful",
+        "test"
+      ]
+    },
+    "result": [
+      "0xec2a590f3052b25a7de5955d41ba85347b35af08"
+    ],
+    "success": true,
+    "config": {},
+    "response": []
+  }
+]

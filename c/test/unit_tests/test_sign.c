@@ -39,7 +39,6 @@
 #define DEBUG
 #endif
 
-#include "../../src/verifier/eth1/nano/rpcs.h"
 #include "../../include/in3/error.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/keys.h"
@@ -51,6 +50,7 @@
 #include "../../src/core/util/scache.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
+#include "../../src/verifier/eth1/nano/rpcs.h"
 #include "nodeselect/full/cache.h"
 #include "nodeselect/full/nodelist.h"
 
@@ -192,40 +192,7 @@ static in3_ret_t prep_tx(void* ctx, d_token_t* old_tx, json_ctx_t** new_tx) {
   }
   return IN3_EUNKNOWN;
 }
-/*
-static void test_signer_prepare_tx() {
-  // setup in3
-  in3_t*    c = in3_for_chain(CHAIN_ID_MAINNET);
-  bytes32_t pk;
-  hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
-  eth_set_pk_signer(c, pk, NULL);
 
-  // prepare request
-  in3_req_t* ctx        = req_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  c->signer->prepare_tx = prep_tx;
-  json_ctx_t* jtx       = parse_json("{\"success\":false}");
-  bytes_t     raw_tx    = sign_tx(jtx->result, ctx);
-  TEST_ASSERT_FALSE(raw_tx.data && raw_tx.len);
-  TEST_ASSERT_NOT_EQUAL(IN3_OK, req_get_error(ctx, 0));
-  json_free(jtx);
-  req_free(ctx);
-
-  ctx    = req_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  jtx    = parse_json("{\"success\":true}");
-
-  raw_tx = sign_tx(jtx->result, ctx);
-  TEST_ASSERT_TRUE(ctx->type == RT_RPC && ctx->status == IN3_WAITING && ctx->required);
-  TEST_ASSERT_EQUAL(IN3_OK, in3_send_req(ctx->required));
-
-  raw_tx = sign_tx(jtx->result, ctx);
-  TEST_ASSERT_NOT_NULL(raw_tx.data);
-  TEST_ASSERT_NOT_EQUAL(IN3_OK, req_get_error(ctx, 0));
-  _free(raw_tx.data);
-  req_free(ctx);
-  json_free(jtx);
-  in3_free(c);
-}
-*/
 /*
  * Main
  */

@@ -25,5 +25,37 @@
       ]
     },
     "response": []
+  },
+  {
+    "descr": "in3_signData_2",
+    "request": {
+      "method": "in3_signData",
+      "params": [
+        "HelloWorld",
+        "0x9307f84ece09d5904a9baf1071e1e1b6917555c9",
+        "raw"
+      ]
+    },
+    "result": {
+      "message": "0x48656c6c6f576f726c64",
+      "messageHash": "0x7c5ea36004851c764c44143b1dcb59679b11c9a68e5f41497f6cf3d480715331",
+      "signature": "0x9539b711815d5e48eed3ac6642d3286fdd498d56b173d39e3ed14f292d1feff650f7ad5329ed8c8eb6641cb23e3c317f804275a15ed78086ca364abac1139e5e1b",
+      "r": "0x9539b711815d5e48eed3ac6642d3286fdd498d56b173d39e3ed14f292d1feff6",
+      "s": "0x50f7ad5329ed8c8eb6641cb23e3c317f804275a15ed78086ca364abac1139e5e",
+      "v": 27
+    },
+    "success": true,
+    "config": {
+      "hd": [
+        {
+          "seed_phrase": "dizzy nice link honey faith expect protect nasty manage athlete need brown boost rose tongue brass flash tip leaf release horse guide lens rigid",
+          "seed_password": "test",
+          "paths": [
+            "m/44'/60'/0'/0/0"
+          ]
+        }
+      ]
+    },
+    "response": []
   }
 ]

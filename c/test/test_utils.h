@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/blockchainsllc/in3
- * 
+ *
  * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -39,6 +39,31 @@
     char tmp[len * 2 + 1];                                          \
     bytes_to_hex(actual, len, tmp);                                 \
     TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, tmp, message);       \
+  }
+
+#define TEST_CONFIGURE(in3, conf)           \
+  {                                         \
+    char* error = in3_configure(in3, conf); \
+    TEST_ASSERT_NULL_MESSAGE(error, error); \
+  }
+
+#define TEST_RPC(in3, method, args, expected)                                             \
+  {                                                                                       \
+    in3_req_t* r = in3_client_rpc_ctx(in3, method, args);                                 \
+    TEST_ASSERT_NULL_MESSAGE(r->error, r->error);                                         \
+    d_token_t* result = d_get(req_get_response(r, 0), K_RESULT);                          \
+    TEST_ASSERT_NOT_NULL_MESSAGE(result, "No result");                                    \
+    TEST_ASSERT_EQUAL_STRING(expected, stack_printx(strlen(expected) + 1, "%j", result)); \
+    req_free(r);                                                                          \
+  }
+#define TEST_CTX(in3, code)                                                               \
+  {                                                                                       \
+    in3_req_t r = in3_client_rpc_ctx(in3, method, args);                                  \
+    TEST_ASSERT_NULL_MESSAGE(r->error, r->error);                                         \
+    d_token_t* result = d_get(req_get_response(r, 0), K_RESULT);                          \
+    TEST_ASSERT_NOT_NULL_MESSAGE(result, "No result");                                    \
+    TEST_ASSERT_EQUAL_STRING(expected, stack_printx(strlen(expected) + 1, "%j", result)); \
+    req_free(r);                                                                          \
   }
 
 #include "unity/unity.h"
@@ -96,4 +121,4 @@ static inline int mock_rand(void* s) {
 }
 #endif
 
-#endif //IN3_TEST_UTILS_H
+#endif // IN3_TEST_UTILS_H

@@ -252,8 +252,6 @@ args=(
 '-tr[runs test request when showing in3_weights]'
 '--test-health-request[runs test request including health-check when showing in3_weights]'
 '-thr[runs test request including health-check when showing in3_weights]'
-'--multisig=[adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig...]:multisig:()'
-'-ms[adds a multisig as signer this needs to be done in the right order! (first the pk then the multisaig...]:multisig:()'
 '--ms.signatures=[add additional signatures, which will be useds when sending through a multisig!]:ms.signatures:()'
 '-sigs[add additional signatures, which will be useds when sending through a multisig!]:ms.signatures:()'
 '--response.in[read response from stdin]'

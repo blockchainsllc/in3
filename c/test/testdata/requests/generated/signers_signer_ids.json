@@ -1,6 +1,6 @@
 [
   {
-    "descr": "signer_ids",
+    "descr": "signer_ids : empty",
     "request": {
       "method": "signer_ids",
       "params": []
@@ -23,6 +23,29 @@
     "config": {
       "pk": [
         "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
+      ]
+    },
+    "response": []
+  },
+  {
+    "descr": "signer_ids_3",
+    "request": {
+      "method": "signer_ids",
+      "params": []
+    },
+    "result": [
+      "0x9307f84ece09d5904a9baf1071e1e1b6917555c9"
+    ],
+    "success": true,
+    "config": {
+      "hd": [
+        {
+          "seed_phrase": "dizzy nice link honey faith expect protect nasty manage athlete need brown boost rose tongue brass flash tip leaf release horse guide lens rigid",
+          "seed_password": "test",
+          "paths": [
+            "m/44'/60'/0'/0/0"
+          ]
+        }
       ]
     },
     "response": []

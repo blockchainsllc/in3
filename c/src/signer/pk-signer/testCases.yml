@@ -1,15 +1,66 @@
-account:
+_defines:
+  - &hd_config
+    hd:
+      - seed_phrase: "dizzy nice link honey faith expect protect nasty manage athlete need brown boost rose tongue brass flash tip leaf release horse guide lens rigid"
+        seed_password: test
+        paths:
+          - m/44'/60'/0'/0/0
 
+account:
   in3_addRawKey:
     input:
       - "0x1234567890123456789012345678901234567890123456789012345678901234"
     expected_output: "0x2e988a386a799f506693793c6a5af6b54dfaabfb"
 
   signer_ids:
-    -
+    - extra: empty
       expected_output: []
     - config:
-        pk: 
+        pk:
           - "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7"
       expected_output:
         - "0x00a329c0648769a73afac7f9381e08fb43dbea72"
+    - config: *hd_config
+      expected_output:
+        - "0x9307f84ece09d5904a9baf1071e1e1b6917555c9"
+
+  in3_signData:
+    - config: *hd_config
+      input:
+        - HelloWorld
+        - "0x9307f84ece09d5904a9baf1071e1e1b6917555c9"
+        - raw
+      expected_output:
+        message: "0x48656c6c6f576f726c64"
+        messageHash: "0x7c5ea36004851c764c44143b1dcb59679b11c9a68e5f41497f6cf3d480715331"
+        signature: "0x9539b711815d5e48eed3ac6642d3286fdd498d56b173d39e3ed14f292d1feff650f7ad5329ed8c8eb6641cb23e3c317f804275a15ed78086ca364abac1139e5e1b"
+        r: "0x9539b711815d5e48eed3ac6642d3286fdd498d56b173d39e3ed14f292d1feff6"
+        s: "0x50f7ad5329ed8c8eb6641cb23e3c317f804275a15ed78086ca364abac1139e5e"
+        v: 27
+
+  in3_addJsonKey:
+    - input:
+        - version: 3,
+          id: "f6b5c0b1-ba7a-4b67-9086-a01ea54ec638"
+          address: "08aa30739030f362a8dd597fd3fcde283e36f4a1"
+          crypto:
+            ciphertext: "d5c5aafdee81d25bb5ac4048c8c6954dd50c595ee918f120f5a2066951ef992d"
+            cipherparams:
+              iv: "415440d2b1d6811d5c8a3f4c92c73f49"
+            cipher: "aes-128-ctr"
+            kdf: pbkdf2
+            kdfparams:
+              dklen: 32
+              salt: "691e9ad0da2b44404f65e0a60cf6aabe3e92d2c23b7410fd187eeeb2c1de4a0d"
+              c: 16384
+              prf: hmac-sha256
+            mac: "de651c04fc67fd552002b4235fa23ab2178d3a500caa7070b554168e73359610"
+        - test
+      expected_output: "0x08aa30739030f362a8dd597fd3fcde283e36f4a1"
+
+  in3_addMnemonic:
+    - input:
+        - "time mouse jealous change lyrics carpet wise tuition merit second believe benefit obtain until purchase egg tissue myself toilet window across coffee peace awful"
+        - test
+      expected_output:
+        - "0xec2a590f3052b25a7de5955d41ba85347b35af08"

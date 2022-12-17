@@ -57,8 +57,8 @@
 #define IN3_VERSION "local"
 #endif
 
-#define __HELPER_MAX_RESULT_SIZE 512000
-#define __HELPER_MAX_ARG_SIZE    127
+#define __HELPER_MAX_RESULT_SIZE 5120000
+#define __HELPER_MAX_ARG_SIZE    1280000 // we may pass big strings here and test them if they are ens entries!
 
 void die(char* msg) {
   recorder_print(1, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
@@ -209,7 +209,7 @@ char* get_wei(char* val) {
 }
 
 char* resolve(in3_t* c, char* name) {
-  if (!name) return NULL;
+  if (!name || (name[0] == '0' && name[1] == 'x')) return name;
   if (strnlen(name, __HELPER_MAX_ARG_SIZE) == __HELPER_MAX_ARG_SIZE) return NULL; // argument is too big
   if (name[0] == '0' && name[1] == 'x') return name;
   if (strstr(name, ".eth")) {
