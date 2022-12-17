@@ -19,6 +19,7 @@ variables:
 
 sonarqube:
   image: docker.slock.it/build-images/cmake:sonar
+  allow_failure: true
   needs:
     - coverage
   stage: analysis
