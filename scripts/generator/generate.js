@@ -78,7 +78,7 @@ process.argv.slice(2).forEach(a => {
     }
     else throw new Error('Invalid argument : ' + a)
 })
-if (!src_dirs.length) src_dirs.push('../c/src')
+if (!src_dirs.length) src_dirs.push('../src')
 let examples = {};
 (doc_dir || []).forEach(p => {
     try {
@@ -92,7 +92,7 @@ let examples = {};
 })
 
 //const doc_dir = process.argv[process.argv.length - 1]
-const main_conf = yaml.parse(fs.readFileSync(in3_core_dir + '/c/src/cmd/in3/in3.yml', 'utf-8'))
+const main_conf = yaml.parse(fs.readFileSync(in3_core_dir + '/src/cmd/in3/in3.yml', 'utf-8'))
 const rpc_doc = []
 const config_doc = []
 const main_help = []
@@ -160,7 +160,7 @@ function create_modules() {
         if (exclude.indexOf(api) >= 0) return
         const mod = cmake.modules[api]
         const [dir] = mod.dir || ['']
-        const in3_pos = (dir && dir.indexOf('/in3/c/src')) || -1
+        const in3_pos = (dir && dir.indexOf('/in3/src')) || -1
         const g = getGroup(in3_pos >= 0 ? dir.substring(in3_pos + 11).split('/')[0] : 'sdk')
 
         // get rpc_yml
@@ -526,7 +526,7 @@ async function main() {
     if (args_file.length)
         fs.writeFileSync(args_file[0], '// This is a generated file, please don\'t edit it manually!\n\n#include <stdlib.h>\n\nconst char* bool_props[] = {' + bool_props.map(_ => '"' + _ + '", ').join('') + 'NULL};\n\nconst char* help_args = "\\\n' + main_help.map(_ => _ + '\\n').join('\\\n') + '";\n\nconst char* aliases[] = {\n' + main_aliases.join('\n') + '\n    NULL};\n', { encoding: 'utf8' })
 
-    create_abi_sigs(in3_core_dir + '/c/src/api/eth1/abi_sigs.h')
+    create_abi_sigs(in3_core_dir + '/src/api/eth1/abi_sigs.h')
 
 }
 main().then(_ => { console.log('done'); process.exit(0) }, console.error)

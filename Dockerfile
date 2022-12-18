@@ -34,7 +34,7 @@
 
 FROM debian as build
 COPY CMakeLists.txt /in3/
-COPY c /in3/c/
+COPY c /in3/
 COPY scripts /in3/scripts/
 WORKDIR /in3/
 USER root

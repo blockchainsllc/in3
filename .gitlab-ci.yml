@@ -33,9 +33,9 @@ stages:
 # all the CI files to include and run, they are imported before the CI is started
 include:
   - local: "/.gitlab/code-quality.gitlab-ci.yml"
-  - local: "/c/ci.yml"
-  - local: "/c/ci-analyse.yml"
-  - local: "/c/ci-deploy.yml"
+  - local: "/.gitlab/ci.yml"
+  - local: "/.gitlab/ci-analyse.yml"
+  - local: "/.gitlab/ci-deploy.yml"
   - project: build-images/synopsys-detect
     ref: main
     file: "/templates/.gitlab-ci-blackduck.yml"

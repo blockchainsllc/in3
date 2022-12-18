@@ -99,12 +99,12 @@ elif [ "$CONTAINER" = "cortexm3" ]; then
   CONTAINER=docker.io/zephyrprojectrtos/zephyr-build:v0.12
   echo $CONTAINER > build/container.txt
   docker run  --rm -v $RD:$RD  $CONTAINER \
-    /bin/bash -c "cd $RD;west init -m https://github.com/zephyrproject-rtos/zephyr --mr v2.0.0;export ZEPHYR_BASE=/builds/in3/c/in3-core;source /builds/in3/c/in3-core/zephyr/zephyr-env.sh;west build -b qemu_cortex_m3 c/test/qemu/zephyr-arm3"
+    /bin/bash -c "cd $RD;west init -m https://github.com/zephyrproject-rtos/zephyr --mr v2.0.0;export ZEPHYR_BASE=/builds/in3/in3-core;source /builds/in3/in3-core/zephyr/zephyr-env.sh;west build -b qemu_cortex_m3 test/qemu/zephyr-arm3"
 elif [ "$CONTAINER" = "esp" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:esp
   echo $CONTAINER > build/container.txt
   docker run  --rm -v $RD:$RD  $CONTAINER \
-    /bin/bash -c "cd $RD;cp -avi scripts/qemu_xtensa.sh /opt/qemu;cd c/test/qemu/esp32;idf.py build;./make-flash-img.sh in3-espidf flash_image.bin"
+    /bin/bash -c "cd $RD;cp -avi scripts/qemu_xtensa.sh /opt/qemu;cd test/qemu/esp32;idf.py build;./make-flash-img.sh in3-espidf flash_image.bin"
 elif [ "$CONTAINER" = "android" ]; then
   CONTAINER=cangol/android-gradle
   echo $CONTAINER > build/container.txt

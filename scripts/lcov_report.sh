@@ -6,5 +6,5 @@ for f in test/test*
 do
  echo "-object=$PWD/$f"
 done
-echo "-ignore-filename-regex='c/test/*'"
+echo "-ignore-filename-regex='test/*'"
 echo "-ignore-filename-regex='src/third-party/*'"

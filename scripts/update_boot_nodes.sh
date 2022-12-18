@@ -1,2 +1,2 @@
 #!/bin/sh
-./macro2bin.sh ../c/src/nodeselect/full/nodeselect_def_cfg_template.h > ../c/src/nodeselect/full/nodeselect_def_cfg.h
+./macro2bin.sh ../src/nodeselect/full/nodeselect_def_cfg_template.h > ../src/nodeselect/full/nodeselect_def_cfg.h

@@ -1,0 +1,299 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
+variables:
+  SAST_DISABLE_DIND: "true"
+  #  SAST_EXCLUDED_ANALYZERS: gosec,nodejs-scan,brakeman
+  SAST_EXCLUDED_ANALYZERS: spotbugs,gosec,nodejs-scan,brakeman,eslint,semgrep
+  SAST_EXCLUDED_PATHS: spec, test, tests, tmp, examples, third-party, dotnet, java, python, rust, wasm, scripts, include, example, docs
+  SAST_BANDIT_EXCLUDED_PATHS: "*/tests/*, */venv/*, */*"
+  SAST_FLAWFINDER_LEVEL: 3
+
+.only_full:
+  rules:
+    - changes:
+        - **/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
+    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
+
+sonarqube:
+  image: docker.slock.it/build-images/cmake:sonar
+  allow_failure: true
+  needs:
+    - coverage
+  stage: analysis
+  script:
+    - echo "sonar.cfamily.llvm-cov.reportPath=cov_build/coverage.txt" >> sonar-project.properties
+    - mkdir .sonar
+    - mkdir build; cd build;  cmake -DIN3API=true -DIN3_LIB=false -DUSE_CURL=false -DTEST=true -DZKSYNC=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
+    - /sonar/build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir ../.sonar/bw-output make
+    - cd ..
+    - /sonar/sonar-scanner-4.6.2.2472-linux/bin/sonar-scanner -Dsonar.cfamily.build-wrapper-output=.sonar/bw-output
+  after_script:
+    - export PROJECT=$(grep projectKey sonar-project.properties |  cut -d "=" -f 2)
+    - 'curl -v -u $SONAR_TOKEN:  "$SONAR_HOST_URL/api/issues/search?componentKeys=$PROJECT&branch=${CI_COMMIT_REF_NAME}&statuses=${STATUSES}&severities=${SEVERITIES}&types=${TYPES}" | node /sonar/sonar.js > sonar_sast.json'
+  artifacts:
+    reports:
+      sast: sonar_sast.json
+  variables:
+    STATUSES: OPEN,CONFIRMED,REOPENED
+    SEVERITIES: BLOCKER,CRITICAL
+    TYPES: BUG,VULNERABILITY
+
+coverage:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:clang16
+  coverage: '/TOTAL.*\s+(\d+.\d+\%)\s*$/'
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - mkdir cov_build; cd cov_build
+    - cmake -DIN3API=true -DIN3_LIB=false -DUSE_CURL=false -DTEST=true -DZKSYNC=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
+    - make -j8 &&  make CTEST_OUTPUT_ON_FAILURE=1 test
+    - ../scripts/lcov_report.sh | xargs llvm-cov-16 report
+    - ../scripts/lcov_report.sh | xargs llvm-cov-16 show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
+    - ../scripts/lcov_report.sh | xargs llvm-cov-16 show  > coverage.txt
+    - ../scripts/lcov_report.sh | xargs llvm-cov-16 export  -format=lcov  > ccov/all-merged/lcov.info
+    - lcov_cobertura ccov/all-merged/lcov.info -b $(dirname "$PWD") -o coverage.xml
+    - node -p "const fs=require('fs');fs.writeFileSync('coverage.xml',fs.readFileSync('coverage.xml','utf8').split('../../../../../../../../builds/in3/in3-core/').join(''),'utf8')"
+  artifacts:
+    paths:
+      - cov_build/all.profdata
+      - cov_build/ccov/all-merged
+      - cov_build/coverage.xml
+      - cov_build/coverage.txt
+#    reports:
+#      cobertura: cov_build/coverage.xml
+
+clangcheck:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:clang16
+  needs: []
+  extends: .only_full
+  allow_failure: false
+  tags:
+    - long-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - scan-build-16 $OPTS cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true -DZKSYNC=false ..
+    - scan-build-16 $OPTS --status-bugs --exclude ../src/third-party --force-analyze-debug-code -o ../report make 2> err.log || cat err.log
+    - node ../scripts/create_sast.js .. scan-build <err.log >sast.json || echo "found issues"
+
+  artifacts:
+    paths:
+      - report
+      - _build/sast.json
+    reports:
+      sast: _build/sast.json
+  variables:
+    OPTS: -enable-checker alpha.core.SizeofPtr  -enable-checker alpha.core.TestAfterDivZero   -enable-checker alpha.security.ArrayBoundV2 -enable-checker alpha.security.MallocOverflow  -enable-checker alpha.security.ReturnPtrRange  -enable-checker optin.performance.Padding
+
+cppcheck:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:gcc11
+  extends: .only_full
+  allow_failure: true
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release ..
+    - sed -i 's/\\\\\\/\\/g' compile_commands.json
+    - cd ..
+    - cppcheck --quiet --project=_build/compile_commands.json -i/usr/include -i/builds/in3/in3-core/test -i/builds/in3/in3-core/src/third-party
+
+gcc11check:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:gcc11
+  extends: .only_full
+  allow_failure: true
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DGCC_ANALYZER=true -DIN3_SERVER=true ..
+    - make 2> err.log || cat err.log
+    - node ../scripts/create_sast.js .. gcc11 <err.log >sast.json || echo "reported issues"
+  artifacts:
+    reports:
+      sast: _build/sast.json
+
+valgrind:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:clang16
+  extends: .only_full
+  #  allow_failure: true
+  needs: []
+  tags:
+    - long-jobs
+  variables:
+    VALGRIND_OPTS: "-v -q --num-callers=50  --main-stacksize=4000 --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
+    - for f in test/test*; do valgrind $VALGRIND_OPTS $(pwd)/$f 2>> err.log || cat err.log; done
+    - for f in ../test/testdata/requests/*.json; do valgrind $VALGRIND_OPTS test/runner $(pwd)/$f 2>> err.log || cat err.log; done
+    - for f in ../test/testdata/requests/generated/*.json; do valgrind $VALGRIND_OPTS test/runner $(pwd)/$f 2>> err.log || cat err.log; done
+    - node ../scripts/create_sast.js .. valgrind <err.log >sast.json
+  artifacts:
+    reports:
+      sast: _build/sast.json
+
+code_quality:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
+  stage: analysis
+  needs: []
+  tags:
+    - short-jobs
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    expire_in: 1 week
+  variables:
+    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
+    REPORT_STDOUT: STDOUT
+
+format:
+  stage: analysis
+  needs: []
+  image: docker.slock.it/build-images/cmake:clang16
+  tags:
+    - short-jobs
+  script:
+    - find src/core/ src/cmd/ src/api/ src/verifier/ src/transport/ \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-16 -i
+    - git diff --patch --exit-code
+
+#cpd:
+#  allow_failure: true
+#  stage: analysis
+#  needs: []
+#  image: rawdee/pmd:6.40.0
+#  tags:
+#    - short-jobs
+#  script:
+#    - cpd -help || cpd --help
+#    - cpd -minimum-tokens 180 --language cpp --exclude src/third-party --exclude src/signer/zk_wallet/iamo_deploy.h  --files src
+#    - cpd -minimum-tokens 150 --language java --files java/src
+#    - cpd -minimum-tokens 150 --language python --files python
+
+vulnerabilities:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
+  stage: analysis
+  extends: .only_full
+  allow_failure: true
+  needs:
+    - docker
+  tags:
+    - short-jobs
+  image: docker.slock.it/build-images/vulnerability-testing-tools
+  script:
+    - export COMMIT_IMAGE_TAG="$CI_REGISTRY_IMAGE:${CI_COMMIT_REF_NAME/\//_}"
+    - echo $COMMIT_IMAGE_TAG
+    - export TRIVY_AUTH_URL=$CI_REGISTRY
+    - export TRIVY_USERNAME=gitlab-ci-token
+    - export TRIVY_PASSWORD=$CI_JOB_TOKEN
+    - trivy -f json -o vulnerability_analysis.json --exit-code 1 $COMMIT_IMAGE_TAG || echo "failed! See details in artifacts"
+  artifacts:
+    paths:
+      - vulnerability_analysis.json
+
+metrics:
+  stage: analysis
+  image: docker.slock.it/build-images/deployment
+  tags:
+    - short-jobs
+  needs:
+    - mac_os
+    - gcc8
+  script:
+    - echo "mac_cmd_size `stat -c %s mac_build/bin/in3` " > metrics.txt
+    - echo "gcc8_size `stat -c %s x64_build/bin/in3` " >> metrics.txt
+    - echo "reported metrics"; cat metrics.txt
+  artifacts:
+    expose_as: metrics
+    paths:
+      - metrics.txt
+    reports:
+      metrics: metrics.txt
+
+semgrep-sast:
+  needs: []
+  stage: analysis
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.16"
+
+eslint-sast:
+  needs: []
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.16"
+  stage: analysis
+
+flawfinder-sast:
+  needs: []
+  stage: analysis
+security-code-scan-sast:
+  needs: []
+  stage: analysis
+
+gosec-sast:
+  needs: []
+  #  when: never
+  stage: analysis
+
+nodejs-scan-sast:
+  needs: []
+  #  when: never
+  stage: analysis
+
+spotbugs-sast:
+  needs: []
+  stage: analysis
+
+bandit-sast:
+  needs: []
+  stage: analysis
+
+brakeman-sast:
+  needs: []
+  stage: analysis
+  #  when: never
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.21.1"
+
+black duck scan branches:
+  extends:
+    - .scan
+  stage: analysis
+  variables:
+    VERSION: ${CI_COMMIT_BRANCH}
+  only:
+    - develop
+    - main
+    - master
+
+black duck scan tags:
+  extends:
+    - .scan
+  stage: analysis
+  variables:
+    VERSION: ${CI_COMMIT_TAG}
+  only:
+    - tags
