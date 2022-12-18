@@ -6,7 +6,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/arm-toolchain.cmake)
 
 project(demo)
 
-set(IN3_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
+set(IN3_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(IN3_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(IN3_LIB_DIR ${IN3_BUILD_DIR}/in3/lib)
 set(CRYPTOCELL_SOURCE_DIR ${IN3_SOURCE_DIR}/src/signer/cryptocell)
