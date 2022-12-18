@@ -438,6 +438,13 @@
                     "type": "string",
                     "description": "defines this function as the same configuration as the specified function."
                 },
+                "depends": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "a list of rpc-functions, which must be available in order to generate this function."
+                },
                 "skipGenerate": {
                     "type": "boolean",
                     "description": "this has only an effect if this is a generated function from openapi. In this case, this function will be implemented manually."

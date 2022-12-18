@@ -129,6 +129,8 @@ signers:
       response: "0x2e988a386a799f506693793c6a5af6b54dfaabfb"
 
   in3_addJsonKey:
+    depends:
+      - in3_decryptKey
     sync: true
     descr: decrypts a JSON Keystore file as defined in the [Web3 Secret Storage Definition](https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition) and adds it as signer.
     params:
