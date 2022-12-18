@@ -407,11 +407,15 @@ function check_extension(api) {
     return aconf.fields
 }
 
-async function main() {
-    for (let s of src_dirs) await scan(s)
-    // do we have extensions?
-    Object.keys(api_conf).forEach(check_extension)
+function cleanup_depends() {
+    let all = {}
+    for (const api of Object.keys(docs)) all = { ...all, ...docs[api] }
+    Object.keys(all).forEach(fn => {
+        if (all[fn].depends && all[fn].depends.find(_ => !all[_])) all.skipApi = true
+    })
+}
 
+function fix_examples() {
     // fix examples
     for (const api of Object.keys(docs)) {
         for (const fn of Object.keys(docs[api])) {
@@ -427,6 +431,21 @@ async function main() {
             }
         }
     }
+}
+
+async function main() {
+    for (let s of src_dirs) await scan(s)
+
+    // do we have extensions?
+    Object.keys(api_conf).forEach(check_extension)
+
+    // remove dependencies
+    cleanup_depends()
+
+    // cleanup depends
+    fix_examples()
+
+
 
 
     docs.config.in3_config.params.config.type = config
