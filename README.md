@@ -4,6 +4,7 @@
 [![Stars](https://img.shields.io/github/stars/slockit/in3)](https://github.com/blockchainsllc/in3/watchers)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://github.com/blockchainsllc/in3/blob/master/LICENSE.AGPL)
 
+
 The **Incubed** client is a
 
 - Crypto-Economic
