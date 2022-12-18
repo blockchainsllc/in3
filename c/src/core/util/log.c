@@ -65,7 +65,7 @@ static void remove_pk(sb_t* sb) {
   remove_pk_args(sb, "\"pk\":");
   remove_pk_args(sb, FN_IN3_ADDRAWKEY);
   remove_pk_args(sb, FN_IN3_ADDMNEMONIC);
-  remove_pk_args(sb, FN_IN3_ADDJSONKEY);
+  remove_pk_args(sb, "in3_addJsonKey");
 }
 
 static struct {
