@@ -35,7 +35,7 @@
 if(NOT SDK) 
   cmake_minimum_required(VERSION 3.5.1)
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 if (CRYPTOCELL)
     find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
@@ -43,7 +43,7 @@ endif()
 
 if(NOT SDK) 
     project(in3)
-    include("options.cmake")
+    include("cmake/options.cmake")
 endif()
 
 # build tests
@@ -52,9 +52,9 @@ if(TEST)
 endif(TEST)
 
 
-include("macro.cmake")
+include("cmake/macro.cmake")
 if (NOT CRYPTOCELL)
-    include("compiler.cmake")    
+    include("cmake/compiler.cmake")    
 endif()
 
 #  build modules
