@@ -1,5 +1,5 @@
 #!/bin/bash
-cd ../c
+cd ..
 rm -rf include
 mkdir -p include/in3
 find src -type d >include/in3/.dirs
@@ -31,7 +31,7 @@ done <include/in3/.dirs
 rm include/in3/.dirs
 
 # create rust binding header
-cat <<EOF >../include/in3.rs.h
+cat <<EOF >include/in3.rs.h
 // AUTO-GENERATED FILE
 // See scripts/build_includeh.sh
 #include "../src/core/client/request_internal.h"
@@ -50,7 +50,7 @@ cat <<EOF >../include/in3.rs.h
 EOF
 
 # create swift binding header
-cat <<EOF >../include/in3.swift.h
+cat <<EOF >include/in3.swift.h
 // AUTO-GENERATED FILE
 // See scripts/build_includeh.sh
 #include "../src/core/client/request_internal.h"
