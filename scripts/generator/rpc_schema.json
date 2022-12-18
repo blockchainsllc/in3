@@ -438,7 +438,7 @@
                     "type": "string",
                     "description": "defines this function as the same configuration as the specified function."
                 },
-                "depends": {
+                "depends_fn": {
                     "type": "array",
                     "items": {
                         "type": "string"

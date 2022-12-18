@@ -669,7 +669,7 @@ exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types
         let path = ''
         let s = dir.split('/')
         if (s.indexOf('in3') >= 0 && dir.indexOf("in3/src") > 0)
-            path = s.slice(s.lastIndexOf('in3') + 3).map(_ => '../').join('') + 'core/client/request_internal.h'
+            path = s.slice(s.lastIndexOf('in3') + 2).map(_ => '../').join('') + 'core/client/request_internal.h'
         else
             path = '../../in3/src/core/client/request_internal.h'
         const mod = '__RPC_' + dirs[dir][0].api.toUpperCase() + '_H'
