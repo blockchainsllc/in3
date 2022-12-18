@@ -16,7 +16,7 @@ include_directories(${IN3_SOURCE_DIR}/include/in3)
 include_directories(${IN3_SOURCE_DIR}/include)
 include_directories(${IN3_SOURCE_DIR}/src/signer/cryptocell)
 
-add_subdirectory(../../../.. in3)
+add_subdirectory(../../.. in3)
 
 set_property(TARGET cryptocell PROPERTY IMPORTED_LOCATION ${IN3_BUILD_DIR}/libcryptocell.a)
 set_property(TARGET core PROPERTY IMPORTED_LOCATION ${IN3_BUILD_DIR}/libcore.a)

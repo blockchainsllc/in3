@@ -4,15 +4,15 @@
 if [ ! -d /usr/local/include/in3 ]; then
 
   echo "Using local incubed build..."
-  if [ ! -d ../../build/lib ]; then
+  if [ ! -d ../build/lib ]; then
      # not installed yet, so let'sa build it locally
-     mkdir -p ../../build
-     cd ../../build
+     mkdir -p ..build
+     cd ../build
      cmake .. && make 
      cd ../examples
   fi
 
-  BUILDARGS="-L../../build/lib/  -I../../include/ -lin3 -lm"
+  BUILDARGS="-L../build/lib/  -I../include/ -lin3 -lm"
 
   # if you want to staticly link, uncomment the next lines
 

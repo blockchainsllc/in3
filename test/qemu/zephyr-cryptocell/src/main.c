@@ -75,10 +75,10 @@ int main(void) {
 
   // send raw rpc-request, which is then verified
   ret = in3_client_rpc(
-      in3,            //  the configured client
+      in3,             //  the configured client
       FN_IN3_SIGNDATA, // the rpc-method you want to call.
       "[\"Hello World\"]",
-      &result, // the reference to a pointer which will hold the result
+      &result,         // the reference to a pointer which will hold the result
       &error);
   // check and print the result or error
   if (ret == IN3_OK) {
