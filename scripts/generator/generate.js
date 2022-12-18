@@ -411,7 +411,8 @@ function cleanup_depends() {
     let all = {}
     for (const api of Object.keys(docs)) all = { ...all, ...docs[api] }
     Object.keys(all).forEach(fn => {
-        if (all[fn].depends_fn && all[fn].depends_fn.find(_ => !all[_])) all.skipApi = true
+        if (all[fn].depends_fn && all[fn].depends_fn.find(_ => !all[_]))
+            all[fn].skipApi = true
     })
 }
 
