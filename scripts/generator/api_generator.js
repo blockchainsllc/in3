@@ -620,6 +620,7 @@ function sort_includes(lines) {
 
 
         includes = b.length && a.length ? [...b, '', ...a] : [...b, ...a]
+        includes = includes.filter((_, i) => _ == '' || includes.indexOf(_) == i)
 
 
         lines = lines.filter(_ => !_.startsWith('#include '))
