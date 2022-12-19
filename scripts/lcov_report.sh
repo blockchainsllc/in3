@@ -7,4 +7,7 @@ do
  echo "-object=$PWD/$f"
 done
 echo "-ignore-filename-regex='test/*'"
+echo "-ignore-filename-regex='rpcs.h'"
 echo "-ignore-filename-regex='src/third-party/*'"
+echo "-ignore-filename-regex='src/transport/*'"
+echo "-ignore-filename-regex='src/tools/*'"
