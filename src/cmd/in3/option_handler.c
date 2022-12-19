@@ -71,7 +71,7 @@ static bool set_nodelist(in3_t* c, char* nodes, sb_t* sb, bool update) {
     nl->nodelist_upd8_params = NULL;
   }
   char* cpy;
-  _strncpy(cpy, nodes, __OPTION_VALUE_MAX_SIZE);
+  _stack_strncpy(cpy, nodes, __OPTION_VALUE_MAX_SIZE);
   char* s = NULL;
   sb_add_chars(sb, "{\"autoUpdateList\":false,\"nodes\":{\"needsUpdate\":false,\"nodeList\":[");
   for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
@@ -263,10 +263,11 @@ void init_env(in3_t* c, int argc, char* argv[]) {
   // is there a config-file we can load?
   char* cnf = getenv("IN3_CONF");
   if (!cnf) {
-    char* home = get_storage_dir();
-    cnf        = alloca(strlen(home) + 20);
-    strcpy(cnf, home);
-    strcpy(cnf + strlen(cnf) - 1, "_conf.json");
+    const char*  home = get_storage_dir();
+    const size_t l    = _strlen(home);
+    cnf               = alloca(l + 20);
+    memcpy(cnf, home, l);
+    memcpy(cnf + l - 1, "_conf.json", 11); // we copy the null terminator as from a constant
   }
 
   if (cnf && strcmp(cnf, "none")) {

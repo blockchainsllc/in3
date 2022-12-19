@@ -524,7 +524,7 @@ char* bytes_to_string_val(bytes_t wei, int exp, int digits) {
   char tmp[300];
   int  l = encode(ENC_DECIMAL, wei, tmp);
   if (l < 0)
-    strcpy(tmp, "<not supported>");
+    strcpy(tmp, "<not supported>"); // NOSONAR - target is big enough
   else {
     if (exp) {
       if (l <= exp) {

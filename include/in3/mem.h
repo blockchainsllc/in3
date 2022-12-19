@@ -165,11 +165,20 @@ in3_ret_t tf() {
 #define _strlen(d) strnlen(d, 0xFFFFFFFF)
 #define _strncpy(dest, src, max_len)                                                                        \
   {                                                                                                         \
-    uint32_t src_len = strnlen(src, max_len);                                                               \
-    dest             = alloca(src_len + 1);                                                                 \
+    size_t src_len = strnlen(src, max_len);                                                                 \
     if (src_len == max_len) in3_log_warn("Tried to copy a string which is too big or not null-terminated"); \
-    strncpy(dest, src, src_len);                                                                            \
+    memcpy(dest, src, src_len);                                                                             \
     dest[src_len] = '\0'; /*ensure dest string is null-terminated*/                                         \
   }
+#define _stack_strncpy(dest, src, max_len)                                                            \
+  {                                                                                                   \
+    size_t l = strnlen(src, max_len);                                                                 \
+    dest     = alloca(l + 1);                                                                         \
+    dest[l]  = '\0'; /*ensure dest string is null-terminated*/                                        \
+    memcpy(dest, src, l);                                                                             \
+    if (l == max_len) in3_log_warn("Tried to copy a string which is too big or not null-terminated"); \
+  }
+#define _stack_strcpy(dest, src) _stack_strncpy(dest, src, 0xFFFF)
+#define _strcpy(dest, src)       _stack_strncpy(dest, src, 0xFFFFFFFF)
 
 #endif /* __MEM_H__ */

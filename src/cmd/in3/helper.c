@@ -40,6 +40,7 @@
 #include "../../api/eth1/eth_api.h"
 #include "../../api/eth1/rpcs.h"
 #include "../../core/util/log.h"
+#include "../../core/util/mem.h"
 #include "../../signer/pk-signer/rpcs.h"
 #include "../../signer/pk-signer/signer.h"
 #include "../../tools/recorder/recorder.h"
@@ -103,7 +104,7 @@ void configure_opt(in3_t* c, char* name, char* value, int argc, char** argv) {
   if (handle_option(c, name, value, &sb, argc, argv)) return;
   if (!sb.data) {
     char* _name;
-    _strncpy(_name, name, __HELPER_MAX_ARG_SIZE);
+    _stack_strncpy(_name, name, __HELPER_MAX_ARG_SIZE);
     char* p = strtok(_name, ".");
     sb_add_char(&sb, '{');
     int b = 1;
@@ -147,9 +148,11 @@ bool configure_arg(in3_t* c, char** args, int* index, int argc) {
   if (arg[1] && arg[1] != '-') {
     for (int i = 0; aliases[i]; i += 2) {
       if (strcmp(aliases[i], arg + 1) == 0) {
-        name = alloca(strlen(aliases[i + 1]) + 1);
-        strcpy(name, aliases[i + 1]);
-        value = strchr(aliases[i + 1], '=');
+        size_t len = _strnlen(aliases[i + 1], __HELPER_MAX_ARG_SIZE);
+        name       = alloca(len + 1);
+        memcpy(name, aliases[i + 1], len);
+        name[len] = 0;
+        value     = strchr(aliases[i + 1], '=');
         if (value) {
           *strchr(name, '=') = 0;
           value++;
@@ -170,8 +173,10 @@ bool configure_arg(in3_t* c, char** args, int* index, int argc) {
       name[value - arg - 3] = 0;
     }
     else {
-      name = alloca(strlen(arg) - 1);
-      strcpy(name, arg + 2);
+      size_t l = _strnlen(arg, __HELPER_MAX_ARG_SIZE);
+      name     = alloca(l - 1);
+      memcpy(name, arg + 2, l - 2); // NOSONAR - this is safe, because we would only copy up to max bytes
+      name[l - 2] = 0;
     }
   }
 

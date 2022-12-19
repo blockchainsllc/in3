@@ -283,6 +283,7 @@ in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumbe
   // if this is just waiting, it is not an error!
   if (errnumber == IN3_WAITING || errnumber == IN3_OK) return errnumber;
   if (message) {
+
     sb_t sb = {0};
     if (strchr(message, '%')) {
       va_list args;

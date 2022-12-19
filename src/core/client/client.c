@@ -99,8 +99,7 @@ static in3_ret_t ctx_rpc(in3_req_t* ctx, char** result, char** error) {
   // check parse-errors
   if (ctx->error) {
     // we have an error
-    *error = _malloc(strlen(ctx->error) + 1);
-    strcpy(*error, ctx->error);
+    *error = _strdupn(ctx->error, -1);
     if (res == IN3_OK) res = IN3_EUNKNOWN;
     goto clean;
   }
