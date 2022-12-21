@@ -441,8 +441,10 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
               break;
             }
             char* tmp = _malloc(wei.len * 3 + 1);
-            if (encode(ENC_DECIMAL, wei, tmp, wei.len * 3) < 0) strcpy(tmp, "<not supported>");
-            sb_add_chars(sb, tmp);
+            if (encode(ENC_DECIMAL, wei, tmp, wei.len * 3) < 0)
+              sb_add_chars(sb, "<not supported>");
+            else
+              sb_add_chars(sb, tmp);
             _free(tmp);
             break;
           }
@@ -455,7 +457,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
             char tmp[100];
             int  len = encode(ENC_DECIMAL, wei.val, tmp, 100);
             if (len < 0)
-              strcpy(tmp, "<not supported>");
+              strcpy(tmp, "<not supported>"); // NOSONAR - 100 is big enough
             else {
               if (wei.dec >= len) {
                 memmove(tmp + (2 + wei.dec - len), tmp, len + 1);

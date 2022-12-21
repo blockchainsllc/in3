@@ -39,8 +39,7 @@
 
 #ifndef IN3_DEBUG_H
 #define IN3_DEBUG_H
-
-#include "params.h"
+#include "mem.h" //ssss #include "params.h"
 #include "stringbuilder.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -79,8 +78,8 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
   } while (0)
 
 #define EXPECT_CFG(cond, err) EXPECT(cond, { \
-  res = malloc(strlen(err) + 1);             \
-  if (res) strcpy(res, err);                 \
+  res = _malloc(_strnlen(err, 300) + 1);     \
+  if (res) strncpy(res, err, 300);           \
   goto cleanup;                              \
 })
 #define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })

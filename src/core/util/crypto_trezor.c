@@ -320,17 +320,17 @@ in3_ret_t crypto_convert(in3_curve_type_t type, in3_convert_type_t conv_type, by
 }
 
 static void bip32_add_path(HDNode node, char* path, uint8_t* pk) {
-  char* tmp = alloca(strlen(path) + 1);
-  strcpy(tmp, path);
+  char* tmp;
+  _stack_strncpy(tmp, path, 100);
   int n = tokenize(tmp, "/");
   for (char* p = tmp; n; n--, p += strlen(p) + 1) {
     if (strcmp(p, "m") == 0) continue;
     if (p[0] == '\'')
       hdnode_private_ckd_prime(&node, atoi(p + 1));
-    else if (p[strlen(p) - 1] == '\'') {
+    else if (p[strlen(p) - 1] == '\'') { // NOSONAR - checked
       char tt[50];
-      strcpy(tt, p);
-      tt[strlen(p) - 1] = 0;
+      strcpy(tt, p);                     // NOSONAR - checked
+      tt[strlen(p) - 1] = 0;             // NOSONAR - checked
       hdnode_private_ckd_prime(&node, atoi(tt));
     }
     else
