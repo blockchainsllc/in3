@@ -49,7 +49,7 @@ int btc_addr_from_pub_key_hash(ripemd160_t pub_key_hash160, btc_address_prefix_t
   dst->as_bytes.len = BTC_PK_ADDR_SIZE_BYTES;
 
   // calculate base58 address encoding
-  return encode(ENC_BASE58, dst->as_bytes, dst->encoded);
+  return encode(ENC_BASE58, dst->as_bytes, dst->encoded, 1000);
 }
 
 int btc_addr_from_pub_key(bytes_t pub_key, btc_address_prefix_t prefix, btc_address_t* dst) {

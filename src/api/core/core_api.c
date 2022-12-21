@@ -175,8 +175,9 @@ static in3_ret_t in3_bip39_decode(in3_rpc_handle_ctx_t* ctx) {
 static in3_ret_t in3_encode(in3_rpc_handle_ctx_t* ctx, in3_encoding_type_t type) {
   bytes_t data;
   TRY_PARAM_GET_REQUIRED_BYTES(data, ctx, 0, 0, 0)
-  char* c = _malloc(encode_size(type, data.len));
-  int   l = encode(type, data, c);
+  size_t dst_len = encode_size(type, data.len);
+  char*  c       = _malloc(dst_len);
+  int    l       = encode(type, data, c, dst_len);
   if (l >= 0) sb_printx(in3_rpc_handle_start(ctx), "\"%S\"", c);
   _free(c);
   return l < 0

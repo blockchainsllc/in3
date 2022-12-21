@@ -99,7 +99,7 @@ static in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, 
 
   size_t b58sz = 64;
   *b58         = _malloc(b58sz);
-  if (encode(ENC_BASE58, bytes(out, mhlen), *b58) < 0)
+  if (encode(ENC_BASE58, bytes(out, mhlen), *b58, b58sz) < 0)
     ret = IN3_EUNKNOWN;
 
 EXIT:

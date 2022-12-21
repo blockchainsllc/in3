@@ -30,10 +30,10 @@ in3_encoding_type_t d_encoding_from_string(char* enc, in3_encoding_type_t def) {
   return def;
 }
 
-int encode(in3_encoding_type_t type, bytes_t src, char* dst) {
+int encode(in3_encoding_type_t type, bytes_t src, char* dst, size_t dst_len) {
   switch (type) {
     case ENC_UTF8:
-      memcpy(dst, src.data, src.len);
+      memcpy(dst, src.data, min(src.len, dst_len));
       dst[src.len] = 0;
       return src.len;
     case ENC_HEX: return bytes_to_hex(src.data, src.len, dst);
@@ -50,7 +50,7 @@ int encode(in3_encoding_type_t type, bytes_t src, char* dst) {
 #ifdef BASE64
       char*  r = base64_encode(src.data, src.len);
       size_t s = _strnlen(r, src.len * 3);
-      strcpy(dst, r);
+      strncpy(dst, r, dst_len);
       _free(r);
       return s;
 #else

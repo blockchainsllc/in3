@@ -441,7 +441,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
               break;
             }
             char* tmp = _malloc(wei.len * 3 + 1);
-            if (encode(ENC_DECIMAL, wei, tmp) < 0) strcpy(tmp, "<not supported>");
+            if (encode(ENC_DECIMAL, wei, tmp, wei.len * 3) < 0) strcpy(tmp, "<not supported>");
             sb_add_chars(sb, tmp);
             _free(tmp);
             break;
@@ -453,7 +453,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
               break;
             }
             char tmp[100];
-            int  len = encode(ENC_DECIMAL, wei.val, tmp);
+            int  len = encode(ENC_DECIMAL, wei.val, tmp, 100);
             if (len < 0)
               strcpy(tmp, "<not supported>");
             else {
@@ -492,7 +492,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
             bytes_t b = va_arg(args, bytes_t);
             if (c[1] == '6' && c[2] == '4') {
               size_t max = check_size(sb, encode_size(ENC_BASE64, b.len));
-              int    l   = encode(ENC_BASE64, b, sb->data + sb->len);
+              int    l   = encode(ENC_BASE64, b, sb->data + sb->len, max);
               if (l > (int) max) l = (int) max;
               sb->data[sb->len + l] = 0;
               sb->len += l;
@@ -500,7 +500,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
             }
             else if (c[1] == '5' && c[2] == '8') {
               size_t max            = check_size(sb, encode_size(ENC_BASE58, b.len));
-              int    l              = encode(ENC_BASE58, b, sb->data + sb->len);
+              int    l              = encode(ENC_BASE58, b, sb->data + sb->len, max);
               l                     = l < (int) max ? l : (int) max;
               sb->data[sb->len + l] = 0;
               sb->len += l;

@@ -8,7 +8,7 @@
 
 static int to_dec(char* dst, zk_fee_t val) {
 #ifdef ZKSYNC_256
-  int l = encode(ENC_DECIMAL, bytes(val, 32), dst);
+  int l = encode(ENC_DECIMAL, bytes(val, 32), dst, 80);
   if (l < 0) sprintf(dst, "<NOT SUPPORTED>");
   return l;
 #else

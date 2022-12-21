@@ -37,6 +37,7 @@
 #include "../../verifier/eth1/nano/rpcs.h"
 #include "../util/debug.h"
 #include "../util/log.h"
+#include "../util/mem.h"
 #include "client.h"
 #include "keys.h"
 #include "plugin.h"
@@ -285,7 +286,8 @@ in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumbe
   if (message) {
 
     sb_t sb = {0};
-    if (strchr(message, '%')) {
+    if (_strnlen(message, 10000) == 10000) message = "The error-message is too big";
+    if (strchr(message, '%')) { // NOSONAR
       va_list args;
       va_start(args, line);
       sb_vprintx(&sb, message, args);
@@ -293,18 +295,18 @@ in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumbe
       message = sb.data;
     }
 
-    const size_t l   = strlen(message);
+    const size_t l   = strlen(message); // NOSONAR - all error messages are either internally created or takej from responses, which means they have been been checked before.
     char*        dst = NULL;
     if (ctx->error) {
-      dst = _malloc(l + 2 + strlen(ctx->error));
-      strcpy(dst, message);
+      dst = _malloc(l + 2 + strlen(ctx->error)); // NOSONAR error is always safe
+      strcpy(dst, message);                      // NOSONAR message has been checked
       dst[l] = ':';
-      strcpy(dst + l + 1, ctx->error);
+      strcpy(dst + l + 1, ctx->error);           // NOSONAR checked strings
       _free(ctx->error);
     }
     else {
       dst = _malloc(l + 1);
-      strcpy(dst, message);
+      strcpy(dst, message); // NOSONAR - checked
     }
     ctx->error = dst;
     _free(sb.data);

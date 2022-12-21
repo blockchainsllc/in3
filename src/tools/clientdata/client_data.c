@@ -1,5 +1,15 @@
 #include "client_data.h"
 
+/**
+ * get direct access to plugin data (if registered) based on action function
+ */
+static inline void* in3_plugin_get_data(in3_t* c, in3_plugin_act_fn fn) {
+  for (in3_plugin_t* p = c->plugins; p; p = p->next) {
+    if (p->action_fn == fn) return p->data;
+  }
+  return NULL;
+}
+
 in3_ret_t in3_plugin_client_data(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx) {
   if (action == PLGN_ACT_GET_DATA) {
     in3_get_data_ctx_t* pctx = plugin_ctx;

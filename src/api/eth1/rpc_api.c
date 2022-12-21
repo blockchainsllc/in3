@@ -522,7 +522,7 @@ static in3_ret_t in3_toWei(in3_rpc_handle_ctx_t* ctx) {
 
 char* bytes_to_string_val(bytes_t wei, int exp, int digits) {
   char tmp[300];
-  int  l = encode(ENC_DECIMAL, wei, tmp);
+  int  l = encode(ENC_DECIMAL, wei, tmp, 300);
   if (l < 0)
     strcpy(tmp, "<not supported>"); // NOSONAR - target is big enough
   else {
