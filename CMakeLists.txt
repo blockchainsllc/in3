@@ -32,20 +32,24 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-cmake_minimum_required(VERSION 3.5.1)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
+if(NOT SDK) 
+  cmake_minimum_required(VERSION 3.5.1)
+endif()
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 if (CRYPTOCELL)
     find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 endif()
 
-project(in3)
-
-include("c/options.cmake")
+if(NOT SDK) 
+    project(in3)
+    include("cmake/options.cmake")
+endif()
 
 # build tests
 if(TEST)
-    add_subdirectory(c/test)
+    add_subdirectory(test)
 endif(TEST)
 
-add_subdirectory(c)
+add_subdirectory(src)
+add_subdirectory(docs)

@@ -445,8 +445,8 @@ function generate_rpc(path, api_name, rpcs, descr, state) {
         use_main = fs.readFileSync(`${path}/${api_name}.h`, 'utf8')
         use_conf = use_main.indexOf(`${api_name}_config_t`) >= 0;
     } catch (x) { }
-    const in3_start = path.indexOf('/in3-core/c/src') > 0 ? path.indexOf('/in3-core/c/src') + '/in3-core/c/src'.length : (path.indexOf('/in3/c/src/') >= 0 ? path.lastIndexOf('/in3/c/src') + '/in3/c/src/'.length : -1)
-    const in3_root = in3_start == -1 ? '../../in3/c/src' : relative(path, path.substring(0, in3_start))
+    const in3_start = path.indexOf('/in3-core/src') > 0 ? path.indexOf('/in3-core/src') + '/in3-core/src'.length : (path.indexOf('/in3/src/') >= 0 ? path.lastIndexOf('/in3/src') + '/in3/src/'.length : -1)
+    const in3_root = in3_start == -1 ? '../../in3/src' : relative(path, path.substring(0, in3_start))
     const api_file = api_name
     const rpc_exec = []
     const type_defs = {}
@@ -620,6 +620,7 @@ function sort_includes(lines) {
 
 
         includes = b.length && a.length ? [...b, '', ...a] : [...b, ...a]
+        includes = includes.filter((_, i) => _ == '' || includes.indexOf(_) == i)
 
 
         lines = lines.filter(_ => !_.startsWith('#include '))
@@ -668,10 +669,10 @@ exports.generateAllAPIs = function ({ apis, types, conf, cmake_deps, cmake_types
     Object.keys(dirs).forEach(dir => {
         let path = ''
         let s = dir.split('/')
-        if (s.indexOf('in3') >= 0 && dir.indexOf("in3/c") > 0)
-            path = s.slice(s.lastIndexOf('in3') + 3).map(_ => '../').join('') + 'core/client/request_internal.h'
+        if (s.indexOf('in3') >= 0 && dir.indexOf("in3/src") > 0)
+            path = s.slice(s.lastIndexOf('in3') + 2).map(_ => '../').join('') + 'core/client/request_internal.h'
         else
-            path = '../../in3/c/src/core/client/request_internal.h'
+            path = '../../in3/src/core/client/request_internal.h'
         const mod = '__RPC_' + dirs[dir][0].api.toUpperCase() + '_H'
         const apis = dirs[dir]
 
@@ -753,7 +754,7 @@ function createTestCaseFunction(testname, testCase, api_name, rpc) {
     })
 
     const folders = [
-        "../c/test/testdata/requests/generated",
+        "../test/testdata/requests/generated",
         '../test/requests/generated'
     ]
     const folder = folders.find(f => fs.existsSync(f))

@@ -7,7 +7,7 @@ Check if your MR fulfills the following requirements:
 - [ ] Build was run locally
 - [ ] Gitlab CI pipeline is green
 - [ ] Lint has passed locally and any fixes were made for failures
-- [ ] Format check clang-format, (ran [format_all.sh](https://git.slock.it/in3/c/in3-core/-/blob/develop/scripts/format_all.sh))
+- [ ] Format check clang-format, (ran [format_all.sh](https://git.slock.it/in3/in3-core/-/blob/develop/scripts/format_all.sh))
 - [ ] Check for private keys or login info and remove them
 - [ ] An example has been added or an existing one has been updated/reviewed if needed (bug fixes / new features / signature changes)
 - [ ] Ran all the examples in your local machine. (ci doesn't run them)

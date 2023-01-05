@@ -1,0 +1,61 @@
+[
+  {
+    "descr": "in3_signData",
+    "request": {
+      "method": "in3_signData",
+      "params": [
+        "0x0102030405060708090a0b0c0d0e0f",
+        "0xa8b8759ec8b59d7c13ef3630e8530f47ddb47eba12f00f9024d3d48247b62852",
+        "raw"
+      ]
+    },
+    "result": {
+      "message": "0x0102030405060708090a0b0c0d0e0f",
+      "messageHash": "0x1d4f6fccf1e27711667605e29b6f15adfda262e5aedfc5db904feea2baa75e67",
+      "signature": "0xa5dea9537d27e4e20b6dfc89fa4b3bc4babe9a2375d64fb32a2eab04559e95792264ad1fb83be70c145aec69045da7986b95ee957fb9c5b6d315daa5c0c3e1521b",
+      "r": "0xa5dea9537d27e4e20b6dfc89fa4b3bc4babe9a2375d64fb32a2eab04559e9579",
+      "s": "0x2264ad1fb83be70c145aec69045da7986b95ee957fb9c5b6d315daa5c0c3e152",
+      "v": 27
+    },
+    "success": true,
+    "config": {
+      "proof": "none",
+      "pk": [
+        "0xe20eb92b34a3c5bd2ef0802a4bc443a90e73fc4a0edc4781446d7b22a44cc5d8"
+      ]
+    },
+    "response": []
+  },
+  {
+    "descr": "in3_signData_2",
+    "request": {
+      "method": "in3_signData",
+      "params": [
+        "HelloWorld",
+        "0x9307f84ece09d5904a9baf1071e1e1b6917555c9",
+        "raw"
+      ]
+    },
+    "result": {
+      "message": "0x48656c6c6f576f726c64",
+      "messageHash": "0x7c5ea36004851c764c44143b1dcb59679b11c9a68e5f41497f6cf3d480715331",
+      "signature": "0x9539b711815d5e48eed3ac6642d3286fdd498d56b173d39e3ed14f292d1feff650f7ad5329ed8c8eb6641cb23e3c317f804275a15ed78086ca364abac1139e5e1b",
+      "r": "0x9539b711815d5e48eed3ac6642d3286fdd498d56b173d39e3ed14f292d1feff6",
+      "s": "0x50f7ad5329ed8c8eb6641cb23e3c317f804275a15ed78086ca364abac1139e5e",
+      "v": 27
+    },
+    "success": true,
+    "config": {
+      "hd": [
+        {
+          "seed_phrase": "dizzy nice link honey faith expect protect nasty manage athlete need brown boost rose tongue brass flash tip leaf release horse guide lens rigid",
+          "seed_password": "test",
+          "paths": [
+            "m/44'/60'/0'/0/0"
+          ]
+        }
+      ]
+    },
+    "response": []
+  }
+]

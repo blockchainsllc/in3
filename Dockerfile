@@ -33,9 +33,12 @@
 ###############################################################################
 
 FROM debian as build
-COPY CMakeLists.txt /in3/
-COPY c /in3/c/
-COPY scripts /in3/scripts/
+COPY CMakeLists.txt /in3/CMakeLists.txt
+COPY cmake /in3/cmake
+COPY docs /in3/docs
+COPY include /in3/include
+COPY src /in3/src
+COPY scripts /in3/scripts
 WORKDIR /in3/
 USER root
 RUN apt-get clean && apt-get update && apt-get install -y libcurl4-openssl-dev curl cmake build-essential

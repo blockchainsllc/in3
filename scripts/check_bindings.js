@@ -6,11 +6,11 @@ const { execSync } = require('child_process')
 const exists = (a, name) => a.find(_ => _.name == name)
 const grep = (pattern, start) => execSync('grep -r -E ' + pattern + ' --exclude-dir third-party --exclude "debug.h" ' + start).toString().split('\n').filter(_ => _)
 const strings = (start, c) => grep(c + '[0-9a-zA-Z_]{4,}' + c, start).map(_ => ((/.*[\"']([0-9a-zA-Z_]{4,})[\"'].*/g).exec(_) || ['', ''])[1]).filter(_ => _)
-const getRPCHandlers = () => grep('TRY_RPC', '../c/src').map(line => {
+const getRPCHandlers = () => grep('TRY_RPC', '../src').map(line => {
     const r = (/(.*?\.c).*TRY_RPC\(\"([^\"]+).*/gm).exec(line)
     return { file: r[1], name: r[1].indexOf('zksync') == -1 ? r[2] : 'zksync_' + r[2], type: 'handler' }
 })
-const getRPCVerifiers = () => grep('VERIFY_RPC', '../c/src').reduce((p, line) => {
+const getRPCVerifiers = () => grep('VERIFY_RPC', '../src').reduce((p, line) => {
     let r = (/(.*?\.c).*?VERIFY_RPC\(\"([^\"]+)(.*)/gm).exec(line)
     const file = r[1]
     if (!exists(p, r[2])) p.push({ file, name: r[2], type: 'verifier' })
@@ -19,7 +19,7 @@ const getRPCVerifiers = () => grep('VERIFY_RPC', '../c/src').reduce((p, line) =>
     }
     return p
 }, [])
-const getConfigs = () => grep('CONFIG_KEY', '../c/src').reduce((p, line) => {
+const getConfigs = () => grep('CONFIG_KEY', '../src').reduce((p, line) => {
     let r = (/(.*?\.c).*?CONFIG_KEY\(\"([^\"]+)(.*)/gm).exec(line)
     const file = r[1]
     if (!exists(p, r[2])) p.push({ file, name: r[2], type: 'config' })
@@ -40,12 +40,12 @@ const bindings = {
     rust: strings('../rust/in3-rs/src', '"'),
     dotnet: strings('../dotnet/In3', '"', '*.cs'),
     swift: strings('../swift/Sources', '"'),
-    c_api: strings('../c/src/api', '"',),
-    //    test: [...strings('../c/test/testdata/requests', '"'), ...strings('../c/test/testdata/api', '"'), ...strings('../c/test/testdata/cmd', ' ')],
+    c_api: strings('../src/api', '"',),
+    //    test: [...strings('../test/testdata/requests', '"'), ...strings('../test/testdata/api', '"'), ...strings('../test/testdata/cmd', ' ')],
     test: [
-        ...strings('../c/test/testdata/requests', '"'),
-        ...strings('../c/test/testdata/api', '"'),
-        ...grep('\"^.*_.*\"', '../c/test/testdata/cmd').map(_ => ((/.* ([0-9a-zA-Z]+_[0-9a-zA-Z_]+).*/g).exec(_) || ['', ''])[1]).filter(_ => _)],
+        ...strings('../test/testdata/requests', '"'),
+        ...strings('../test/testdata/api', '"'),
+        ...grep('\"^.*_.*\"', '../test/testdata/cmd').map(_ => ((/.* ([0-9a-zA-Z]+_[0-9a-zA-Z_]+).*/g).exec(_) || ['', ''])[1]).filter(_ => _)],
     autocmpl: grep("\"'.*?:\"", '_in3.sh').map(_ => ((/'([a-zA-Z0-9_]+):/gm).exec(_) || ["", ""])[1]),
 }
 const res = Object.keys(bindings).reduce((p, c) => ({ ...p, [c]: 0 }), {})

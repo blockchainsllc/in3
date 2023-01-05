@@ -2,17 +2,17 @@
 
 # C
 
-DOC="../../c/docs/2_examples.md"
+DOC="../../docs/2_examples.md"
 README="README.md"
 
-cd ../c/examples
+cd ../examples
 
 printf "# Examples\n\n" > $DOC
 printf "# Examples\n\n" > $README
 
 for f in *.c;
   do
-    printf "### ${f%%.*}\n\nsource : [in3-c/c/examples/$f](https://github.com/blockchainsllc/in3/blob/master/c/examples/$f)\n\n" >> $DOC
+    printf "### ${f%%.*}\n\nsource : [in3-c/examples/$f](https://github.com/blockchainsllc/in3/blob/master/examples/$f)\n\n" >> $DOC
     cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC
     printf "\n\n\`\`\`c\n" >> $DOC
     cat $f >> $DOC
@@ -22,8 +22,8 @@ for f in *.c;
     cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $README
 done
 
-cat ../../c/docs/build_examples.md_ >> $DOC
-cat ../../c/docs/build_examples.md_ >> $README
+cat ../../docs/build_examples.md_ >> $DOC
+cat ../../docs/build_examples.md_ >> $README
 cd ../../scripts
 
 

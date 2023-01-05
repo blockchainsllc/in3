@@ -306,7 +306,7 @@ function chex(val) {
 }
 function impl_solidity(fn, state, includes) {
     const to_arg = _ => ', ' + ((_.components && !_.type.endsWith(']')) ? _.name + '.json' : _.name)
-    const abi_include = '#include "../../in3/c/src/api/eth1/abi.h"'
+    const abi_include = '#include "../../in3/src/api/eth1/abi.h"'
     const wallet_include = '#include "../wallet/wallet.h"'
     const l1_include = '#include "../eth_wallet/eth_wallet.h"'
     const contracts_include = '#include "contracts.h"'
