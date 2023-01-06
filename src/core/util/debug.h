@@ -79,8 +79,7 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
   } while (0)
 
 #define EXPECT_CFG(cond, err) EXPECT(cond, { \
-  res = _malloc(_strnlen(err, 300) + 1);     \
-  if (res) strncpy(res, err, 300);           \
+  res = _strdupn(err, _strnlen(err, 300));   \
   goto cleanup;                              \
 })
 #define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })
