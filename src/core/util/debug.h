@@ -39,7 +39,8 @@
 
 #ifndef IN3_DEBUG_H
 #define IN3_DEBUG_H
-#include "mem.h" //ssss #include "params.h"
+#include "mem.h"
+#include "params.h"
 #include "stringbuilder.h"
 #include <assert.h>
 #include <stdbool.h>
