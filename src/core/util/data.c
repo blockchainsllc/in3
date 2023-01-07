@@ -431,7 +431,7 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
   uint64_t value = 0;                        // the resulting value (if it is a integer)
   jp->c--;                                   // NOSONAR -> we also need to include the previous character!
 
-  for (int i = 0; i < 21; i++) {             // we are not accepting more than 20 characters, since a uint64 can hold up to 18446744073709552000 (which has 20 digits)
+  for (int i = 0;; i++) {                    // find the end ...
     if (jp->c[i] >= '0' && jp->c[i] <= '9')  // NOSONAR - as long as this is a digit
       value = value * 10 + (jp->c[i] - '0'); // NOSONAR - we handle it and add it to the value.
     else {
@@ -459,11 +459,11 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
               jp->c += i;
               return JSON_E_INVALID_CHAR;
           }
-          item->state = TOKEN_STATE_CONVERTED | TOKEN_STATE_ALLOCATED;
-          item->data  = _malloc(i + 1);
-          item->len   = T_STRING << 28 | (unsigned) i;
-          memcpy(item->data, jp->c, i);
+          item->state   = TOKEN_STATE_CONVERTED | TOKEN_STATE_ALLOCATED;
+          item->data    = _malloc(i + 1);
+          item->len     = T_STRING << 28 | (unsigned) i;
           item->data[i] = 0;
+          memcpy(item->data, jp->c, i);
           break;
         }
 
@@ -475,10 +475,9 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
         case ']':
         case ',':
         case 0:
-
-          if ((value & 0xfffffffff0000000) == 0) // is it small ennough to store it in the length ?
-            item->len |= (uint32_t) value;       // 32-bit number / no 64-bit number
-          else {
+          if (i < 21 && (value & 0xfffffffff0000000) == 0) // is it small ennough to store it in the length ?
+            item->len |= (uint32_t) value;                 // 32-bit number / no 64-bit number
+          else if (i < 21) {
             // as it is a 64-bit number we have to change the type from T_INTEGER to T_BYTES and treat it accordingly
             uint8_t tmp[8];
             long_to_bytes(value, tmp);
@@ -488,6 +487,14 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
             item->data  = _malloc(len);
             item->len   = T_BYTES << 28 | len;
             memcpy(item->data, p, len);
+          }
+          else {
+            // the number is longer than 21 characters and will be repreented as string
+            item->state   = TOKEN_STATE_ALLOCATED;
+            item->data    = _malloc(i + 1);
+            item->len     = T_STRING << 28 | (unsigned) i;
+            item->data[i] = 0;
+            memcpy(item->data, jp->c, i);
           }
           break;
         default:
@@ -499,6 +506,7 @@ static NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
       return 0;
     }
   }
+
   return JSON_E_NUMBER_TOO_LONG;
 }
 
@@ -515,7 +523,9 @@ static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
         item->len  = l | T_STRING << 28;
         item->data = escape ? _malloc(l + 1) : start;
         if (escape) {
-          char* x = start;
+          char* x       = start;
+          item->state   = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
+          item->data[l] = 0;
           for (size_t n = 0; n < l; n++, x++) {
             if (*x == '\\') {
               switch (x[1]) {
@@ -542,12 +552,12 @@ static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
                   item->data[n] = x[1];
               }
               x++;
+              //  "before_value\\u0000after_value" would produce a string, which would handled as "before_value" since the \u0000 would be seen as null terminator, but the null terminator is still within the allocated memory
+              //              if (item->data[n] == 0) return JSON_E_INVALID_CHAR; // we don't allow a NULL character within the string, this would be  terminating it.
             }
             else
               item->data[n] = *x;
           }
-          item->state   = TOKEN_STATE_ALLOCATED | TOKEN_STATE_CONVERTED;
-          item->data[l] = 0;
         }
         return 0;
       case '\\':

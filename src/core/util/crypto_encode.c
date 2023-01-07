@@ -50,7 +50,8 @@ int encode(in3_encoding_type_t type, bytes_t src, char* dst, size_t dst_len) {
 #ifdef BASE64
       char*  r = base64_encode(src.data, src.len);
       size_t s = _strnlen(r, src.len * 3);
-      strncpy(dst, r, dst_len);
+      if (s > dst_len) r[dst_len] = 0; // make sure the string is not bigger than dst_len
+      strcpy(dst, r);                  // NOSONAR - size is checked
       _free(r);
       return s;
 #else

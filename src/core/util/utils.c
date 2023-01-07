@@ -231,7 +231,7 @@ uint64_t char_to_long(const char* a, int l) {
   }
   else if (l < 12) {
     char temp[12];
-    strncpy(temp, a, l);
+    strncpy(temp, a, l); // NOSONAR - size is checked
     temp[l] = 0;
     return atoi(temp);
   }
@@ -241,7 +241,7 @@ uint64_t char_to_long(const char* a, int l) {
 char* _strdupn(const char* src, int len) {
   if (len < 0) len = strlen(src);
   char* dst = _malloc(len + 1);
-  strncpy(dst, src, len);
+  memcpy(dst, src, len); // NOSONAR - dst is allocated with the right amount
   dst[len] = 0;
   return dst;
 }
@@ -296,7 +296,7 @@ char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep) {
 
   char* tmp = _malloc(l - len + strlen(rep) + 1);
   if (tmp) {
-    strncpy(tmp, orig, pos);
+    strncpy(tmp, orig, pos); // NOSONAR tmp has enough memory
     tmp[pos] = '\0';
     if (rep) strcat(tmp, rep);
     strcat(tmp, orig + pos + len);

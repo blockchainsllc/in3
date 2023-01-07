@@ -233,7 +233,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
   zksync_token_t _token = {
       .id       = d_get_int(price, K_ID),
       .decimals = d_get_int(price, key("decimals"))};
-  strncpy(_token.symbol, d_get_string(price, key("token")), 6);
+  strncpy(_token.symbol, d_get_string(price, key("token")), 6); // NOSONAR - size checked
   bytes_t tmp = d_bytes(d_get(price, K_ADDRESS));
   if (tmp.len == 20)
     memcpy(_token.address, tmp.data, 20);
