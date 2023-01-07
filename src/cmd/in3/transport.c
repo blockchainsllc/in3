@@ -73,7 +73,7 @@ static in3_ret_t test_transport(void* plugin_data, in3_plugin_act_t action, void
   in3_ret_t r = action && plugin_ctx != NULL ? IN3_OK : IN3_ECONFIG;
 #endif
   if (r == IN3_OK) {
-    req->payload[strlen(req->payload) - 1] = 0;
+    req->payload[strlen(req->payload) - 1] = 0; // NOSONAR payload is a safe nullterminated string
     recorder_print(0, "[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->req->raw_response->data.data);
     recorder_exit(0);
   }

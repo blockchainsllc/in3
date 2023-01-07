@@ -265,7 +265,7 @@ static in3_ret_t in3_decodeTx(in3_rpc_handle_ctx_t* ctx) {
       sb_add_chars(&response, "]");
     }
     // for to, r,s,v and data we treat them as full bytes
-    else if ((strlen(fields[i]) < 3 || strcmp(fields[i], "data") == 0) && field_type == 1)
+    else if ((strlen(fields[i]) < 3 || strcmp(fields[i], "data") == 0) && field_type == 1) // NOSONAR fields[i] is a safe nullterminated string
       sb_printx(&response, ",\"%s\":\"%B\"", fields[i], val);
     // for other fields, we treat them as number ignoring the leading zeros
     else if (field_type == 1)

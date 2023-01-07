@@ -115,7 +115,7 @@ bool exec_weights(in3_t* c) {
         else
           snprintx(tr, 999, "#%i", b);
       }
-      else if (!strlen(node->url) || !node->props)
+      else if (!strlen(node->url) || !node->props) // NOSONAR node->url is a safe nullterminated string
         snprintx((warning = tr), 999, "No URL spcified anymore props = %i ", (int) (node->props & 0xFFFFFF));
       else if ((node->props & NODE_PROP_DATA) == 0)
         snprintx((warning = tr), 999, "The node is marked as not supporting Data-Providing");
@@ -125,7 +125,7 @@ bool exec_weights(in3_t* c) {
         snprintx((warning = tr), 999, "The node is marked as able to support http-requests");
       else
         tr = ctx->error;
-      if (strlen(tr) > 100) tr[100] = 0;
+      if (strnlen(tr, 1000) > 100) tr[100] = 0; // NOSONAR tr is a safe nullterminated string
     }
     if (blacklisted)
       recorder_print(0, COLORT_RED);

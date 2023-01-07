@@ -273,7 +273,7 @@ void in3_sign_ctx_set_signature_hex(
     in3_sign_ctx_t* ct, /**< the signer context */
     const char*     sig) {
 
-  int l = (strlen(sig) + 1) / 2;
+  int l = (strlen(sig) + 1) / 2; // NOSONAR sig is a safe nullterminated string
   if (l && sig[0] == '0' && sig[1] == 'x') l--;
   ct->signature = bytes(_malloc(l), l);
   hex_to_bytes(sig, -1, ct->signature.data, l);

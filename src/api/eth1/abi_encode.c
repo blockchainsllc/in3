@@ -67,7 +67,7 @@ static in3_ret_t encode_value(abi_coder_t* coder, d_token_t* src, bytes_builder_
         char*        val = d_string(src);
         unsigned int bl  = coder->data.number.size / 8;
 
-        if (strlen(val) > 18) return encode_error("invalid number string (too big)", error);
+        if (strlen(val) > 18) return encode_error("invalid number string (too big)", error); // NOSONAR val is a safe nullterminated string
         errno = 0;
         if (*val == '-') {
           int64_t n = strtoll(val, NULL, 10);

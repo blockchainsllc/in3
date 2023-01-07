@@ -212,7 +212,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
 
   for_children_of(it, d_get(vc->proof, K_LOG_PROOF)) {
     sprintf(xtmp, "0x%" PRIx64, d_get_long(it.token, K_NUMBER)); // NOSONAR - the target is big enough
-    if (strlen(xtmp) % 2) {
+    if (strlen(xtmp) % 2) {                                      // NOSONAR - xtmp is a nulltermined string
       memmove(xtmp + 3, xtmp + 2, strlen(xtmp) - 1);             // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       xtmp[2] = '0';
     }

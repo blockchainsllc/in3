@@ -179,7 +179,7 @@ char* eth_set_pk_signer_from_string(in3_t* in3, char* key, char* path, char* pas
   }
   else {
     if (key[0] == '0' && key[1] == 'x') key += 2;
-    if (strlen(key) != 64) return "invalid keylength";
+    if (strlen(key) != 64) return "invalid keylength"; // NOSONAR -key is a nullterminet string
     hex_to_bytes(key, 64, key_bytes, 32);
   }
 
