@@ -169,7 +169,7 @@ bool configure_arg(in3_t* c, char** args, int* index, int argc) {
     if (value) {
       value++;
       name = alloca(value - arg - 2);
-      strncpy(name, arg + 2, value - arg - 3);
+      strncpy(name, arg + 2, value - arg - 3); // NOSONAR  name is big enough for value -arg -3
       name[value - arg - 3] = 0;
     }
     else {
@@ -374,16 +374,7 @@ void display_result(char* method, char* _result) {
   if (!_result) die("Received result was null");
 
   char* result;
-  if (strnlen(_result, __HELPER_MAX_RESULT_SIZE) < __HELPER_MAX_RESULT_SIZE) {
-    result = _result;
-  }
-  else {
-    // result is too big. Truncate
-    in3_log_warn("received result is too big and was truncated");
-    result = alloca(__HELPER_MAX_RESULT_SIZE);
-    strncpy(result, _result, __HELPER_MAX_RESULT_SIZE);
-    result[__HELPER_MAX_RESULT_SIZE - 1] = '\0'; // ensure null termination
-  }
+  _stack_strncpy(result, _result, __HELPER_MAX_RESULT_SIZE);
 
   // if the result is a string, we remove the quotes
   if ((conf & out_human) == 0 && result[0] == '"' && result[strlen(result) - 1] == '"') {

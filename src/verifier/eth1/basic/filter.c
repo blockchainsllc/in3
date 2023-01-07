@@ -138,14 +138,14 @@ char* filter_opt_set_fromBlock(char* fopt, uint64_t fromBlock, bool should_overw
   char   blockstr[40]; // buffer to hold - "fromBlock": "<21 chars for hex repr (upto UINT64_MAX)>",
   char*  tok = str_find(fopt, "\"fromBlock\"");
   if (!tok) {
-    sprintf(blockstr, "\"fromBlock\":\"0x%" PRIx64 "\"%c", fromBlock, str_find(fopt, "\"") ? ',' : '\0');
+    sprintf(blockstr, "\"fromBlock\":\"0x%" PRIx64 "\"%c", fromBlock, str_find(fopt, "\"") ? ',' : '\0'); // NOSONAR blockstr is big enough
     tok = str_find(fopt, "{");
     pos = fopt - tok + 1;
     len = 0;
     return str_replace_pos(fopt, pos, len, blockstr);
   }
   else if (should_overwrite) {
-    sprintf(blockstr, "0x%" PRIx64 "", fromBlock);
+    sprintf(blockstr, "0x%" PRIx64 "", fromBlock); // NOSONAR blockstr is big enough
     tok = str_find(str_find(tok + 1, ":") + 1, "\"");
     pos = tok - fopt + 1;
     tok = str_find(tok + 1, "\"");
@@ -154,7 +154,7 @@ char* filter_opt_set_fromBlock(char* fopt, uint64_t fromBlock, bool should_overw
   }
 
   char* tmp = _malloc(strlen(fopt) + 1);
-  strcpy(tmp, fopt);
+  strcpy(tmp, fopt); // NOSONAR tmp is big enough
   return tmp;
 }
 

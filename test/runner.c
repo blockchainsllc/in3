@@ -393,7 +393,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
     if (fuzz_prop)
       sprintf(temp, "  ...  manipulate #%s", fuzz_prop);
     else
-      strcpy(temp, descr);
+      strcpy(temp, descr); // NOSONAR blockstr is big enough for test
   }
   else
     sprintf(temp, "Request #%i", counter);

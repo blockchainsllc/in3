@@ -68,7 +68,7 @@ static abi_coder_t* create_coder(char* token, char** error) {
     }
     else {
       if (!x || !(x - start_number) || (x - start_number) > 3) return abi_error(error, "invalid fixed type, must be (u)fixed<M<x<N>", coder);
-      coder->data.number.size = strtol(strncpy(tmp, start_number, x - start_number), NULL, 10);
+      coder->data.number.size = strtol(strncpy(tmp, start_number, x - start_number), NULL, 10); // NOSONAR x- start_number can not be bigger than 4, since we checked it in the line above
       start_number            = x + 1;
       if (coder->data.number.size % 8) return abi_error(error, "invalid number length", coder);
     }

@@ -419,8 +419,8 @@ static NONULL int parse_key(json_ctx_t* jp) {
       case 0: return JSON_E_INVALID_CHAR;
       case '"':
         r = d_add_key(jp, start, jp->c - start - 1);
-        return next_char(jp) == ':' ? r : -2;
-      case '\\':
+        return next_char(jp) == ':' ? r : JSON_E_INVALID_CHAR; // we expect the next chara ter after the property name will be a ":"
+      case '\\':                                               // TODO: this would skip the next character, but it also means that quotes in names like "name\"" would not be handled correctly!
         jp->c++;
         break;
     }
@@ -566,92 +566,89 @@ static NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
     }
   }
 }
+static NONULL int parse_token(json_ctx_t* jp, int parent, uint32_t key);
 
 static NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
-  int res, p_index = jp->len;
+  int res;
+  int p_index = jp->len;
+  jp->depth++;                                                              // keep track of the depth
+  parsed_next_item(jp, T_OBJECT, key, parent)->data = (uint8_t*) jp->c - 1; // we set the data pointer to point to the start of the obejct in the string, so we can easily deserialize it
+  while (true) {                                                            // for each property ...
+    switch (next_char(jp)) {
+      case '"':                                                             // property-names must start with a quote
+        res = parse_key(jp);                                                // add the propertyname as key
+        if (res < 0) return res;                                            // and check for errors
+        break;
+      case '}': {                                                           //  end of object,
+        jp->depth--;                                                        // so we reduce the depth again
+        return 0;
+      }
+      default:
+        return JSON_E_INVALID_CHAR;      // invalid character or end
+    }
+    res = parse_token(jp, p_index, res); // parse the value
+    if (res < 0) return res;             // and check errors
+    switch (next_char(jp)) {
+      case ',': break;                   // we continue reading the next property
+      case '}': {
+        jp->depth--;                     //  end of object,
+        return 0;                        // this was the last property, so we return successfully.
+      }
+      default:
+        return JSON_E_INVALID_CHAR; // unexpected character, throw.
+    }
+  }
+}
 
+static NONULL int parse_array(json_ctx_t* jp, int parent, uint32_t key) {
+  int res;
+  int p_index = jp->len;
+  jp->depth++;
+  parsed_next_item(jp, T_ARRAY, key, parent)->data = (uint8_t*) jp->c - 1; // we point the data-pointer to the first character of the array to easily serialize it later
+  if (next_char(jp) == ']') {                                              // looks like an empty array
+    jp->depth--;                                                           // we are done
+    return 0;
+  }
+  jp->c--;                                                              // go back one character since parse_token will jump to the next
+
+  while (true) {                                                        // as long as we find more items...
+    res = parse_token(jp, p_index, jp->result[p_index].len & 0xFFFFFF); // parse the value and use the index as key
+    if (res < 0) return res;                                            // error?
+    switch (next_char(jp)) {
+      case ',': break;                                                  // we continue reading the next property
+      case ']': {                                                       // this was the last element
+        jp->depth--;
+        return 0;                                                       // so we return successfully.
+      }
+      default:
+        return JSON_E_INVALID_CHAR; // unexpected character, throw.
+    }
+  }
+}
+/** adds the next item as constant*/
+static NONULL int parse_constant(json_ctx_t* jp, const char* constant, int parent, uint32_t key, d_type_t type, uint32_t val) {
+  if (strncmp(jp->c, constant + 1, strlen(constant) - 1) == 0) {
+    parsed_next_item(jp, type, key, parent)->len |= val;
+    jp->c += strlen(constant) - 1;
+    return 0;
+  }
+  else
+    return JSON_E_INVALID_CHAR;
+}
+
+/** parse the next item*/
+static NONULL int parse_token(json_ctx_t* jp, int parent, uint32_t key) {
   if (jp->depth > DATA_DEPTH_MAX)
     return JSON_E_MAX_DEPTH;
 
   switch (next_char(jp)) {
-    case 0:
-      return JSON_E_END_OF_STRING;
-    case '{':
-      jp->depth++;
-      parsed_next_item(jp, T_OBJECT, key, parent)->data = (uint8_t*) jp->c - 1;
-      while (true) {
-        switch (next_char(jp)) {
-          case '"':
-            res = parse_key(jp);
-            if (res < 0) return res;
-            break;
-          case '}': {
-            jp->depth--;
-            return 0;
-          }
-          default:
-            return JSON_E_INVALID_CHAR;       // invalid character or end
-        }
-        res = parse_object(jp, p_index, res); // parse the value
-        if (res < 0) return res;
-        switch (next_char(jp)) {
-          case ',': break; // we continue reading the next property
-          case '}': {
-            jp->depth--;
-            return 0; // this was the last property, so we return successfully.
-          }
-          default:
-            return JSON_E_INVALID_CHAR; // unexpected character, throw.
-        }
-      }
-    case '[':
-      jp->depth++;
-      parsed_next_item(jp, T_ARRAY, key, parent)->data = (uint8_t*) jp->c - 1;
-      if (next_char(jp) == ']') {
-        jp->depth--;
-        return 0;
-      }
-      jp->c--;
-
-      while (true) {
-        res = parse_object(jp, p_index, jp->result[p_index].len & 0xFFFFFF); // parse the value
-        if (res < 0) return res;
-        switch (next_char(jp)) {
-          case ',': break; // we continue reading the next property
-          case ']': {
-            jp->depth--;
-            return 0; // this was the last element, so we return successfully.
-          }
-          default:
-            return JSON_E_INVALID_CHAR; // unexpected character, throw.
-        }
-      }
-    case '"':
-      return parse_string(jp, parsed_next_item(jp, T_STRING, key, parent));
-    case 't':
-      if (strncmp(jp->c, "rue", 3) == 0) {
-        parsed_next_item(jp, T_BOOLEAN, key, parent)->len |= 1;
-        jp->c += 3;
-        return 0;
-      }
-      else
-        return JSON_E_INVALID_CHAR;
-    case 'f':
-      if (strncmp(jp->c, "alse", 4) == 0) {
-        parsed_next_item(jp, T_BOOLEAN, key, parent);
-        jp->c += 4;
-        return 0;
-      }
-      else
-        return JSON_E_INVALID_CHAR;
-    case 'n':
-      if (strncmp(jp->c, "ull", 3) == 0) {
-        parsed_next_item(jp, T_NULL, key, parent);
-        jp->c += 3;
-        return 0;
-      }
-      else
-        return JSON_E_INVALID_CHAR;
+    case 0: return JSON_E_END_OF_STRING;                                            // NULL-terminater found. This should not happen since a valid json should end before
+    case '{': return parse_object(jp, parent, key);                                 // it is an json-object
+    case '[': return parse_array(jp, parent, key);                                  // it is an array
+    case '"': return parse_string(jp, parsed_next_item(jp, T_STRING, key, parent)); // it is an string
+    case 't': return parse_constant(jp, "true", parent, key, T_BOOLEAN, 1);         // if the value starts with 't' only "true" is allowed
+    case 'f': return parse_constant(jp, "false", parent, key, T_BOOLEAN, 0);        // if it starts with 'f', only false is allowed
+    case 'n': return parse_constant(jp, "null", parent, key, T_NULL, 0);            // if it starts with 'n', only null is allowed
     case '0':
     case '1':
     case '2':
@@ -686,7 +683,7 @@ char* parse_json_error(const char* js) {
   parser.c          = (char*) js;                                    // the pointer to the string to parse
   parser.allocated  = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
   parser.result     = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
-  const int res     = parse_object(&parser, -1, 0);                  // now parse starting without parent (-1)
+  const int res     = parse_token(&parser, -1, 0);                   // now parse starting without parent (-1)
   for (size_t i = 0; i < parser.len; i++) {
     if (parser.result[i].data != NULL && parser.result[i].state & TOKEN_STATE_ALLOCATED)
       _free(parser.result[i].data);
@@ -715,7 +712,7 @@ json_ctx_t* parse_json(const char* js) {
   parser->c          = (char*) js;                                    // the pointer to the string to parse
   parser->allocated  = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
   parser->result     = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
-  const int res      = parse_object(parser, -1, 0);                   // now parse starting without parent (-1)
+  const int res      = parse_token(parser, -1, 0);                    // now parse starting without parent (-1)
   if (res < 0) {                                                      // error parsing?
     json_free(parser);                                                // clean up
     return NULL;                                                      // and return null
@@ -730,7 +727,7 @@ json_ctx_t* parse_json_indexed(const char* js) {
   parser->allocated  = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
   parser->result     = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
   parser->keys       = _malloc(JSON_INDEXD_PAGE);
-  const int res      = parse_object(parser, -1, 0);                   // now parse starting without parent (-1)
+  const int res      = parse_token(parser, -1, 0);                    // now parse starting without parent (-1)
   if (res < 0) {                                                      // error parsing?
     json_free(parser);                                                // clean up
     return NULL;                                                      // and return null

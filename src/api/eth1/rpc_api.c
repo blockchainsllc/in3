@@ -429,7 +429,8 @@ static const char* UNITS[] = {
 
 int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
   if (!val) return IN3_EINVAL;
-  int l = strlen(val), nl = l, exp = 0, p = 0;
+  int l = strlen(val), nl = l, exp = 0, p = 0; // NOSONAR - this function assumes,  val is null terminated within the allocated memory, because this has been done for the user input
+  if (l > 10000) return IN3_EINVAL;
 
   if (l == 1 && val[0] == '0') {
     *target = 0;
@@ -456,7 +457,7 @@ int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
   }
   if (!exp && l < 20) {
     bytes_t b = bytes(target, 8);
-    long_to_bytes(atoll(nl < l ? strncpy(alloca(nl + 1), val, nl) : val), target);
+    long_to_bytes(atoll(nl < l ? strncpy(alloca(nl + 1), val, nl) : val), target); // NOSONAR - length has been checked before
     b_optimize_len(&b);
     if (b.len < 8) memmove(target, b.data, b.len);
     return (int) b.len;
@@ -496,7 +497,7 @@ int string_val_to_bytes(char* val, char* unit, bytes32_t target) {
 #else
   UNUSED_VAR(p);
   bytes_t b = bytes(target, 8);
-  long_to_bytes(parse_float_val(nl < l ? strncpy(alloca(nl + 1), val, nl) : val, exp), target);
+  long_to_bytes(parse_float_val(nl < l ? strncpy(alloca(nl + 1), val, nl) : val, exp), target); // NOSONAR - length has been checked before
   b_optimize_len(&b);
   if (b.len < 8) memmove(target, b.data, b.len);
   return (int) b.len;
