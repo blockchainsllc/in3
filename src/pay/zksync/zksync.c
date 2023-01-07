@@ -66,9 +66,9 @@ static in3_ret_t zksync_get_pubkeyhash(zksync_config_t* conf, in3_rpc_handle_ctx
   else
     TRY(zksync_get_pubkey_hash(conf, ctx->req, pubkey_hash))
   char res[48];
-  strcpy(res, "\"sync:");
+  strcpy(res, "\"sync:"); // NOSONAR - res is big enough
   bytes_to_hex(pubkey_hash, 20, res + 6);
-  strcpy(res + 46, "\"");
+  strcpy(res + 46, "\""); // NOSONAR res will hold both prefix  and the 20 bytes in hex
   return in3_rpc_handle_with_string(ctx, res);
 }
 

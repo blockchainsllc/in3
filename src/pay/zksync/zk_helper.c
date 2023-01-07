@@ -157,7 +157,7 @@ in3_ret_t zksync_get_account_id(zksync_config_t* conf, in3_req_t* ctx, uint32_t*
 
   if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE) && account) {
     cache_name = alloca(60);
-    strcpy(cache_name, "zksync_ac_");
+    strcpy(cache_name, "zksync_ac_"); // NOSONAR cache_name is big enough
     bytes_to_hex(account, 20, cache_name + 9);
     in3_cache_ctx_t cctx = {.req = ctx, .key = cache_name, .content = NULL};
     TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
@@ -368,13 +368,13 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
       conf->tokens[i].decimals = d_get_int(it.token, key("decimals"));
       char* name               = d_get_string(it.token, key("symbol"));
       if (!name) return req_set_error(ctx, "missing token name", IN3_EINVAL);
-      if (strlen(name) > 9)
+      if (strlen(name) > 9) // NOSONAR name is NULL-terminated
         strncpy(conf->tokens[i].symbol, name, 9);
       else
-        strcpy(conf->tokens[i].symbol, name);
+        strcpy(conf->tokens[i].symbol, name); // NOSONAR - name is less than 9 chars
       bytes_t adr = d_get_bytes(it.token, K_ADDRESS);
       if (!adr.data || adr.len != 20) return req_set_error(ctx, "invalid token addr", IN3_EINVAL);
-      memcpy(conf->tokens[i].address, adr.data, 20);
+      memcpy(conf->tokens[i].address, adr.data, 20); // NOSONAR - adr has been checked to have exactly 20 bytes
     }
 
     // clean up

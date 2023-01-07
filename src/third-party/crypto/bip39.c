@@ -37,9 +37,9 @@
 static int bip39_cache_index = 0;
 
 static CONFIDENTIAL struct {
-  bool set;
-  char mnemonic[256];
-  char passphrase[64];
+  bool    set;
+  char    mnemonic[256];
+  char    passphrase[64];
   uint8_t seed[512 / 8];
 } bip39_cache[BIP39_CACHE_SIZE];
 
@@ -50,20 +50,20 @@ void bip39_cache_clear(void) {
 
 #endif
 
-const char *mnemonic_generate(int strength) {
+const char* mnemonic_generate(int strength) {
   if (strength % 32 || strength < 128 || strength > 256) {
     return 0;
   }
   uint8_t data[32] = {0};
   random_buffer(data, 32);
-  const char *r = mnemonic_from_data(data, strength / 8);
+  const char* r = mnemonic_from_data(data, strength / 8);
   memzero(data, sizeof(data));
   return r;
 }
 
 static CONFIDENTIAL char mnemo[24 * 10];
 
-const char *mnemonic_from_data(const uint8_t *data, int len) {
+const char* mnemonic_from_data(const uint8_t* data, int len) {
   if (len % 4 || len < 16 || len > 32) {
     return 0;
   }
@@ -78,8 +78,8 @@ const char *mnemonic_from_data(const uint8_t *data, int len) {
 
   int mlen = len * 3 / 4;
 
-  int i = 0, j = 0, idx = 0;
-  char *p = mnemo;
+  int   i = 0, j = 0, idx = 0;
+  char* p = mnemo;
   for (i = 0; i < mlen; i++) {
     idx = 0;
     for (j = 0; j < 11; j++) {
@@ -98,7 +98,7 @@ const char *mnemonic_from_data(const uint8_t *data, int len) {
 
 void mnemonic_clear(void) { memzero(mnemo, sizeof(mnemo)); }
 
-int mnemonic_to_bits(const char *mnemonic, uint8_t *bits) {
+int mnemonic_to_bits(const char* mnemonic, uint8_t* bits) {
   if (!mnemonic) {
     return 0;
   }
@@ -121,9 +121,9 @@ int mnemonic_to_bits(const char *mnemonic, uint8_t *bits) {
     return 0;
   }
 
-  char current_word[10] = {0};
+  char     current_word[10] = {0};
   uint32_t j = 0, ki = 0, bi = 0;
-  uint8_t result[32 + 1] = {0};
+  uint8_t  result[32 + 1] = {0};
 
   memzero(result, sizeof(result));
   i = 0;
@@ -142,7 +142,7 @@ int mnemonic_to_bits(const char *mnemonic, uint8_t *bits) {
       i++;
     }
     int k = mnemonic_find_word(current_word);
-    if (k < 0) {  // word not found
+    if (k < 0) { // word not found
       return 0;
     }
     for (ki = 0; ki < 11; ki++) {
@@ -162,9 +162,9 @@ int mnemonic_to_bits(const char *mnemonic, uint8_t *bits) {
   return n * 11;
 }
 
-int mnemonic_check(const char *mnemonic) {
-  uint8_t bits[32 + 1] = {0};
-  int mnemonic_bits_len = mnemonic_to_bits(mnemonic, bits);
+int mnemonic_check(const char* mnemonic) {
+  uint8_t bits[32 + 1]      = {0};
+  int     mnemonic_bits_len = mnemonic_to_bits(mnemonic, bits);
   if (mnemonic_bits_len != (12 * 11) && mnemonic_bits_len != (18 * 11) &&
       mnemonic_bits_len != (24 * 11)) {
     return 0;
@@ -174,21 +174,23 @@ int mnemonic_check(const char *mnemonic) {
   uint8_t checksum = bits[words * 4 / 3];
   sha256_Raw(bits, words * 4 / 3, bits);
   if (words == 12) {
-    return (bits[0] & 0xF0) == (checksum & 0xF0);  // compare first 4 bits
-  } else if (words == 18) {
-    return (bits[0] & 0xFC) == (checksum & 0xFC);  // compare first 6 bits
-  } else if (words == 24) {
-    return bits[0] == checksum;  // compare 8 bits
+    return (bits[0] & 0xF0) == (checksum & 0xF0); // compare first 4 bits
+  }
+  else if (words == 18) {
+    return (bits[0] & 0xFC) == (checksum & 0xFC); // compare first 6 bits
+  }
+  else if (words == 24) {
+    return bits[0] == checksum; // compare 8 bits
   }
   return 0;
 }
 
 // passphrase must be at most 256 characters otherwise it would be truncated
-void mnemonic_to_seed(const char *mnemonic, const char *passphrase,
+void mnemonic_to_seed(const char* mnemonic, const char* passphrase,
                       uint8_t seed[512 / 8],
                       void (*progress_callback)(uint32_t current,
                                                 uint32_t total)) {
-  int mnemoniclen = strlen(mnemonic);
+  int mnemoniclen   = strlen(mnemonic);
   int passphraselen = strnlen(passphrase, 256);
 #if USE_BIP39_CACHE
   // check cache
@@ -207,7 +209,7 @@ void mnemonic_to_seed(const char *mnemonic, const char *passphrase,
   memcpy(salt, "mnemonic", 8);
   memcpy(salt + 8, passphrase, passphraselen);
   static CONFIDENTIAL PBKDF2_HMAC_SHA512_CTX pctx;
-  pbkdf2_hmac_sha512_Init(&pctx, (const uint8_t *)mnemonic, mnemoniclen, salt,
+  pbkdf2_hmac_sha512_Init(&pctx, (const uint8_t*) mnemonic, mnemoniclen, salt,
                           passphraselen + 8, 1);
   if (progress_callback) {
     progress_callback(0, BIP39_PBKDF2_ROUNDS);
@@ -234,7 +236,7 @@ void mnemonic_to_seed(const char *mnemonic, const char *passphrase,
 }
 
 // binary search for finding the word in the wordlist
-int mnemonic_find_word(const char *word) {
+int mnemonic_find_word(const char* word) {
   int lo = 0, hi = BIP39_WORD_COUNT - 1;
   while (lo <= hi) {
     int mid = lo + (hi - lo) / 2;
@@ -244,14 +246,15 @@ int mnemonic_find_word(const char *word) {
     }
     if (cmp > 0) {
       lo = mid + 1;
-    } else {
+    }
+    else {
       hi = mid - 1;
     }
   }
   return -1;
 }
 
-const char *mnemonic_complete_word(const char *prefix, int len) {
+const char* mnemonic_complete_word(const char* prefix, int len) {
   // we need to perform linear search,
   // because we want to return the first match
   for (int i = 0; i < BIP39_WORD_COUNT; i++) {
@@ -262,21 +265,22 @@ const char *mnemonic_complete_word(const char *prefix, int len) {
   return NULL;
 }
 
-const char *mnemonic_get_word(int index) {
+const char* mnemonic_get_word(int index) {
   if (index >= 0 && index < BIP39_WORD_COUNT) {
     return BIP39_WORDLIST_ENGLISH[index];
-  } else {
+  }
+  else {
     return NULL;
   }
 }
 
-uint32_t mnemonic_word_completion_mask(const char *prefix, int len) {
+uint32_t mnemonic_word_completion_mask(const char* prefix, int len) {
   if (len <= 0) {
-    return 0x3ffffff;  // all letters (bits 1-26 set)
+    return 0x3ffffff; // all letters (bits 1-26 set)
   }
   uint32_t res = 0;
   for (int i = 0; i < BIP39_WORD_COUNT; i++) {
-    const char *word = BIP39_WORDLIST_ENGLISH[i];
+    const char* word = BIP39_WORDLIST_ENGLISH[i];
     if (strncmp(word, prefix, len) == 0 && word[len] >= 'a' &&
         word[len] <= 'z') {
       res |= 1 << (word[len] - 'a');

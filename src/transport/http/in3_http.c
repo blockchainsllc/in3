@@ -76,16 +76,22 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
       continue;
     }
 
+    // check url
+    if (strlen(url) > 255) {
+      in3_ctx_add_response(req->req, n, true, "url too long", -1, 0);
+      continue;
+    }
+
     // parse url
     char* path = strchr(url + 7, '/');
     if (path)
-      strncpy(host, url + 7, path - (url + 7));
+      strncpy(host, url + 7, path - (url + 7)); // NOSONAR - size checked
     else {
       path = "/";
-      strcpy(host, url + 7);
+      strcpy(host, url + 7); // NOSONAR - size checked
     }
     int   portno = 80;
-    char* port   = strchr(host, ':');
+    char* port   = strchr(host, ':'); // NOSONAR - size checked
     if (port) {
       *port  = 0;
       portno = atoi(port + 1);

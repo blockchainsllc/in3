@@ -264,27 +264,27 @@ char* str_replace(char* orig, const char* rep, const char* with) {
 
   if (!orig || !rep)
     return NULL;
-  len_rep = strlen(rep);
+  len_rep = strlen(rep); // NOSONAR - this function expects that the string is NULL-terminated before
   if (len_rep == 0)
     return NULL;
   if (!with)
     with = "";
-  len_with = strlen(with);
+  len_with = strlen(with); // NOSONAR - this function expects that the string is NULL-terminated before
 
   ins = orig;
-  for (count = 0; (tmp = strstr(ins, rep)); ++count) {
+  for (count = 0; (tmp = strstr(ins, rep)); ++count) { // NOSONAR - this function expects that the string is NULL-terminated before
     ins = tmp + len_rep;
   }
 
-  tmp = result = _malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+  tmp = result = _malloc(strlen(orig) + (len_with - len_rep) * count + 1); // NOSONAR - this function expects that the string is NULL-terminated before
   while (count--) {
-    ins       = strstr(orig, rep);
+    ins       = strstr(orig, rep);                                         // NOSONAR - this function expects that the string is NULL-terminated before
     len_front = ins - orig;
-    tmp       = strncpy(tmp, orig, len_front) + len_front;
-    tmp       = strcpy(tmp, with) + len_with;
+    tmp       = strncpy(tmp, orig, len_front) + len_front;                 // NOSONAR - this function expects that the string is NULL-terminated before
+    tmp       = strcpy(tmp, with) + len_with;                              // NOSONAR - this function expects that the string is NULL-terminated before
     orig += len_front + len_rep;
   }
-  strcpy(tmp, orig);
+  strcpy(tmp, orig); // NOSONAR - this function expects that the string is NULL-terminated before
   return result;
 }
 
