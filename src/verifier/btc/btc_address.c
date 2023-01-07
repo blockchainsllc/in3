@@ -74,7 +74,7 @@ btc_stype_t btc_get_addr_type(const char* address, bool is_testnet) {
   if ((!is_testnet && (address[0] == 'b' && address[1] == 'c' && address[2] == '1' && address[3] == 'q')) ||
       (is_testnet && (address[0] == 't' && address[1] == 'b' && address[2] == '1' && address[3] == 'q')) ||
       (is_testnet && (address[0] == 'b' && address[1] == 'c' && address[2] == 'r' && address[3] == 't' && address[4] == '1' && address[5] == 'q'))) {
-    size_t addr_len = strlen(address);
+    size_t addr_len = strlen(address); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     if (addr_len == 42) return BTC_V0_P2WPKH;
     if (addr_len == 62) return BTC_P2WSH;
   }
@@ -87,7 +87,7 @@ int btc_decode_address(bytes_t* dst, const char* src, bool is_testnet) {
   switch (addr_type) {
     case BTC_P2PKH:
     case BTC_P2SH: {
-      int ret = decode(ENC_BASE58, src, strlen(src), dst->data);
+      int ret = decode(ENC_BASE58, src, strlen(src), dst->data); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       if (ret > 0) dst->len = ret;
       return ret;
     }

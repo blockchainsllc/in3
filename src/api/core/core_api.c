@@ -153,7 +153,7 @@ static in3_ret_t in3_bip39_create(in3_rpc_handle_ctx_t* ctx) {
   char* r = mnemonic_create(pk);
   in3_rpc_handle(ctx, "\"%s\"", r);
   memzero(hash, 32);
-  memzero(r, strlen(r));
+  memzero(r, strlen(r)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   _free(r);
   return IN3_OK;
 }
@@ -228,7 +228,7 @@ static in3_ret_t in3_crypto_convert(in3_rpc_handle_ctx_t* ctx) {
 static in3_ret_t in3_decode(in3_rpc_handle_ctx_t* ctx, in3_encoding_type_t type) {
   char* txt;
   TRY_PARAM_GET_REQUIRED_STRING(txt, ctx, 0);
-  int      len = strlen(txt);
+  int      len = strlen(txt); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   uint8_t* dst = _malloc(decode_size(type, len));
   int      l   = decode(type, txt, len, dst);
   if (l >= 0) sb_printx(in3_rpc_handle_start(ctx), "\"%B\"", bytes(dst, l));

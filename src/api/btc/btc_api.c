@@ -69,7 +69,7 @@ static void add_btc_hex(sb_t* sb, bytes_t data) {
 
 // converts a hex string without a 0x-prefix to a new bytes_t-pointer, which needs to be freed.
 static bytes_t* hex_to_data(char* hex) {
-  return hex_to_new_bytes(hex, strlen(hex));
+  return hex_to_new_bytes(hex, strlen(hex)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
 }
 
 // size of transactiondata

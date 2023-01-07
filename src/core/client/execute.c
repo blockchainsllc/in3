@@ -449,7 +449,7 @@ static in3_ret_t verify_response(in3_req_t* ctx, in3_chain_t* chain, node_match_
       // this is needed in case it will be cleared and we don't want to lose the error message
       if (ctx->error && response->data.data) {
         _free(response->data.data);
-        size_t l        = strlen(ctx->error);
+        size_t l        = strlen(ctx->error); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
         response->state = res;
         response->data  = (sb_t){.data = _strdupn(ctx->error, l), .allocted = l + 1, .len = l};
       }
@@ -566,7 +566,7 @@ NONULL in3_http_request_t* in3_create_request(in3_req_t* ctx) {
         break;
       default:
         request->payload     = d_create_json(ctx->request, tmp);
-        request->payload_len = strlen(request->payload);
+        request->payload_len = strlen(request->payload); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
         break;
     }
 

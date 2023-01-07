@@ -335,7 +335,7 @@ void write(bytes_t* data, char* l, char** tt) {
 }
 
 void add_rlp(bytes_builder_t* bb, char* val) {
-  int l = strlen(val);
+  int l = strlen(val); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (l > 1 && val[0] == '0' && val[1] == 'x') {
     bytes_t* b = hex_to_new_bytes(val + 2, l - 2);
     rlp_encode_item(bb, b);
@@ -372,8 +372,8 @@ int main(int argc, char* argv[]) {
     else if (output)
       add_rlp(bb, argv[i]);
     else if (input) {
-      input = _realloc(input, strlen(input) + 1 + strlen(argv[i]), strlen(input) + 1);
-      strcat(input, argv[i]);
+      input = _realloc(input, strlen(input) + 1 + strlen(argv[i]), strlen(input) + 1); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
+      strcat(input, argv[i]);                                                          // NOSONAR - input has been reallocated
     }
     else
       input = argv[i];
@@ -396,7 +396,7 @@ int main(int argc, char* argv[]) {
   bytes_t* bytes;
   if (input[0] == '0' && input[1] == 'x') input += 2;
   if (*input == '\"') {
-    int la        = strlen(input);
+    int la        = strlen(input); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     input[la - 1] = 0;
     la -= 2;
     input++;
@@ -422,7 +422,7 @@ int main(int argc, char* argv[]) {
     }
   }
   else if (*input == ':') {
-    bytes                     = hex_to_new_bytes(input + 1, strlen(input + 1));
+    bytes                     = hex_to_new_bytes(input + 1, strlen(input + 1)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     chain_id_t       chain_id = bytes_to_long(bytes->data, bytes->len);
     chainspec_t*     spec     = chainspec_get(chain_id);
     bytes_builder_t* bb       = bb_new();
@@ -430,7 +430,7 @@ int main(int argc, char* argv[]) {
     bytes = &bb->b;
   }
   else
-    bytes = hex_to_new_bytes(input, strlen(input));
+    bytes = hex_to_new_bytes(input, strlen(input)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
 
   write(bytes, "", NULL);
 

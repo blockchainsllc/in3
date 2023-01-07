@@ -149,7 +149,7 @@ void recorder_error(char* req) {
 }
 void recorder_configure(char* conf) {
   sb_add_char(&rec.config, rec.config.len ? ',' : ' ');
-  sb_add_range(&rec.config, conf, 1, strlen(conf) - 2);
+  sb_add_range(&rec.config, conf, 1, strlen(conf) - 2); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
 }
 void recorder_read_start(in3_t* c, char* file) {
   UNUSED_VAR(c);

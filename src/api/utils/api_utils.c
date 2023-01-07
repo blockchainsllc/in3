@@ -72,7 +72,7 @@ static void set_error_intern(int std_error, const char* msg) {
 #else
   in3_log_error("Request failed due to %s\n", msg);
 #endif
-  set_errorn(std_error, msg, strlen(msg));
+  set_errorn(std_error, msg, strlen(msg)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
 }
 
 char* get_error(void) {

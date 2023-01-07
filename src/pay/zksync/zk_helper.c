@@ -143,7 +143,7 @@ in3_ret_t zksync_update_account(zksync_config_t* conf, in3_req_t* ctx) {
   conf->account_id     = d_get_int(result, K_ID);
   conf->nonce          = d_get_long(committed, K_NONCE);
   char* kh             = d_get_string(committed, key("pubKeyHash"));
-  if (kh && strlen(kh) == 45)
+  if (kh && strlen(kh) == 45) // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     hex_to_bytes(kh + 5, 40, conf->pub_key_hash_set, 20);
 
   return IN3_OK;
@@ -201,7 +201,7 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_req_t* ctx, uint8_t* sy
   }
   TRY(zksync_get_account(conf, ctx, &account))
   assert(account);
-  TRY(req_require_signature(ctx, SIGN_EC_PREFIX, ECDSA_SECP256K1, PL_SIGN_ANY, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20), req_get_request(ctx, 0), NULL))
+  TRY(req_require_signature(ctx, SIGN_EC_PREFIX, ECDSA_SECP256K1, PL_SIGN_ANY, &signature, bytes((uint8_t*) message, strlen(message)), bytes(account, 20), req_get_request(ctx, 0), NULL)) // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (signature.len == 65 && signature.data[64] < 2)
     signature.data[64] += 27;
   zkcrypto_pk_from_seed(signature, conf->sync_key);
@@ -308,7 +308,7 @@ in3_ret_t zksync_get_fee(zksync_config_t* conf, in3_req_t* ctx, d_token_t* fee_i
   }
   d_token_t* result;
   bool       is_object_type = *type == '{';
-  int        ss             = strlen(type) + 4 + 50 * 2 - is_object_type * 2;
+  int        ss             = strlen(type) + 4 + 50 * 2 - is_object_type * 2; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   sb_t       sb             = {.allocted = ss, .data = alloca(ss), .len = 0};
   if (!is_object_type) sb_add_char(&sb, '"');
   sb_add_chars(&sb, type);

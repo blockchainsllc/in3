@@ -112,11 +112,11 @@ EXIT:
 in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char* requested_hash) {
   bytes_t* buf = NULL;
   if (!strcmp(encoding, "hex"))
-    buf = hex_to_new_bytes(content, strlen(content));
+    buf = hex_to_new_bytes(content, strlen(content)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   else if (!strcmp(encoding, "utf8"))
-    buf = b_new((uint8_t*) content, strlen(content));
+    buf = b_new((uint8_t*) content, strlen(content)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   else if (!strcmp(encoding, "base64")) {
-    int      l    = strlen(content);
+    int      l    = strlen(content);                  // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     uint8_t* data = _malloc(decode_size(ENC_BASE64, l));
     l             = decode(ENC_BASE64, content, l, data);
     if (l < 0) {

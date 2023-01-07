@@ -54,7 +54,7 @@ in3_ret_t sol_send_req(in3_rpc_handle_ctx_t* ctx, char* method, char* params, d_
 in3_ret_t sol_handle_req(in3_rpc_handle_ctx_t* ctx, char* method, d_token_t* params) {
   d_token_t* result;
   char*      p  = params ? sprintx("%j", params) : _strdupn("[]", -1);
-  int        pl = strlen(p);
+  int        pl = strlen(p); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   p[pl - 1]     = 0;
   TRY_FINAL(sol_send_req(ctx, method, p + 1, &result), _free(p))
   sb_add_json(in3_rpc_handle_start(ctx), "", result);

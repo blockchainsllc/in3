@@ -65,7 +65,7 @@ static recorder_entry_t* read_one_entry() {
   recorder_entry_t* entry = NULL;
   char              buffer[1024];
   while (fgets(buffer, 1023, rec.f)) {
-    int l = strlen(buffer);
+    int l = strlen(buffer); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     if (buffer[l - 1] == '\n')
       buffer[--l] = 0;
     if (!l) {

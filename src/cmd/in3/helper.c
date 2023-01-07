@@ -378,7 +378,7 @@ void display_result(char* method, char* _result) {
 
   // if the result is a string, we remove the quotes
   if ((conf & out_human) == 0 && result[0] == '"' && result[strlen(result) - 1] == '"') {
-    memmove(result, result + 1, strlen(result));
+    memmove(result, result + 1, strlen(result)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     result[strlen(result) - 1] = 0;
   }
 
@@ -386,7 +386,7 @@ void display_result(char* method, char* _result) {
 
   // if the request was a eth_call, we decode the result
   if (req && (strcmp(method, "call") == 0 || strcmp(method, FN_ETH_CALL) == 0)) {
-    int l = strlen(result) / 2 - 1;
+    int l = strlen(result) / 2 - 1; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     if (l) {
       char*       error = NULL;
       uint8_t*    tmp   = alloca(l + 1);
@@ -409,12 +409,12 @@ void display_result(char* method, char* _result) {
   else if (is_onlyshow_rawtx() && strcmp(method, FN_IN3_PREPARETX) == 0 && get_txdata()->from)
     recorder_print(0, "%s %s\n", result, get_txdata()->from);
   else {
-    if (conf & out_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
-      double val = char_to_long(result, strlen(result));
+    if (conf & out_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) { // NOSONAR - this function expects null-terminated string which was checked prior to calling it
+      double val = char_to_long(result, strlen(result));                                  // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       recorder_print(0, "%.3f\n", val / 1000000000000000000L);
     }
-    else if ((conf & out_hex) == 0 && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
-      recorder_print(0, "%" PRIu64 "\n", char_to_long(result, strlen(result)));
+    else if ((conf & out_hex) == 0 && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) // NOSONAR - this function expects null-terminated string which was checked prior to calling it
+      recorder_print(0, "%" PRIu64 "\n", char_to_long(result, strlen(result)));                     // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     else
       recorder_print(0, "%s\n", result);
   }

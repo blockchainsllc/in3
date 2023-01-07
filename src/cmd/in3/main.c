@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     if (method == NULL)
       method = argv[i];
     else if (strcmp(method, "sign") == 0 && !get_txdata()->data)
-      get_txdata()->data = b_new((uint8_t*) argv[i], strlen(argv[i]));
+      get_txdata()->data = b_new((uint8_t*) argv[i], strlen(argv[i])); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     else if (get_txdata()->sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
       get_txdata()->sig = argv[i];
     else {

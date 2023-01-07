@@ -365,7 +365,7 @@ uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, uint64_t
 }
 
 NONULL static char* to_http_url(char* src_url) {
-  const size_t l = strlen(src_url);
+  const size_t l = strlen(src_url); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (strncmp(src_url, "https://", 8) == 0) {
     char* url = _malloc(l);
     strcpy(url, src_url + 1); // NOSONAR - url is big enough

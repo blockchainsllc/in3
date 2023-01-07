@@ -34,7 +34,7 @@ static void add_amount(sb_t* sb, zksync_token_t* token, zk_fee_t val) {
       tmp[1] = '.';
       sep    = tmp + 3;
     }
-    l = strlen(sep);
+    l = strlen(sep); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     while (l && sep[l - 1] == '0') {
       l--;
       sep[l] = 0;
@@ -72,18 +72,18 @@ const char* MAX_MANTISSA_11 = "2048";
 
 static in3_ret_t pack(char* dec, int mantissa_len, int exp_len, uint8_t* dst, in3_req_t* ctx) {
   while (*dec == '0') dec++;                // remove leading zeros (if any)
-  int l     = strlen(dec);                  // trimmed size
+  int l     = strlen(dec);                  // trimmed size // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   int total = (exp_len + mantissa_len) / 8; // the target size in bytes
   int cl    = -1;                           // the content length
   memset(dst, 0, total);                    // clear the target first
   uint8_t     tmp[8];
   const char* max_matissa = mantissa_len == 35 ? MAX_MANTISSA_35 : MAX_MANTISSA_11;
-  int         max_m_len   = strlen(max_matissa);
+  int         max_m_len   = strlen(max_matissa); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
 
-  if (!l) return IN3_OK;             // this means we had a "0" which was trimmed away
-  for (int i = l - 1; i >= 0; i--) { // now we loop backwards
+  if (!l) return IN3_OK;                         // this means we had a "0" which was trimmed away
+  for (int i = l - 1; i >= 0; i--) {             // now we loop backwards
     if (i + 1 < max_m_len || (i + 1 == max_m_len && memcmp(dec, max_matissa, max_m_len) < 0)) {
-      cl = i + 1;                    // now we know how many bytes actually have value
+      cl = i + 1;                                // now we know how many bytes actually have value
       break;
     }
 

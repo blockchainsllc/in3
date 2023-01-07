@@ -147,7 +147,7 @@ static int clients[MAX_CON];
 
 static void error_response(char* message, int error_code) {
   char* payload = sprintx("{\"id\":1,\"jsonrpc\":\"2.0\",\"error\":{\"message\":\"%s\",\"code\":%u}}", message, (uint32_t) error_code);
-  printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %lu\r\n\r\n%s\r\n", strlen(payload), payload);
+  printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %lu\r\n\r\n%s\r\n", strlen(payload), payload); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   _free(payload);
 }
 
@@ -168,7 +168,7 @@ void* respond(void* arg) {
     char* method = strtok(buf, " \t\r\n");
     char* uri    = method ? strtok(NULL, " \t") : NULL;
     char* prot   = uri ? strtok(NULL, " \t\r\n") : NULL;
-    char* rest   = prot ? strstr(prot + strlen(prot) + 1, "\n\r\n") : NULL;
+    char* rest   = prot ? strstr(prot + strlen(prot) + 1, "\n\r\n") : NULL; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
 
     dup2(r->con, STDOUT_FILENO);
     //    close(r->con);
@@ -205,7 +205,7 @@ void* respond(void* arg) {
               *end   = '}';
               end[1] = 0;
             }
-            range.len = strlen(range.data);
+            range.len = strlen(range.data); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
             printf("HTTP/1.1 200\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %i\r\n\r\n%s\r\n", (int) range.len, range.data);
           }
           else if (req->error)

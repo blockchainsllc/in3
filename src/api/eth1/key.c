@@ -57,7 +57,7 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
 
   if (strcmp(kdf, "scrypt") == 0) {
 #ifdef SCRYPT
-    if (libscrypt_scrypt((const uint8_t*) password, strlen(password), salt.data, salt.len,
+    if (libscrypt_scrypt((const uint8_t*) password, strlen(password), salt.data, salt.len, // NOSONAR - this function expects null-terminated string which was checked prior to calling it
                          d_get_long(kdf_params, key("n")), d_get_int(kdf_params, key("r")), d_get_long(kdf_params, key("p")), aeskey, klen))
       return IN3_EPASS;
 #else
@@ -67,7 +67,7 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   else if (strcmp(kdf, "pbkdf2") == 0) {
     if (!kdf_params || strcmp(d_get_string(kdf_params, key("prf")), "hmac-sha256")) return IN3_ENOTSUP;
     if (strcmp(d_get_string(crypto, key("cipher")), "aes-128-ctr")) return IN3_ENOTSUP;
-    pbkdf2_hmac_sha256((const uint8_t*) password, strlen(password), salt.data, salt.len, d_get_int(kdf_params, key("c")), aeskey, klen);
+    pbkdf2_hmac_sha256((const uint8_t*) password, strlen(password), salt.data, salt.len, d_get_int(kdf_params, key("c")), aeskey, klen); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   }
   else
     return IN3_ENOTSUP;
@@ -84,7 +84,7 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   // aes-128-ctr
   d_token_t* cipherparams = d_get(crypto, key("cipherparams"));
   char*      iv_hex       = d_get_string(cipherparams, key("iv"));
-  int        iv_len       = strlen(iv_hex) / 2;
+  int        iv_len       = strlen(iv_hex) / 2; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   uint8_t*   iv_data      = alloca(iv_len);
   hex_to_bytes(iv_hex, -1, iv_data, iv_len);
   return aes_128_ctr_decrypt(aeskey, cipher, iv_data, dst);

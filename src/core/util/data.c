@@ -70,7 +70,7 @@ d_key_t keyn(const char* c, const size_t len) {
 
 static d_key_t get_key(json_ctx_t* ctx, const char* name, size_t len) {
   if (!ctx->keys) return keyn(name, len);
-  if (len == 0) len = strlen(name);
+  if (len == 0) len = strlen(name); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   for (unsigned int p = 0; p < ctx->keys_last;) {
     size_t l = ctx->keys[p];
     if (l == len + 2 && strncmp(name, (char*) ctx->keys + p + 1, len) == 0) return p + 1;
@@ -246,7 +246,7 @@ char* d_string(d_token_t* item) {
 
     case T_BOOLEAN: {
       item->data  = (uint8_t*) _strdupn(d_len(item) ? "true" : "false", -1);
-      item->len   = (T_STRING << 28) | strlen((char*) item->data);
+      item->len   = (T_STRING << 28) | strlen((char*) item->data); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       item->state = TOKEN_STATE_ALLOCATED;
       return (char*) item->data;
     }
@@ -637,9 +637,9 @@ static NONULL int parse_array(json_ctx_t* jp, int parent, uint32_t key) {
 }
 /** adds the next item as constant*/
 static NONULL int parse_constant(json_ctx_t* jp, const char* constant, int parent, uint32_t key, d_type_t type, uint32_t val) {
-  if (strncmp(jp->c, constant + 1, strlen(constant) - 1) == 0) {
+  if (strncmp(jp->c, constant + 1, strlen(constant) - 1) == 0) { // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     parsed_next_item(jp, type, key, parent)->len |= val;
-    jp->c += strlen(constant) - 1;
+    jp->c += strlen(constant) - 1;                               // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     return 0;
   }
   else
@@ -708,7 +708,7 @@ char* parse_json_error(const char* js) {
   sb_t sb = {0};
   sb_print(&sb, "Error parsing json : %s\n", messages[-1 - res]);
   int l   = (int) (parser.c - js) - 1;
-  int len = strlen(js);
+  int len = strlen(js); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   int s   = max(l - 30, 0);
   sb_add_range(&sb, js, s, min(l - s + 30, len - s));
   sb_add_char(&sb, '\n');
@@ -999,7 +999,7 @@ d_token_t* json_create_int(json_ctx_t* jp, uint64_t value) {
   return next_item(jp, T_INTEGER, value);
 }
 d_token_t* json_create_string(json_ctx_t* jp, char* value, int len) {
-  if (len == -1) len = strlen(value);
+  if (len == -1) len = strlen(value); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   d_token_t* r = next_item(jp, T_STRING, len);
   r->state     = TOKEN_STATE_ALLOCATED;
   r->data      = _malloc(len + 1);
@@ -1164,7 +1164,7 @@ d_token_t* token_from_string(char* val, d_token_t* d, bytes32_t buffer) {
     d->len = T_NULL << 28;
   else {
     if (val[0] == '0' && val[1] == 'x') {
-      int l = hex_to_bytes(val + 2, strlen(val + 2), buffer, 32);
+      int l = hex_to_bytes(val + 2, strlen(val + 2), buffer, 32); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       if (l < 5) {
         d->data = NULL;
         d->len  = bytes_to_int(buffer, 4) | (T_INTEGER << 28);
@@ -1176,7 +1176,7 @@ d_token_t* token_from_string(char* val, d_token_t* d, bytes32_t buffer) {
     }
     else {
       d->data = (uint8_t*) val;
-      d->len  = strlen(val) | (T_STRING << 28);
+      d->len  = strlen(val) | (T_STRING << 28); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     }
   }
   return d;

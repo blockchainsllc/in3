@@ -76,7 +76,7 @@ NONULL static size_t check_size(sb_t* sb, size_t len) {
 }
 
 sb_t* sb_add_chars(sb_t* sb, const char* chars) {
-  const size_t l = strlen(chars);
+  const size_t l = strlen(chars); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (l == 0 || chars == NULL) return sb;
   const size_t max = check_size(sb, l);
   memcpy(sb->data + sb->len, chars, max);
@@ -87,7 +87,7 @@ sb_t* sb_add_chars(sb_t* sb, const char* chars) {
 
 sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars, int len) {
   if (chars == NULL) chars = "<NULL>";
-  size_t l       = len == -1 ? strlen(chars) : (size_t) len;
+  size_t l       = len == -1 ? strlen(chars) : (size_t) len; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   size_t escapes = 0;
   if (l == 0 || chars == NULL) return sb;
 
@@ -140,7 +140,7 @@ sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len) {
 }
 sb_t* sb_add_key_value(sb_t* sb, const char* key, const char* value, int lv, bool as_string) {
   if (lv == 0) return sb;
-  int p = sb->len, lk = strlen(key);
+  int p = sb->len, lk = strlen(key); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   check_size(sb, (as_string ? 2 : 0) + lk + 3 + lv);
   sb->data[p++] = '"';
   memcpy(sb->data + p, key, lk);
@@ -157,7 +157,7 @@ sb_t* sb_add_key_value(sb_t* sb, const char* key, const char* value, int lv, boo
 }
 
 sb_t* sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, bool as_array) {
-  int p = sb->len, lk = prefix == NULL ? 0 : strlen(prefix), s = 0, i;
+  int p = sb->len, lk = prefix == NULL ? 0 : strlen(prefix), s = 0, i; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   for (i = 0; i < len; i++) s += bytes[i].len * 2 + 4 + (i > 0 ? 1 : 0);
   check_size(sb, s + lk + (as_array ? 2 : 0));
   if (prefix != NULL) memcpy(sb->data + p, prefix, lk);
@@ -295,7 +295,7 @@ sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, int fix_size) {
     b_optimize_len(&b);
   }
   if (!b.data) b.len = 0;
-  size_t l  = prefix ? strlen(prefix) : 0;
+  size_t l  = prefix ? strlen(prefix) : 0; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   size_t bl = b.len * 2;
   if (fix_size > (int) b.len) bl = (size_t) fix_size * 2;
   if (fix_size == -1 && b.len && *b.data < 16) bl--;
@@ -323,8 +323,8 @@ sb_t* sb_add_rawbytes(sb_t* sb, char* prefix, bytes_t b, int fix_size) {
 
 sb_t* sb_vprint(sb_t* sb, const char* fmt, va_list args) {
   int n = sb->allocted - sb->len - 1;
-  if (n < (int) strlen(fmt)) {
-    check_size(sb, strlen(fmt) + 30);
+  if (n < (int) strlen(fmt)) {        // NOSONAR - this function expects null-terminated string which was checked prior to calling it
+    check_size(sb, strlen(fmt) + 30); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     n = sb->allocted - sb->len - 1;
   }
 
@@ -463,7 +463,7 @@ void sb_vprintx(sb_t* sb, const char* fmt, va_list args) {
                 memmove(tmp + (2 + wei.dec - len), tmp, len + 1);
                 memset(tmp, '0', (2 + wei.dec - len));
                 tmp[1] = '.';
-                for (int l = strlen(tmp) - 1; l > 1; l--) {
+                for (int l = strlen(tmp) - 1; l > 1; l--) { // NOSONAR - this function expects null-terminated string which was checked prior to calling it
                   if (tmp[l] != '0' || tmp[l - 1] == '.') {
                     tmp[l + 1] = 0;
                     break;

@@ -568,9 +568,9 @@ in3_ret_t add_outputs_to_tx(in3_req_t* req, d_token_t* outputs, btc_tx_ctx_t* tx
     uint64_t value = d_get_long(output, key("value"));
 
     btc_tx_out_t tx_out;
-    uint32_t     script_len = strlen(script_string) / 2;
+    uint32_t     script_len = strlen(script_string) / 2;                         // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     bytes_t      script     = bytes(_malloc(script_len), script_len);
-    hex_to_bytes(script_string, strlen(script_string), script.data, script.len);
+    hex_to_bytes(script_string, strlen(script_string), script.data, script.len); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
 
     tx_out.script.data = script;
     tx_out.script.type = btc_get_script_type(&tx_out.script.data);

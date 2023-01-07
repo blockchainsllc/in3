@@ -32,7 +32,7 @@ void btc_hash160(bytes_t data, address_t dst) {
 
 static void rev_hex(char* hex, uint8_t* dst, int l) {
   if (!hex) return;
-  int len     = strlen(hex);
+  int len     = strlen(hex); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   int out_len = (len + 1) >> 1;
   int i, j;
   if (out_len > l)

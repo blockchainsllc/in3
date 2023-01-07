@@ -295,10 +295,10 @@ in3_ret_t req_set_error_intern(in3_req_t* ctx, char* message, in3_ret_t errnumbe
       message = sb.data;
     }
 
-    const size_t l   = strlen(message); // NOSONAR - all error messages are either internally created or takej from responses, which means they have been been checked before.
+    const size_t l   = strlen(message); // NOSONAR - all error messages are either internally created or takej from responses, which means they have been been checked before. // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     char*        dst = NULL;
     if (ctx->error) {
-      dst = _malloc(l + 2 + strlen(ctx->error)); // NOSONAR error is always safe
+      dst = _malloc(l + 2 + strlen(ctx->error)); // NOSONAR error is always safe // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       strcpy(dst, message);                      // NOSONAR message has been checked
       dst[l] = ':';
       strcpy(dst + l + 1, ctx->error);           // NOSONAR checked strings

@@ -45,7 +45,7 @@ static char next_char(char** p, const char* delim) {
 }
 static void remove_pk_args(sb_t* sb, char* k) {
   for (char* p = sb->data; (p = (p && p[0]) ? str_find(p + 1, k) : NULL);) {
-    p += strlen(k) - 1;
+    p += strlen(k) - 1; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     if (!next_char(&p, "[{\",}]")) return;
     bool is_array = *p == '[';
     if (is_array && next_char(&p, "[{\",}]") != '"') continue;

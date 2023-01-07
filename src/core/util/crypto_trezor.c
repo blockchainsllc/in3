@@ -323,7 +323,7 @@ static void bip32_add_path(HDNode node, char* path, uint8_t* pk) {
   char* tmp;
   _stack_strncpy(tmp, path, 100);
   int n = tokenize(tmp, "/");
-  for (char* p = tmp; n; n--, p += strlen(p) + 1) {
+  for (char* p = tmp; n; n--, p += strlen(p) + 1) { // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     if (strcmp(p, "m") == 0) continue;
     if (p[0] == '\'')
       hdnode_private_ckd_prime(&node, atoi(p + 1));
@@ -351,7 +351,7 @@ in3_ret_t bip32(bytes_t seed, in3_curve_type_t curve, const char* path, uint8_t*
     char*    p  = _strdupn(path, -1);
     int      n  = tokenize(p, ",|; \n");
     uint8_t* pp = dst;
-    for (char* s = p; n; n--, s += strlen(s) + 1, pp += 32)
+    for (char* s = p; n; n--, s += strlen(s) + 1, pp += 32) // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       bip32_add_path(node, s, pp);
     _free(p);
   }

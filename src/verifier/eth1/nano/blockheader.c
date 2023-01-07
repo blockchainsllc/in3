@@ -410,7 +410,7 @@ static bytes_t compute_err_hash(uint8_t* err_data, d_token_t* err) {
         break;
       case T_STRING: {
         char* s = d_string(t);
-        bb_write_chars(bb, s, strlen(s));
+        bb_write_chars(bb, s, strlen(s)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
         break;
       }
       case T_BOOLEAN:

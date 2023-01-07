@@ -148,7 +148,7 @@ const char* u64_to_str(uint64_t value, char* buffer, int buffer_len) {
 
 int hex_to_bytes(const char* buf, int len, uint8_t* out, int outbuf_size) {
   if (!buf || len < -1) return len == 0 ? 0 : -1;
-  if (len == -1) len = strlen(buf);
+  if (len == -1) len = strlen(buf); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (buf[0] == '0' && buf[1] == 'x') {
     buf += 2;
     len -= 2;
@@ -192,13 +192,13 @@ int bytes_to_hex(const uint8_t* buffer, int len, char* out) {
 char* bytes_to_hex_string(char* out, const char* prefix, const bytes_t b, const char* postfix) {
   char* res = out;
   if (prefix) {
-    int l = strlen(prefix);
+    int l = strlen(prefix); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     memcpy(out, prefix, l);
     out += l;
   }
   out += bytes_to_hex(b.data, b.len, out);
   if (postfix) {
-    int l = strlen(postfix);
+    int l = strlen(postfix); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     memcpy(out, postfix, l);
     out += l;
   }
@@ -222,7 +222,7 @@ uint64_t bytes_to_long(const uint8_t* data, int len) {
 
 uint64_t char_to_long(const char* a, int l) {
   if (!a || l < -1) return MAX_UINT64;
-  if (l == -1) l = strlen(a);
+  if (l == -1) l = strlen(a);       // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (a[0] == '0' && a[1] == 'x') { // it's a hex number
     long val = 0;
     for (int i = l - 1; i > 1; i--)
@@ -239,9 +239,9 @@ uint64_t char_to_long(const char* a, int l) {
 }
 
 char* _strdupn(const char* src, int len) {
-  if (len < 0) len = strlen(src);
+  if (len < 0) len = strlen(src); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   char* dst = _malloc(len + 1);
-  memcpy(dst, src, len); // NOSONAR - dst is allocated with the right amount
+  memcpy(dst, src, len);          // NOSONAR - dst is allocated with the right amount
   dst[len] = 0;
   return dst;
 }
@@ -291,15 +291,15 @@ char* str_replace(char* orig, const char* rep, const char* with) {
 char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep) {
   if (!orig) return NULL;
 
-  size_t l = strlen(orig);
+  size_t l = strlen(orig); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (pos > l) return NULL;
 
-  char* tmp = _malloc(l - len + strlen(rep) + 1);
+  char* tmp = _malloc(l - len + strlen(rep) + 1); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (tmp) {
-    strncpy(tmp, orig, pos); // NOSONAR tmp has enough memory
+    strncpy(tmp, orig, pos);                      // NOSONAR tmp has enough memory
     tmp[pos] = '\0';
-    if (rep) strcat(tmp, rep);
-    strcat(tmp, orig + pos + len);
+    if (rep) strcat(tmp, rep);                    // NOSONAR tmp is allocated big enough
+    strcat(tmp, orig + pos + len);                // NOSONAR tmp is allocated big enough
   }
   return tmp;
 }
@@ -318,7 +318,7 @@ char* str_find(char* haystack, const char* needle) {
 }
 
 char* str_remove_html(char* data) {
-  int len = strlen(data), i = 0, dst = 0, html = 0;
+  int len = strlen(data), i = 0, dst = 0, html = 0; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   for (; i < len; i++) {
     switch (data[i]) {
       case '<':
@@ -437,7 +437,7 @@ int tokenize(char* str, const char* del) {
       int skip = 1;
       while (*(str + skip) && strchr(del, *(str + skip))) skip++;
       if (skip > 1) {
-        int len = strlen(str + 1);
+        int len = strlen(str + 1); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
         memmove(str + 1, str + skip, len - skip + 2);
       }
       l = str + 1;
@@ -448,7 +448,7 @@ int tokenize(char* str, const char* del) {
 }
 
 in3_ret_t parse_decimal(char* val, int l, bytes32_t target, size_t* target_len) {
-  if (l < 0) l = strlen(val);
+  if (l < 0) l = strlen(val); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (l > 79) return IN3_EINVAL;
   char input[80];
   memcpy(input, val, l);

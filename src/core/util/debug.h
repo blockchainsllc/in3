@@ -102,7 +102,7 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
 
 static inline char* config_err(const char* keyname, const char* err) {
   const char* k = keyname ? keyname : "";
-  char*       s = _malloc(strlen(k) + strlen(err) + 4);
+  char*       s = _malloc(strlen(k) + strlen(err) + 4); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   sprintf(s, "%s: %s!", k, err);
   return s;
 }

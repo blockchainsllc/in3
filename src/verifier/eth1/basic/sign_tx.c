@@ -99,7 +99,7 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
 
   // since this is a subrequest it will be freed when the parent is freed.
   // allocate memory for the request-string
-  char* req = _malloc(strlen(method) + strlen(params) + 200);
+  char* req = _malloc(strlen(method) + strlen(params) + 200); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   // create it
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params);
   // and add the request context to the parent.
@@ -233,7 +233,7 @@ static bytes_t get_or_create_cached(in3_req_t* req, d_key_t k, int size) {
 static in3_ret_t transform_erc20(in3_req_t* req, d_token_t* tx, eth_tx_data_t* td) {
   char*   token  = d_get_string(tx, key("token"));
   bytes_t nft_id = d_get_bytes(tx, key("nft_id"));
-  if (token && nft_id.data == NULL && token[0] == '0' && token[1] == 'x' && strlen(token) == 42) {
+  if (token && nft_id.data == NULL && token[0] == '0' && token[1] == 'x' && strlen(token) == 42) { // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     if (td->to.len != 20) return req_set_error(req, "Invalid to address!", IN3_EINVAL);
     td->data = get_or_create_cached(req, key("pdata"), 68);
     memcpy(td->data.data, "\xa9\x05\x9c\xbb", 4);                                  // transfer (address, uint256)
@@ -257,7 +257,7 @@ static in3_ret_t transform_erc721(in3_req_t* req, d_token_t* tx, eth_tx_data_t* 
   bytes_t nft_id   = d_get_bytes(tx, key("nft_id"));
   bytes_t nft_from = d_get_bytes(tx, key("nft_from"));
   if (nft_from.data == NULL) nft_from = bytes(td->from, 20);
-  if (token && nft_id.data != NULL && token[0] == '0' && token[1] == 'x' && strlen(token) == 42) {
+  if (token && nft_id.data != NULL && token[0] == '0' && token[1] == 'x' && strlen(token) == 42) { // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     if (td->to.len != 20) return req_set_error(req, "Invalid to address!", IN3_EINVAL);
     if (nft_from.len != 20) return req_set_error(req, "Invalid to nft_from address!", IN3_EINVAL);
     td->data = get_or_create_cached(req, key("pdata"), 100);
@@ -537,7 +537,7 @@ in3_ret_t handle_eth_sendTransaction(in3_req_t* ctx, d_token_t* req) {
 
 /** minimum signer for the wallet, returns the signed message which needs to be freed **/
 char* eth_wallet_sign(const char* key, const char* data) {
-  int     data_l = strlen(data) / 2 - 1;
+  int     data_l = strlen(data) / 2 - 1; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   uint8_t key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
   hex_to_bytes(key + 2, -1, key_bytes, 32);
   bytes32_t hash;

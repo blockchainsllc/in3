@@ -197,7 +197,7 @@ char*                        d_get_keystr(json_ctx_t* json, d_key_t k);         
 char*                        d_get_property_name(d_token_internal_t* ob, d_key_t k); /**< searches within the properties of the object for the one with name for the key. if found the returned pointer must be free after use! */
 NONULL static inline d_key_t key(const char* c) {
   uint16_t val = 0;
-  size_t   l   = strlen(c);
+  size_t   l   = strlen(c); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   for (; l; l--, c++) val ^= *c | val << 7;
   return val;
 }

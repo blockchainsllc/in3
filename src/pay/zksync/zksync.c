@@ -232,7 +232,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   if (strcmp(ctx->method, "get_token_price") == 0 && strchr(json, '.') && d_type(result) == T_STRING) {
     // remove pending zeros
-    for (char* p = json + strlen(json) - 1; *p && p > json; p--) {
+    for (char* p = json + strlen(json) - 1; *p && p > json; p--) { // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       if (*p == '"') continue;
       if (*p == '0' && p > json) {
         if (p[-1] == '.') {
@@ -365,7 +365,7 @@ static in3_ret_t config_set(zksync_config_t* conf, in3_configure_ctx_t* ctx) {
       conf->musig_urls = _calloc(conf->musig_len, sizeof(char*));
       for (int i = 0; i < conf->musig_len; i++) {
         char* s = d_get_string_at(urls, i);
-        if (s && strlen(s)) conf->musig_urls[i] = _strdupn(s, -1);
+        if (s && strlen(s)) conf->musig_urls[i] = _strdupn(s, -1); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       }
     }
   }

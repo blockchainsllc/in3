@@ -80,11 +80,11 @@ static bool set_nodelist(in3_t* c, char* nodes, sb_t* sb, bool update) {
 
     if (*next == '0' && next[1] == 'x' && (s = strchr(next, ':'))) {
       address = (str_range_t){.data = next, .len = s - next};
-      url     = (str_range_t){.data = s + 1, .len = strlen(s + 1)};
+      url     = (str_range_t){.data = s + 1, .len = strlen(s + 1)}; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     }
     else {
       address = (str_range_t){.data = "0x1234567890123456789012345678901234567890", .len = 42};
-      url     = (str_range_t){.data = next, .len = strlen(next)};
+      url     = (str_range_t){.data = next, .len = strlen(next)}; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     }
     sb_add_chars(sb, "{\"address\":\"");
     sb_add_range(sb, address.data, 0, address.len);

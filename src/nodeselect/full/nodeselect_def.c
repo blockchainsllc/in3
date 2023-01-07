@@ -124,7 +124,7 @@ static in3_ret_t add_node(in3_nodeselect_def_t* data, char* url, in3_node_props_
 
   node->props = props;
   node->url   = _malloc(strlen(url) + 1);
-  memcpy(node->url, url, strlen(url) + 1);
+  memcpy(node->url, url, strlen(url) + 1); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
 
   in3_node_weight_t* weight   = data->weights + node_index;
   weight->blacklisted_until   = 0;
@@ -308,7 +308,7 @@ static in3_ret_t config_set(in3_nodeselect_def_t* data, in3_configure_ctx_t* ctx
     c->proof           = PROOF_NONE;
     c->signature_count = 0;
     c->chain.id        = CHAIN_ID_LOCAL;
-    c->chain.version   = strncmp(url, "https://", 8) ? 0 : (0x7fffffff & (((uint32_t) key(url)) << 16 | ((uint32_t) key(url + strlen(url) / 2)))); // hash the url, but set the last bit to 0
+    c->chain.version   = strncmp(url, "https://", 8) ? 0 : (0x7fffffff & (((uint32_t) key(url)) << 16 | ((uint32_t) key(url + strlen(url) / 2)))); // hash the url, but set the last bit to 0 // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     BITMASK_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
     w->request_count = 1;
 

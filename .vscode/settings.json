@@ -115,5 +115,9 @@
     "mocha.env": {
         "CI": true
     },
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "sonarlint.connectedMode.project": {
+        "connectionId": "https-sonarqube-bc-labs-dev",
+        "projectKey": "in3-core"
+    }
 }

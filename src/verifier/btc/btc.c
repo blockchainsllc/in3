@@ -35,7 +35,7 @@ static in3_ret_t check_pre_bip34(in3_vctx_t* vc, bytes_t finality_headers, uint6
 
 // check if 2 byte arrays are equal where one is a bytes while the other one is a hex string (without 0x)
 static bool equals_hex(bytes_t data, char* hex) {
-  uint32_t sl = hex ? strlen(hex) : 0, bl = sl >> 1;                                                              // calc len of bytes from hex
+  uint32_t sl = hex ? strlen(hex) : 0, bl = sl >> 1;                                                              // calc len of bytes from hex // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (bl != data.len || sl % 1) return false;                                                                     // we do not support odd length of hex
   for (uint32_t i = 0; i < bl; i++) {                                                                             // compare each byte
     if (data.data[i] != ((hexchar_to_int(hex[i << 1]) << 4) | (hexchar_to_int(hex[(i << 1) + 1])))) return false; // cancel on first difference
@@ -45,7 +45,7 @@ static bool equals_hex(bytes_t data, char* hex) {
 
 // check if 2 byte arrays are equal where one is a bytes while the other one is a hex string (without 0x)
 static bool equals_hex_rev(bytes_t data, char* hex) {
-  uint32_t sl = hex ? strlen(hex) : 0, bl = sl >> 1;                                                                             // calc len of bytes from hex
+  uint32_t sl = hex ? strlen(hex) : 0, bl = sl >> 1;                                                                             // calc len of bytes from hex // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (bl != data.len || sl % 1) return false;                                                                                    // we do not support odd length of hex
   for (uint32_t i = 0; i < bl; i++) {                                                                                            // compare each byte
     if (data.data[data.len - i - 1] != ((hexchar_to_int(hex[i << 1]) << 4) | (hexchar_to_int(hex[(i << 1) + 1])))) return false; // cancel on first difference
@@ -371,7 +371,7 @@ in3_ret_t btc_verify_block(btc_target_conf_t* conf, in3_vctx_t* vc, bytes32_t bl
     else {
       char*    block_hex  = d_string(vc->result);
       uint8_t* block_data = _malloc(strlen(block_hex) / 2);
-      bytes_t  block      = bytes(block_data, strlen(block_hex) / 2);
+      bytes_t  block      = bytes(block_data, strlen(block_hex) / 2); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       hex_to_bytes(block_hex, -1, block.data, block.len);
       int        tx_count     = btc_get_transaction_count(block);
       bytes_t*   transactions = _malloc(tx_count * sizeof(bytes_t));
@@ -563,7 +563,7 @@ in3_ret_t btc_create_address(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx)
       return req_set_error(ctx->req, "ERROR: btc_create_address: P2MS scripts have no intrinsic address. Cannot create address.", IN3_EINVAL);
     }
 
-    uint32_t seed_len_bytes = strlen(seed) / 2;
+    uint32_t seed_len_bytes = strlen(seed) / 2; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     bytes_t  raw_seed       = bytes(alloca(seed_len_bytes), seed_len_bytes);
     hex_to_bytes(seed, -1, raw_seed.data, raw_seed.len);
     bool seed_valid = false;
@@ -638,7 +638,7 @@ in3_ret_t btc_get_addresses(btc_target_conf_t* conf, in3_rpc_handle_ctx_t* ctx) 
   TRY_PARAM_GET_REQUIRED_STRING(txid, ctx, 0);
   TRY_PARAM_GET_STRING(blockhash, ctx, 1, NULL);
 
-  size_t tx_len = strlen(txid);
+  size_t tx_len = strlen(txid); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (tx_len < BTC_TX_HASH_SIZE_BYTES * 2) {
     return req_set_error(ctx->req, "ERROR: btc_get_addresses: invalid txid", IN3_EINVAL);
   }

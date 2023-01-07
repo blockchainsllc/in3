@@ -73,7 +73,7 @@ static in3_ret_t ensure_payment_data(in3_req_t* req, zksync_config_t* conf) {
 
   in3_pay_sign_req_ctx_t sctx      = {.req = req, .request = NULL, .signature = {0}};
   bytes_t                sig_bytes = bytes(sctx.signature, 65);
-  keccak(bytes((void*) message, strlen(message)), sctx.request_hash);
+  keccak(bytes((void*) message, strlen(message)), sctx.request_hash); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   TRY(in3_plugin_execute_first(req, PLGN_ACT_PAY_SIGN_REQ, &sctx))
   if (sig_bytes.len == 65 && sig_bytes.data[64] < 2) sig_bytes.data[64] += 27;
 
@@ -269,7 +269,7 @@ in3_ret_t zksync_check_payment(zksync_config_t* conf, in3_pay_followup_ctx_t* ct
   sb_add_chars(&sb, "]}");
 
   // add data as cache, so we can add it when we create the next payload.
-  in3_cache_add_entry(&ctx->req->cache, NULL_BYTES, bytes((void*) sb.data, strlen(sb.data)))->props = CACHE_PROP_MUST_FREE | CACHE_PROP_PAYMENT;
+  in3_cache_add_entry(&ctx->req->cache, NULL_BYTES, bytes((void*) sb.data, strlen(sb.data)))->props = CACHE_PROP_MUST_FREE | CACHE_PROP_PAYMENT; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
 
   // now we make sure we try again.
   TRY(in3_retry_same_node(ctx->req))

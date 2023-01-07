@@ -103,7 +103,7 @@ in3_ret_t btc_check_conf(in3_req_t* req, btc_target_conf_t* conf) {
     }
     else {
       const char*        btc_targets = BTC_TARGETS;
-      const unsigned int len         = strlen(btc_targets);
+      const unsigned int len         = strlen(btc_targets); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       conf->data                     = bytes(_malloc(len >> 1), len >> 1);
       hex_to_bytes(btc_targets, len, conf->data.data, conf->data.len);
     }

@@ -118,7 +118,7 @@ in3_ret_t zksync_set_key(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx, bool 
     if (ret && sb.data) _free(sb.data);
     TRY(ret)
     if (!sb.data) return IN3_EUNKNOWN;
-    cached        = in3_cache_add_entry(&ctx->req->cache, NULL_BYTES, bytes((void*) sb.data, strlen(sb.data)));
+    cached        = in3_cache_add_entry(&ctx->req->cache, NULL_BYTES, bytes((void*) sb.data, strlen(sb.data))); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     cached->props = ckey;
   }
 

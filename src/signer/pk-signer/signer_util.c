@@ -100,7 +100,7 @@ void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg) {
   in3_digest_t d      = crypto_create_hash(DIGEST_KECCAK);
   const char*  PREFIX = "\x19"
                         "Ethereum Signed Message:\n";
-  crypto_update_hash(d, bytes((uint8_t*) PREFIX, strlen(PREFIX)));
+  crypto_update_hash(d, bytes((uint8_t*) PREFIX, strlen(PREFIX))); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   crypto_update_hash(d, bytes(dst, sprintf((char*) dst, "%d", (int) msg.len)));
   if (msg.len) crypto_update_hash(d, msg);
   crypto_finalize_hash(d, dst);
@@ -161,7 +161,7 @@ char* eth_set_pk_signer_from_string(in3_t* in3, char* key, char* path, char* pas
     mnemonic_to_seed(key, passphrase, seed, NULL);
     if (!path) path = "m/44'/60'/0'/0/0";
 
-    int path_len = strlen(path);
+    int path_len = strlen(path); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     int l        = 1;
     for (int i = 0; i < path_len; i++) {
       if (path[i] == ' ' || path[i] == ',') l++;

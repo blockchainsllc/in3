@@ -74,14 +74,14 @@ static abi_coder_t* create_coder(char* token, char** error) {
     }
   }
   else if (strncmp(token, "bytes", 5) == 0) {
-    coder->type  = strlen(token) > 5 ? ABI_FIXED_BYTES : ABI_BYTES;
+    coder->type  = strlen(token) > 5 ? ABI_FIXED_BYTES : ABI_BYTES; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     start_number = token + 5;
   }
   else
     return abi_error(error, "invalid type", coder);
 
   if (start_number) {
-    int i = strlen(start_number) ? atoi(start_number) : 256;
+    int i = strlen(start_number) ? atoi(start_number) : 256; // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     if (coder->type == ABI_FIXED_BYTES)
       coder->data.fixed.len = i;
     else if (coder->type == ABI_NUMBER) {

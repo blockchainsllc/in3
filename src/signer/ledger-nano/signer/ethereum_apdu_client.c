@@ -52,12 +52,12 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
         is_hashed = true;
       case SIGN_EC_HASH:
       case SIGN_EC_PREFIX:
-        if (memcmp(prefix, sc->message.data, strlen(prefix)) == 0) {
+        if (memcmp(prefix, sc->message.data, strlen(prefix)) == 0) { // NOSONAR - this function expects null-terminated string which was checked prior to calling it
           is_msg = true;
         }
 
         if (!is_hashed && is_msg == true)
-          hasher_Raw(HASHER_SHA3K, sc->message.data + strlen(prefix), sc->message.len - strlen(prefix), hash);
+          hasher_Raw(HASHER_SHA3K, sc->message.data + strlen(prefix), sc->message.len - strlen(prefix), hash); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
         else {
           hasher_Raw(HASHER_SHA3K, sc->message.data, sc->message.len, hash);
         }
@@ -72,9 +72,9 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
         apdu[index_counter++] = 0x00;
         apdu[index_counter++] = 0x00;
 
-        if (is_msg == true) { // final apdu lenghts will be adjusted differenly for message and transaction`
+        if (is_msg == true) {                                                                            // final apdu lenghts will be adjusted differenly for message and transaction`
 
-          apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 5 + (sc->message.len - strlen(prefix));
+          apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 5 + (sc->message.len - strlen(prefix)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
         }
         else {
           apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 1 + sc->message.len;
@@ -88,9 +88,9 @@ in3_ret_t eth_ledger_sign_txn(void* p_data, in3_plugin_act_t action, void* p_ctx
           apdu[index_counter++] = 0x00;
           apdu[index_counter++] = 0x00;
           apdu[index_counter++] = 0x00;
-          apdu[index_counter++] = sc->message.len - strlen(prefix);
-          memcpy(apdu + index_counter, sc->message.data + strlen(prefix), sc->message.len - strlen(prefix));
-          index_counter += sc->message.len - strlen(prefix);
+          apdu[index_counter++] = sc->message.len - strlen(prefix);                                          // NOSONAR - this function expects null-terminated string which was checked prior to calling it
+          memcpy(apdu + index_counter, sc->message.data + strlen(prefix), sc->message.len - strlen(prefix)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
+          index_counter += sc->message.len - strlen(prefix);                                                 // NOSONAR - this function expects null-terminated string which was checked prior to calling it
         }
         else {
           memcpy(apdu + index_counter, sc->message.data, sc->message.len);

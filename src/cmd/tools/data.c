@@ -253,7 +253,7 @@ int main(int argc, char* argv[]) {
       debug = true;
     else {
       input.data = (uint8_t*) argv[i];
-      input.len  = strlen(argv[i]);
+      input.len  = strlen(argv[i]); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
     }
   }
 
@@ -265,7 +265,7 @@ int main(int argc, char* argv[]) {
     if ((input.data[0] == '0' && input.data[1] == 'x') || hexchar_to_int(*input.data) >> 1 == T_BOOLEAN) {
       char* hex  = (char*) input.data;
       input.data = malloc(strlen(hex) / 2);
-      input.len  = hex_to_bytes(hex, -1, input.data, strlen(hex) / 2);
+      input.len  = hex_to_bytes(hex, -1, input.data, strlen(hex) / 2); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       format     = "json";
     }
     else

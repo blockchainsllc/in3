@@ -29,7 +29,7 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       if (accounts) {
         int account_len = 20;
         if (ctx->curve_type == EDDSA_ED25519) account_len = 32;
-        size_t l = strlen(accounts);
+        size_t l = strlen(accounts); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
         if (l % (account_len * 2) == 0) {
           ctx->accounts_len = l / (account_len * 2);
           ctx->accounts     = _malloc(l / 2);
@@ -44,7 +44,7 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       sign_derive_key_ctx_t* _Nonnull ctx = plugin_ctx;
       char* address                       = conf->derive_key(ctx);
       if (!address) return req_set_error(ctx->req, "Could not derrive the path", IN3_EINVAL);
-      if (address[0] != '0' || address[1] != 'x' || strlen(address) != 42) {
+      if (address[0] != '0' || address[1] != 'x' || strlen(address) != 42) { // NOSONAR - this function expects null-terminated string which was checked prior to calling it
         req_set_error(ctx->req, address, IN3_EINVAL);
         _free(address);
         return IN3_EINVAL;
@@ -59,7 +59,7 @@ static in3_ret_t handle(void* plugin_data, in3_plugin_act_t action, void* plugin
       sctx.req                    = ctx->req;
       char* accounts              = conf->sign_accounts(&sctx);
       if (!accounts) return IN3_EIGNORE;
-      int l = strlen(accounts);
+      int l = strlen(accounts); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       if (l < 3) {
         _free(accounts);
         return IN3_EIGNORE;

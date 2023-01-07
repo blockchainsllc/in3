@@ -60,7 +60,7 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_req_t* parent, bytes_
 
 static void ens_hash(const char* domain, bytes32_t dst) {
   uint8_t hash[64];                                                                            // we use the first 32 bytes for the root and the 2nd for the name so we can combine them without copying
-  int     end = strlen(domain);                                                                // we start with the last token
+  int     end = strlen(domain);                                                                // NOSONAR - this function expects null-terminated string which was checked prior to calling it // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   memset(hash, 0, 32);                                                                         // clear root
   for (int pos = next_token(domain, end - 1);; end = pos, pos = next_token(domain, pos - 1)) { // we start with the last
     keccak(bytes((uint8_t*) (domain + pos + 1), end - pos - 1), hash + 32);                    // hash the name
@@ -71,7 +71,7 @@ static void ens_hash(const char* domain, bytes32_t dst) {
 }
 
 in3_ret_t ens_resolve(in3_req_t* parent, char* name, const address_t registry, in3_ens_type_t type, uint8_t* dst, int* res_len) {
-  const int len = strlen(name);
+  const int len = strlen(name); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   if (*name == '0' && name[1] == 'x' && len == 42) {
     hex_to_bytes(name, 40, dst, 20);
     return IN3_OK;

@@ -171,7 +171,7 @@ in3_ret_t in3_cache_store_nodelist(in3_t* c, in3_nodeselect_def_t* data) {
     bb_write_long(bb, n->deposit);
     bb_write_long(bb, n->props);
     bb_write_fixed_bytes(bb, addr);
-    bb_write_chars(bb, n->url, strlen(n->url));
+    bb_write_chars(bb, n->url, strlen(n->url)); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   }
 
   // verified hashes

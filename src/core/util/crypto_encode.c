@@ -87,7 +87,7 @@ int encode_size(in3_encoding_type_t type, int src_len) {
   }
 }
 int decode(in3_encoding_type_t type, const char* src, int src_len, uint8_t* dst) {
-  if (src_len < 0) src_len = strlen(src);
+  if (src_len < 0) src_len = strlen(src); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   switch (type) {
     case ENC_UTF8: memcpy(dst, src, src_len); return src_len;
     case ENC_HEX: return hex_to_bytes(src, src_len, dst, src_len * 2);

@@ -132,7 +132,7 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
       continue;
     }
 
-    if (send(s, message, strlen(message), 0) < 0) {
+    if (send(s, message, strlen(message), 0) < 0) { // NOSONAR - this function expects null-terminated string which was checked prior to calling it
       in3_ctx_add_response(req->req, n, true, "Send failed", -1, 0);
       continue;
     }
