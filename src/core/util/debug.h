@@ -103,7 +103,7 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
 static inline char* config_err(const char* keyname, const char* err) {
   const char* k = keyname ? keyname : "";
   char*       s = _malloc(strlen(k) + strlen(err) + 4); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
-  sprintf(s, "%s: %s!", k, err);
+  sprintf(s, "%s: %s!", k, err);                        // NOSONAR - the target is big enough
   return s;
 }
 
@@ -136,7 +136,7 @@ static inline void add_string(sb_t* sb, char prefix, const char* property, const
 static inline void add_uint(sb_t* sb, char prefix, const char* property, uint64_t value) {
   add_prop(sb, prefix, property);
   char tmp[16];
-  sprintf(tmp, "%u", (uint32_t) value);
+  sprintf(tmp, "%u", (uint32_t) value); // NOSONAR - the target is big enough
   sb_add_chars(sb, tmp);
 }
 

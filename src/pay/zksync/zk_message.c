@@ -9,10 +9,10 @@
 static int to_dec(char* dst, zk_fee_t val) {
 #ifdef ZKSYNC_256
   int l = encode(ENC_DECIMAL, bytes(val, 32), dst, 80);
-  if (l < 0) sprintf(dst, "<NOT SUPPORTED>");
+  if (l < 0) sprintf(dst, "<NOT SUPPORTED>"); // NOSONAR - the target is big enough ( 80)
   return l;
 #else
-  return sprintf(dst, "%" PRId64, val);
+  return sprintf(dst, "%" PRId64, val); // NOSONAR - the target is big enough
 #endif
 }
 

@@ -221,7 +221,7 @@ static in3_ret_t zksync_rpc(zksync_config_t* conf, in3_rpc_handle_ctx_t* ctx) {
 
   // we need to show the arguments as integers
   if (strcmp(ctx->method, "ethop_info") == 0)
-    sprintf(param_string, "%i", d_get_int_at(ctx->params, 0));
+    sprintf(param_string, "%i", d_get_int_at(ctx->params, 0)); // NOSONAR - the target is big enough
 
   // send request to the server
   d_token_t* result;

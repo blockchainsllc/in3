@@ -112,9 +112,10 @@ void crypto_finalize_hash(
 /**
  * encodes bytes to a string */
 int encode(
-    in3_encoding_type_t type, /**< the encoding typr */
-    bytes_t             src,  /**< the src-data to encode */
-    char*               dst   /**< the pointer to resulting string to write to. the caller has to ensure it is big enough. (see encode_size to allocate enough memory)*/
+    in3_encoding_type_t type,   /**< the encoding typr */
+    bytes_t             src,    /**< the src-data to encode */
+    char*               dst,    /**< the pointer to resulting string to write to. the caller has to ensure it is big enough. (see encode_size to allocate enough memory)*/
+    size_t              dst_len /**< the allocated memory of the destination */
 );
 
 int encode_size(

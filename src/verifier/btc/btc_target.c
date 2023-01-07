@@ -17,7 +17,7 @@ in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t n
   return IN3_OK;
 }
 static void set_cachekey(chain_id_t id, char* buffer) {
-  sprintf(buffer, "btc_target_%d", (uint32_t) id);
+  sprintf(buffer, "btc_target_%d", (uint32_t) id); // NOSONAR - the target is big enough
 }
 
 // format:  <2 bytes big endias HEX DAP NR> <4 bytes bits>
@@ -212,6 +212,6 @@ in3_ret_t btc_check_target(btc_target_conf_t* tc, in3_vctx_t* vc, uint32_t block
 
   // we need more proof, so we create a request
   char* req = _malloc(300);
-  sprintf(req, "{\"method\":\"btc_proofTarget\",\"jsonrpc\":\"2.0\",\"params\":[\"%d,%d,%d,%d,%d\"]}", current_dap, found_dap, (int) tc->max_diff, (int) tc->max_daps, (int) tc->dap_limit);
+  sprintf(req, "{\"method\":\"btc_proofTarget\",\"jsonrpc\":\"2.0\",\"params\":[\"%d,%d,%d,%d,%d\"]}", current_dap, found_dap, (int) tc->max_diff, (int) tc->max_daps, (int) tc->dap_limit); // NOSONAR - the target is big enough
   return req_add_required(vc->req, req_new(vc->req->client, req));
 }

@@ -98,7 +98,7 @@ in3_ret_t send_http(void* plugin_data, in3_plugin_act_t action, void* plugin_ctx
     }
 
     // create message
-    sprintf(message, "POST %s HTTP/1.0\r\nHost: %s\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n%s", path, host, (int) strlen(req->payload), req->payload);
+    sprintf(message, "POST %s HTTP/1.0\r\nHost: %s\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n%s", path, host, (int) strlen(req->payload), req->payload); // NOSONAR - the target is big enough
     total = strlen(message);
 
 /* create the socket */

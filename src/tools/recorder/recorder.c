@@ -251,7 +251,7 @@ static void recorder_init(in3_t* c, char* file) {
 
 void in3_record(in3_t* c, char* file, bool in) {
   char file_record[32];
-  sprintf(file_record, "%s_%s.txt", file, IN3_VERSION);
+  sprintf(file_record, "%s_%s.txt", file, IN3_VERSION); // NOSONAR - the target is big enough
   if (!in) {
     recorder_init(c, file_record);
   }

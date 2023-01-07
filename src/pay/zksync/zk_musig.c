@@ -42,7 +42,7 @@ static in3_ret_t send_sign_request(in3_req_t* parent, int pos, zksync_config_t* 
   char* url = conf->musig_urls ? conf->musig_urls[pos] : NULL;
   if (!url) return req_set_error(parent, "missing url to fetch a signature", IN3_EINVAL);
   char* in3 = alloca(strlen(url) + 26);
-  sprintf(in3, "{\"rpc\":\"%s\"}", url);
+  sprintf(in3, "{\"rpc\":\"%s\"}", url); // NOSONAR - the target is big enough
   return req_send_sub_request(parent, method, params, in3, result, NULL);
 }
 

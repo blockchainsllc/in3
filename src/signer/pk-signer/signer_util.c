@@ -100,8 +100,8 @@ void eth_create_prefixed_msg_hash(bytes32_t dst, bytes_t msg) {
   in3_digest_t d      = crypto_create_hash(DIGEST_KECCAK);
   const char*  PREFIX = "\x19"
                         "Ethereum Signed Message:\n";
-  crypto_update_hash(d, bytes((uint8_t*) PREFIX, strlen(PREFIX))); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
-  crypto_update_hash(d, bytes(dst, sprintf((char*) dst, "%d", (int) msg.len)));
+  crypto_update_hash(d, bytes((uint8_t*) PREFIX, strlen(PREFIX)));              // NOSONAR - this function expects null-terminated string which was checked prior to calling it
+  crypto_update_hash(d, bytes(dst, sprintf((char*) dst, "%d", (int) msg.len))); // NOSONAR - the target is big enough
   if (msg.len) crypto_update_hash(d, msg);
   crypto_finalize_hash(d, dst);
 }

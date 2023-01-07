@@ -101,7 +101,7 @@ static in3_ret_t get_from_nodes(in3_req_t* parent, char* method, char* params, b
   // allocate memory for the request-string
   char* req = _malloc(strlen(method) + strlen(params) + 200); // NOSONAR - this function expects null-terminated string which was checked prior to calling it
   // create it
-  sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params);
+  sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"params\":%s}", method, params); // NOSONAR - the target is big enough
   // and add the request context to the parent.
   return req_add_required(parent, req_new(parent->client, req));
 }

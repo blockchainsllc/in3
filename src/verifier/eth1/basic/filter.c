@@ -332,7 +332,7 @@ in3_ret_t filter_get_changes(in3_filter_handler_t* filters, in3_req_t* ctx, size
 
           if (!block_ctx) {
             char* req = _malloc(150);
-            sprintf(req, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"0x%" PRIx64 "\", false]}", i);
+            sprintf(req, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"0x%" PRIx64 "\", false]}", i); // NOSONAR - the target is big enough
             res = req_add_required(ctx, req_new(ctx->client, req));
           }
           else {

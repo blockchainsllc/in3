@@ -134,12 +134,12 @@ static in3_ret_t build_unlocking_script(in3_req_t* req, btc_tx_in_t* tx_in, byte
     }
     if (utxo->tx_out.script.type == BTC_P2SH && utxo->raw_script.data.len > MAX_P2SH_SCRIPT_SIZE_BYTES) {
       char message[100];
-      sprintf(message, "ERROR: in build_unlocking_script: provided redeem script is bigger than the %d bytes limit.", MAX_P2SH_SCRIPT_SIZE_BYTES);
+      sprintf(message, "ERROR: in build_unlocking_script: provided redeem script is bigger than the %d bytes limit.", MAX_P2SH_SCRIPT_SIZE_BYTES); // NOSONAR - the target is big enough
       return req_set_error(req, message, IN3_EINVAL);
     }
     if (utxo->raw_script.data.len > MAX_SCRIPT_SIZE_BYTES) {
       char message[100];
-      sprintf(message, "ERROR: in build_unlocking_script: provided redeem script is bigger than the %d bytes limit.", MAX_SCRIPT_SIZE_BYTES);
+      sprintf(message, "ERROR: in build_unlocking_script: provided redeem script is bigger than the %d bytes limit.", MAX_SCRIPT_SIZE_BYTES); // NOSONAR - the target is big enough
       return req_set_error(req, message, IN3_EINVAL);
     }
   }

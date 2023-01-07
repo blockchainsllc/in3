@@ -97,9 +97,9 @@ static uint64_t fill_transition(json_ctx_t* ctx, d_token_t* params, uint64_t b, 
   memset(eip, 0, sizeof(eip_t));
 
   for (int n = 0; EIPS[n]; n++) {
-    sprintf(tmp, "eip%iTransition", EIPS[n]);
+    sprintf(tmp, "eip%iTransition", EIPS[n]);        // NOSONAR - the target is big enough
     start = d_get(params, ikey(ctx, tmp));
-    sprintf(tmp, "eip%iDisableTransition", EIPS[n]);
+    sprintf(tmp, "eip%iDisableTransition", EIPS[n]); // NOSONAR - the target is big enough
     end = d_get(params, ikey(ctx, tmp));
     if (start && d_long(start) > b && (next_block == b || d_long(start) < next_block)) next_block = d_long(start);
     if (end && d_long(end) > b && (next_block == b || d_long(end) < next_block)) next_block = d_long(end);

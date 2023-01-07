@@ -196,7 +196,7 @@ in3_ret_t zksync_get_sync_key(zksync_config_t* conf, in3_req_t* ctx, uint8_t* sy
     d_token_t* res = NULL;
     TRY(req_send_sub_request(ctx, "eth_chainId", "", NULL, &res, NULL))
     char* tmp = alloca(strlen(message) + 30);
-    sprintf(tmp, "%s\nChain ID: %d.", message, (int) d_int(res));
+    sprintf(tmp, "%s\nChain ID: %d.", message, (int) d_int(res)); // NOSONAR - the target is big enough
     message = tmp;
   }
   TRY(zksync_get_account(conf, ctx, &account))
@@ -243,7 +243,7 @@ in3_ret_t zksync_get_contracts(zksync_config_t* conf, in3_req_t* ctx, uint8_t** 
     if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
       TRY(ensure_provider(conf, ctx))
       cache_name = alloca(100);
-      sprintf(cache_name, "zksync_contracts_%x", key(conf->provider_url));
+      sprintf(cache_name, "zksync_contracts_%x", key(conf->provider_url)); // NOSONAR - the target is big enough
       in3_cache_ctx_t cctx = {.req = ctx, .key = cache_name, .content = NULL};
       TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
       if (cctx.content) {
@@ -345,7 +345,7 @@ in3_ret_t resolve_tokens(zksync_config_t* conf, in3_req_t* ctx, d_token_t* token
     if (in3_plugin_is_registered(ctx->client, PLGN_ACT_CACHE)) {
       TRY(ensure_provider(conf, ctx))
       cache_name = alloca(100);
-      sprintf(cache_name, "zksync_tokens_%x", key(conf->provider_url));
+      sprintf(cache_name, "zksync_tokens_%x", key(conf->provider_url)); // NOSONAR - the target is big enough
       in3_cache_ctx_t cctx = {.req = ctx, .key = cache_name, .content = NULL};
       TRY(in3_plugin_execute_first_or_none(ctx, PLGN_ACT_CACHE_GET, &cctx))
       if (cctx.content) {

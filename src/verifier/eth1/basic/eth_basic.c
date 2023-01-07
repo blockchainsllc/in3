@@ -139,7 +139,7 @@ static in3_ret_t eth_send_transaction_and_wait(in3_rpc_handle_ctx_t* ctx) {
     if (wait > 120000) // more than 2 minutes is too long, so we stop here
       return req_set_error(ctx->req, "Waited too long for the transaction to be minded", IN3_ELIMIT);
     char in3[20];
-    sprintf(in3, "{\"wait\":%d}", wait);
+    sprintf(in3, "{\"wait\":%d}", wait); // NOSONAR - the target is big enough
 
     return req_send_sub_request(ctx->req, FN_ETH_GETTRANSACTIONRECEIPT, tx_hash_hex, in3, &tx_receipt, &last_r);
   }

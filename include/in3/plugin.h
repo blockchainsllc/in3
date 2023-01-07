@@ -82,16 +82,6 @@ in3_ret_t in3_plugin_execute_first(in3_req_t* req, in3_plugin_act_t action, void
  */
 in3_ret_t in3_plugin_execute_first_or_none(in3_req_t* req, in3_plugin_act_t action, void* plugin_ctx);
 
-/**
- * get direct access to plugin data (if registered) based on action function
- */
-static inline void* in3_plugin_get_data(in3_t* c, in3_plugin_act_fn fn) {
-  for (in3_plugin_t* p = c->plugins; p; p = p->next) {
-    if (p->action_fn == fn) return p->data;
-  }
-  return NULL;
-}
-
 // ----------- RPC HANDLE -----------
 
 /**
