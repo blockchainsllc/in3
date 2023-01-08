@@ -64,8 +64,8 @@ char* get_storage_dir() {
     if (!home) home = ".";
     _HOME_DIR = sprintx("%s/.in3/", home);
     mode_t old_umask;
-    old_umask = umask(0);
-    mkdir(_HOME_DIR, 0777);
+    old_umask = umask(1 | 2 | 4);
+    mkdir(_HOME_DIR, 0700);
     umask(old_umask);
 #endif
   }
