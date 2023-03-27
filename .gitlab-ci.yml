@@ -23,6 +23,7 @@ workflow:
 # defines all the stages in the CI, this includes all stages defined inside the included yml files
 stages:
   - build
+  - scan
   - integration
   - bindings
   - test
@@ -39,6 +40,12 @@ include:
   - project: build-images/synopsys-detect
     ref: main
     file: "/templates/.gitlab-ci-blackduck.yml"
+  - project: 'build-images/synopsys-detect'
+    ref: main
+    file: '/templates/.gitlab-ci-blackduck-signature.yml' # Signature scans
+  - project: 'build-images/sonar-qube'
+    ref: main
+    file: '/templates/.gitlab-ci-sonarqube.yml'
 
 wasm:
   stage: bindings
